@@ -1,84 +1,70 @@
 #include <Arduino.h>
 #include "FastLED.h"
 #include "Dot2D/dot2d.h"
-#include "Matrix.h"
+#include "Matrix/MatrixMain.h"
+#include "Key/ClockKey.h"
+#include "RTC/SD3078.h"
 
-//LED矩阵宽
-#define MATRIX_WIDTH          32
-//LED矩阵高
-#define MATRIX_HEIGHT         8
-//点阵屏驱动引脚
-#define MATRIX_LED_PIN        18
-//屏幕最大亮度
-#define MATRIX_MAX_BRIGHTNESS 48
-
-dot2d::Director* director = nullptr;
-
-
-//必须要实现的dot2d导演对象代理方法
-class MainDelegate : public dot2d::DirectorDelegate
-{
-
-    void render()
-    {
-        FastLED.show();
-        // 输出ESP32内存占用情况
-        // Serial.printf("-----Free Heap Mem : %d [%.2f%%]-----\n",
-        //         ESP.getFreeHeap(),
-        //         ESP.getFreeHeap()/(double)ESP.getHeapSize()*100);
-        // Serial.printf("-----Free PSRAM Mem: %d [%.2f%%]-----\n",
-        //         ESP.getFreePsram(),
-        //         ESP.getFreePsram()/(double)ESP.getPsramSize()*100);
-    }
-
-    size_t write(uint8_t c)
-    {
-      return Serial.write(c);
-    }
-
-    //返回一个RGB对象的顺序表指针，用于初始化硬件屏幕
-    void initMatrix(dot2d::DTRGB *data)
-    {
-      FastLED.addLeds<WS2812Controller800Khz,MATRIX_LED_PIN, GRB>((CRGB* )data,MATRIX_WIDTH*MATRIX_HEIGHT);
-    }
-
-    //用于计算坐标为(x,y)的灯珠在RGB对象顺序表中的具体位置，适配不同排列方式的屏幕，在此处修改
-    uint32_t dotOrder(uint16_t x,uint16_t y)
-    {
-      uint16_t order = x*MATRIX_HEIGHT;
-      if (x%2==0)
-      {
-          order+=(MATRIX_HEIGHT-1-y);
-      }else
-      {
-          order+=y;
-      }
-      return order;
-    }
-};
-
-
+ClockKey* keyHandler = nullptr;
+//SD3078* SD3078Time = nullptr;
+tst3078Time ClockTime = {0x00,0x17,0x93,0x07,0x12,0x02,0x23,};
+int8_t Tempture = 0;
 void setup() {
   //----------------开启串口通信----------------
-  Serial.begin(115200);
-
-  //设置WS2812屏幕亮度
-  FastLED.setBrightness(MATRIX_MAX_BRIGHTNESS);
-
-
-  //----------------初始化Dot2d引擎及渲染画布----------------
-  director = dot2d::Director::getInstance();                      //获取导演对象
-  director->setDelegate(new MainDelegate());                      //设置导演代理
-  director->setFramesPerSecond(30);                               //设置帧速率
-  director->initDotCanvas(MATRIX_WIDTH,MATRIX_HEIGHT);            //初始化导演画布
-
-
-  director->runWithScene(dot2d::Matrix::create());
-
-  
+  Serial.begin(9600);
+  Serial.printf("Setup function excuted!\n");
+  keyHandler = new ClockKey();
+  keyHandler->Start();
+  vMatrixInit();
+  pinMode(26, OUTPUT);
+  digitalWrite(26,HIGH);
+  if(digitalPinCanOutput(26))
+  {
+      Serial.printf("Pin26 can output!\n");
+  }
+  //SD3078Time = new SD3078();
+  //SD3078Time->SetTime(&ClockTime);
 }
+
+// void vPrintTaskInfo(void)
+// {
+//     TaskHandle_t xHandle;
+//     TaskStatus_t xTaskDetails;
+//     xHandle = xTaskGetCurrentTaskHandle();
+
+//     if(xHandle)
+//     {
+//         /* Use the handle to obtain further information about the task. */
+//         vTaskGetInfo( /* The handle of the task being queried. */
+//                       xHandle,
+//                       /* The TaskStatus_t structure to complete with information
+//                       on xTask. */
+//                       &xTaskDetails,
+//                       /* Include the stack high water mark value in the
+//                       TaskStatus_t structure. */
+//                       pdTRUE,
+//                       /* Include the task state in the TaskStatus_t structure. */
+//                       eInvalid );
+//         Serial.printf(xTaskDetails.pcTaskName);Serial.printf("\n\r");
+//         Serial.printf("BasePriority:%d\n\r",xTaskDetails.uxBasePriority);
+//         Serial.printf("StackHighWater:%d\n\r",xTaskDetails.usStackHighWaterMark);
+//     }
+// }
 
 void loop() {
-  vTaskDelay(10);
-  director->mainLoop();
+  uint32_t BatADC;
+  vTaskDelay(500 / portTICK_PERIOD_MS);
+  BatADC = analogReadMilliVolts(39);
+  Serial.printf("Battary ADC:%d\n",BatADC);
+  //vPrintTaskInfo();
+  // SD3078Time->ReadTime(&ClockTime);
+  // Serial.printf("Time: %x:%x:%x:%x:%x:%x:%x\n",ClockTime.u8Year,ClockTime.u8Month,ClockTime.u8Day,ClockTime.u8Week,ClockTime.u8Hour,ClockTime.u8Min,ClockTime.u8Sec);
+  // SD3078Time->ReadTemp(&Tempture);
+  // Serial.printf("Temp:%d\n",Tempture);
+  // Serial.printf("-----Free Heap Mem : %d [%.2f%%]-----\n",
+  //         ESP.getFreeHeap(),
+  //         ESP.getFreeHeap()/(double)ESP.getHeapSize()*100);
 }
+
+
+

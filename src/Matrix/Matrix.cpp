@@ -44,7 +44,7 @@ bool MatrixLayer::initLayer()
 {
     Size size = this->getContentSize();
     showInterval = size.height / 12.0;
-    animateCount = size.width;
+    animateCount = 3;
     animateList = (Animate*)malloc(sizeof(Animate)*animateCount);
     for (int16_t i=0; i<animateCount; i++) {
         Animate& animate = animateList[i];
