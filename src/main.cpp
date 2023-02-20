@@ -18,9 +18,15 @@ void setup() {
   vMatrixInit();
   pinMode(26, OUTPUT);
   digitalWrite(26,HIGH);
+  pinMode(16, OUTPUT);
+  digitalWrite(16,HIGH);
   if(digitalPinCanOutput(26))
   {
       Serial.printf("Pin26 can output!\n");
+  }
+  if(digitalPinCanOutput(16))
+  {
+      Serial.printf("Pin16 can output!\n");
   }
   //SD3078Time = new SD3078();
   //SD3078Time->SetTime(&ClockTime);
@@ -53,9 +59,15 @@ void setup() {
 
 void loop() {
   uint32_t BatADC;
-  vTaskDelay(500 / portTICK_PERIOD_MS);
-  BatADC = analogReadMilliVolts(39);
-  Serial.printf("Battary ADC:%d\n",BatADC);
+  uint32_t LDRADC;
+  uint32_t MicroPhoneADC;
+  //vTaskDelay(10 / portTICK_PERIOD_MS);
+  //BatADC = analogReadMilliVolts(39);
+  //LDRADC = analogReadMilliVolts(36);
+  //MicroPhoneADC = analogReadMilliVolts(4);
+  //Serial.printf("Battary ADC:%d\n",BatADC);
+  //Serial.printf("LDR ADC:%d\n",LDRADC);
+  //Serial.printf("%d\n",MicroPhoneADC);
   //vPrintTaskInfo();
   // SD3078Time->ReadTime(&ClockTime);
   // Serial.printf("Time: %x:%x:%x:%x:%x:%x:%x\n",ClockTime.u8Year,ClockTime.u8Month,ClockTime.u8Day,ClockTime.u8Week,ClockTime.u8Hour,ClockTime.u8Min,ClockTime.u8Sec);

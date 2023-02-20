@@ -4,7 +4,7 @@
 #include "Matrix.h"
 #include "MatrixMain.h"
 #include "ClockScene.h"
-
+#include "FFT.h"
 
 
 dot2d::Director* director = nullptr;
@@ -71,7 +71,7 @@ void vMatrixInit(void)
   director->setDelegate(new MainDelegate());                      //设置导演代理
   director->setFramesPerSecond(30);                               //设置帧速率
   director->initDotCanvas(MATRIX_WIDTH,MATRIX_HEIGHT);            //初始化导演画布
-  director->runWithScene(dot2d::ClockScene::create());
+  director->runWithScene(dot2d::FFT::create());
   xTaskCreate(
     vMatrixMain,    // Function that should be called
     "Matrix main task",   // Name of the task (for debugging)
