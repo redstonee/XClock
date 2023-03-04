@@ -110,6 +110,8 @@ public:
 
     static FrameSprite* create(const uint8_t* bitmap,uint32_t size);
 
+    static FrameSprite* create(const uint8_t* bitmap,uint32_t size,BMPType bmp_type);
+
     static FrameSprite* create(SpriteFrame* spriteFrame);
 
     virtual void setSpriteFrame(SpriteFrame* newFrame);

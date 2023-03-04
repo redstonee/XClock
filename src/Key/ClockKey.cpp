@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "ClockKey.h"
+#include "Sound/Sound.h"
 
 OneButton *ClockKey::ButtonLeft = new OneButton(CLOCKKEY_LEFT_PIN);
 OneButton *ClockKey::ButtonRight = new OneButton(CLOCKKEY_RIGHT_PIN);
@@ -9,18 +10,21 @@ OneButton *ClockKey::ButtonOk = new OneButton(CLOCKKEY_OK_PIN);
 
 // This function will be called when the button1 was pressed 1 time (and no 2. button press followed).
 void ClockKey::vClickLeft() {
+  boReqSound(enSndID_Alarm1,1);
   Serial.println("Button Left click.");
 } // clickLeft
 
 
 // This function will be called when the button1 was pressed 2 times in a short timeframe.
 void ClockKey::vDoubleClickLeft() {
+  boReqSound(enSndID_Alarm2,1);
   Serial.println("Button Left doubleclick.");
 } // doubleclickLeft
 
 
 // This function will be called once, when the button1 is pressed for a long time.
 void ClockKey::vLongPressStartLeft() {
+  boReqSound(enSndID_Ding,1);
   Serial.println("Button Left longPress start");
 } // longPressStartLeft
 
@@ -40,21 +44,25 @@ void ClockKey::vLongPressStopLeft() {
 // ... and the same for button 2:
 
 void ClockKey::vClickRight() {
+  boReqSound(enSndID_DingDong,1);
   Serial.println("Button Right click.");
 } // clickRight
 
 
 void ClockKey::vDoubleClickRight() {
+  boReqSound(enSndID_Ding,1);
   Serial.println("Button Right doubleclick.");
 } // doubleclickRight
 
 
 void ClockKey::vLongPressStartRight() {
+  boReqSound(enSndID_Ding,1);
   Serial.println("Button Right longPress start");
 } // longPressStartRight
 
 
 void ClockKey::vLongPressRight() {
+  boReqSound(enSndID_Ding,1);
   Serial.println("Button Right longPress...");
 } // longPressRight
 
@@ -65,21 +73,25 @@ void ClockKey::vLongPressStopRight() {
 // ... and the same for button 3:
 
 void ClockKey::vClickOk() {
+  boReqSound(enSndID_Ding,1);
   Serial.println("Button Ok click.");
 } // clickOk
 
 
 void ClockKey::vDoubleClickOk() {
+  boReqSound(enSndID_Ding,1);
   Serial.println("Button Ok doubleclick.");
 } // doubleclick3
 
 
 void ClockKey::vLongPressStartOk() {
+  boReqSound(enSndID_Ding,1);
   Serial.println("Button Ok longPress start");
 } // longPressStartOk
 
 
 void ClockKey::vLongPressOk() {
+  boReqSound(enSndID_Ding,1);
   Serial.println("Button Ok longPress...");
 } // longPressOk
 
@@ -102,7 +114,7 @@ void ClockKey::Start(){
     xTaskCreate(
     KeyLoop,    // Function that should be called
     "Keyhandler main task",   // Name of the task (for debugging)
-    1000,            // Stack size (bytes)
+    2000,            // Stack size (bytes)
     NULL,            // Parameter to pass
     1,               // Task priority
     NULL             // Task handle
@@ -114,6 +126,7 @@ ClockKey::ClockKey()
 {
     // link the button 1 functions.
     ButtonLeft->attachClick(vClickLeft);
+    ButtonLeft->setClickTicks(100);
     ButtonLeft->attachDoubleClick(vDoubleClickLeft);
     ButtonLeft->attachLongPressStart(vLongPressStartLeft);
     ButtonLeft->attachLongPressStop(vLongPressLeft);
@@ -121,6 +134,7 @@ ClockKey::ClockKey()
 
     // link the button 2 functions.
     ButtonRight->attachClick(vClickRight);
+    ButtonRight->setClickTicks(100);
     ButtonRight->attachDoubleClick(vDoubleClickRight);
     ButtonRight->attachLongPressStart(vLongPressStartRight);
     ButtonRight->attachLongPressStop(vLongPressRight);
@@ -128,6 +142,7 @@ ClockKey::ClockKey()
 
     // link the button 3 functions.
     ButtonOk->attachClick(vClickOk);
+    ButtonOk->setClickTicks(100);
     ButtonOk->attachDoubleClick(vDoubleClickOk);
     ButtonOk->attachLongPressStart(vLongPressStartOk);
     ButtonOk->attachLongPressStop(vLongPressOk);

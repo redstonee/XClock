@@ -557,7 +557,15 @@ struct DTRGB
 
 };
 
+typedef enum
+{
+    BMP_BMP,
+    BMP_PNG,
+    BMP_JPG,
+    BMP_DGF,
+    BMP_GIF,
 
+}BMPType;
 
 NS_DT_END
 

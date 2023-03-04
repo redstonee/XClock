@@ -30,17 +30,19 @@ THE SOFTWARE.
 #include "base/dtRef.h"
 #include "base/dtTypes.h"
 #include "extended/DgfParser.h"
+#include "extended/GifClass.h"
+#include "extended/BmpClass.h"
 
 NS_DT_BEGIN
 
-class SpriteFrame : public Ref , public DgfDecoder
+class SpriteFrame : public Ref , public DgfDecoder ,public GifClass,public BmpClass
 {
 private:
 
-
+    
 
 public:
-
+    BMPType _bmp_type;
 
 
 public:
@@ -50,12 +52,23 @@ public:
 
     static SpriteFrame* create(const uint8_t* bitmap,uint32_t size);
 
+    static SpriteFrame* create(const uint8_t* bitmap,uint32_t size,BMPType bmp_type);
+
     DTRGB colorWithXY(uint16_t x,uint16_t y) const;
 
     void setSaturationRate(float rate);
     
     bool init(const uint8_t* bitmap,uint32_t size);
 
+    bool decode_bmp(const uint8_t* bitmap,uint32_t size);
+
+    uint16_t getDuration_bmp() const;
+
+    bool renderNextFrame_bmp(bool loop);
+
+    uint8_t width_bmp();
+
+    uint8_t height_bmp();
 protected:
 
     SpriteFrame();

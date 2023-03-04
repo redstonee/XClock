@@ -90,8 +90,8 @@ void FrameSprite::switchUpdate(float dt)
     {
         return;
     }
-    _spriteFrame->renderNextFrame(true);
-    this->scheduleOnce(DT_SCHEDULE_SELECTOR(FrameSprite::switchUpdate),_spriteFrame->getDuration()*FRAME_DURATION_UNIT_TIME);
+    _spriteFrame->renderNextFrame_bmp(true);
+    this->scheduleOnce(DT_SCHEDULE_SELECTOR(FrameSprite::switchUpdate),_spriteFrame->getDuration_bmp()*FRAME_DURATION_UNIT_TIME);
 }
 
 bool FrameSprite::init(SpriteFrame* spriteFrame)
@@ -145,6 +145,16 @@ FrameSprite* FrameSprite::create(const uint8_t* bitmap,uint32_t size)
     return nullptr;
 }
 
+FrameSprite* FrameSprite::create(const uint8_t* bitmap,uint32_t size,BMPType bmp_type)
+{
+    SpriteFrame* frame = SpriteFrame::create(bitmap,size,bmp_type);
+    if (frame)
+    {
+        return FrameSprite::create(frame);
+    }
+    return nullptr;
+}
+
 FrameSprite* FrameSprite::create(SpriteFrame* spriteFrame)
 {
     FrameSprite *sprite = new FrameSprite();
@@ -163,14 +173,14 @@ void FrameSprite::setSpriteFrame(SpriteFrame* newFrame)
     DT_SAFE_RELEASE(_spriteFrame);
     _spriteFrame = newFrame;
     _spriteFrame->retain();
-    _contentSize = Size(_spriteFrame->width(),_spriteFrame->height());
+    _contentSize = Size(_spriteFrame->width_bmp(),_spriteFrame->height_bmp());
 }
 
 bool FrameSprite::updateFrameData(const uint8_t* bitmap,uint32_t size)
 {
     if(!_spriteFrame){ return false; }
-    bool res = _spriteFrame->decode(bitmap,size);
-    _contentSize = Size(_spriteFrame->width(),_spriteFrame->height());
+    bool res = _spriteFrame->decode_bmp(bitmap,size);
+    _contentSize = Size(_spriteFrame->width_bmp(),_spriteFrame->height_bmp());
     return res;
 }
 
@@ -179,7 +189,7 @@ void FrameSprite::setAutoSwitch(bool e)
     _autoSwitch = e;
     if (_autoSwitch)
     {
-        this->scheduleOnce(DT_SCHEDULE_SELECTOR(FrameSprite::switchUpdate),_spriteFrame->getDuration()*FRAME_DURATION_UNIT_TIME);
+        this->scheduleOnce(DT_SCHEDULE_SELECTOR(FrameSprite::switchUpdate),_spriteFrame->getDuration_bmp()*FRAME_DURATION_UNIT_TIME);
     }
 }
 
