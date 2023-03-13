@@ -84,6 +84,8 @@ public:
 
     SpriteCanvas(uint16_t w, uint16_t h);
 
+    SpriteCanvas(uint16_t w, uint16_t h, DTRGB& textcolor);
+
     ~SpriteCanvas();
 
     static SpriteCanvas* create();
@@ -92,9 +94,12 @@ public:
 
     static SpriteCanvas* create(uint16_t w, uint16_t h);
 
-    static SpriteCanvas* create(uint16_t w, uint16_t h,const std::string& s,const GFXfont *f = (const GFXfont *)__null,uint8_t tSize = 1);
+    static SpriteCanvas* create(uint16_t w, uint16_t h, DTRGB& textcolor);
+
+    static SpriteCanvas* create(uint16_t w, uint16_t h, DTRGB& textcolor,const std::string& s,const GFXfont *f = (const GFXfont *)__null,uint8_t tSize = 1);
 
     static SpriteCanvas* create(const std::string& s,const GFXfont *f = (const GFXfont *)__null,uint8_t tSize = 1);
+
 
     uint16_t getTextWidth(){return textWidth;}
 

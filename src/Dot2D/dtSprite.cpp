@@ -367,9 +367,9 @@ TextSprite* TextSprite::create(const Size& spriteSize,const std::string& s,TextA
     return nullptr;
 }
 
-TextSprite* TextSprite::create(const Size& spriteSize,const Size& textSize,const std::string& s,TextAlign ta,const GFXfont *f,uint8_t tSize)
+TextSprite* TextSprite::create(const Size& spriteSize,const Size& textSize,DTRGB& textcolor,const std::string& s,TextAlign ta,const GFXfont *f,uint8_t tSize)
 {
-    SpriteCanvas *canvas = SpriteCanvas::create(textSize.width,textSize.height,s,f,tSize);
+    SpriteCanvas *canvas = SpriteCanvas::create(textSize.width,textSize.height,textcolor,s,f,tSize);
     if (canvas)
     {
         TextSprite *sprite = new TextSprite();

@@ -241,7 +241,7 @@ public:
 
     static TextSprite* create(const Size& spriteSize,const std::string& s,TextAlign ta = TextAlign::TextAlignLeft,const GFXfont *f = (const GFXfont *)__null,uint8_t tSize = 1);
 
-    static TextSprite* create(const Size& spriteSize,const Size& textSize,const std::string& s,TextAlign ta = TextAlign::TextAlignLeft,const GFXfont *f = (const GFXfont *)__null,uint8_t tSize = 1);
+    static TextSprite* create(const Size& spriteSize,const Size& textSize,DTRGB& textcolor,const std::string& s,TextAlign ta = TextAlign::TextAlignLeft,const GFXfont *f = (const GFXfont *)__null,uint8_t tSize = 1);
 
     virtual void draw(Renderer *renderer,const Transform& transform) override;
     

@@ -155,6 +155,21 @@ SpriteCanvas::SpriteCanvas(uint16_t w, uint16_t h)
     gfxFont     = nullptr;
 }
 
+SpriteCanvas::SpriteCanvas(uint16_t w, uint16_t h, DTRGB& textcolor)
+:WIDTH(w), HEIGHT(h)
+{
+    _width      = WIDTH;
+    _height     = HEIGHT;
+    rotation    = 0;
+    cursor_y    = 0;
+    cursor_x    = 0;
+    textSize    = 1;
+    textColor   = textcolor;
+    textBgColor = DTRGB(255, 255, 255);;
+    wrap        = true;
+    gfxFont     = nullptr;
+}
+
 SpriteCanvas::~SpriteCanvas()
 {
     DT_SAFE_DELETE(_canvasBuffer);
@@ -183,10 +198,22 @@ SpriteCanvas* SpriteCanvas::create(uint16_t w, uint16_t h)
     return nullptr;
 }
 
-SpriteCanvas* SpriteCanvas::create(uint16_t w, uint16_t h,const std::string& s,const GFXfont *f,uint8_t tSize)
+SpriteCanvas* SpriteCanvas::create(uint16_t w, uint16_t h, DTRGB& textcolor)
+{
+    SpriteCanvas *spriteCanvas = new SpriteCanvas(w,h,textcolor);
+    if(spriteCanvas && spriteCanvas->init(w,h))
+    {
+        spriteCanvas->autorelease();
+        return spriteCanvas;
+    }
+    DT_SAFE_DELETE(spriteCanvas);
+    return nullptr;
+}
+
+SpriteCanvas* SpriteCanvas::create(uint16_t w, uint16_t h, DTRGB& textcolor,const std::string& s,const GFXfont *f,uint8_t tSize)
 {
     
-    SpriteCanvas *spriteCanvas = SpriteCanvas::create(w,h);
+    SpriteCanvas *spriteCanvas = SpriteCanvas::create(w,h,textcolor);
     if(spriteCanvas)
     {
         spriteCanvas->setTextWrap(false);
@@ -198,6 +225,7 @@ SpriteCanvas* SpriteCanvas::create(uint16_t w, uint16_t h,const std::string& s,c
     return spriteCanvas;
 }
 
+
 SpriteCanvas* SpriteCanvas::create(const std::string& s,const GFXfont *f,uint8_t tSize)
 {
     uint16_t w=0;
@@ -206,8 +234,9 @@ SpriteCanvas* SpriteCanvas::create(const std::string& s,const GFXfont *f,uint8_t
     int16_t y=0;
     int16_t x1=0;
     int16_t y1=0;
+    DTRGB c = DTRGB(255,255,255);
     SpriteCanvas::getTextBounds(s.c_str(),x,y,&x1,&y1,&w,&h,0,0,tSize,false,f);
-    return SpriteCanvas::create(w,h,s,f,tSize);
+    return SpriteCanvas::create(w,h,c,s,f,tSize);
 }
 
 
