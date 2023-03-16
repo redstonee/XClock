@@ -8,14 +8,28 @@
 
 
 ClockKey* keyHandler = nullptr;
+QueueHandle_t KeyQueue = NULL;
 //SD3078* SD3078Time = nullptr;
 tst3078Time ClockTime = {0x00,0x17,0x93,0x07,0x12,0x02,0x23,};
 int8_t Tempture = 0;
+
+void vCreateKeyQueue(void)
+{
+    KeyQueue = xQueueCreate(
+                         /* The number of items the queue can hold. */
+                         5,
+                         /* Size of each item is big enough to hold the
+                         whole structure. */
+                         sizeof( tstKeyEvent ) );
+}
+
 void setup() {
   //----------------开启串口通信----------------
   Serial.begin(9600);
   Serial.printf("Setup function excuted!\n");
+  vCreateKeyQueue();
   keyHandler = new ClockKey();
+  keyHandler->SetSendQueue(KeyQueue);
   keyHandler->Start();
   vMatrixInit();
   pinMode(26, OUTPUT);//BAT ADC EN

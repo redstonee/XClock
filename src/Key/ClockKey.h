@@ -7,10 +7,31 @@
 #define CLOCKKEY_RIGHT_PIN      25
 #define CLOCKKEY_OK_PIN         33
 
+typedef enum
+{
+    enKey_Left,
+    enKey_Right,
+    enKey_OK,
+}tenKeyID;
+
+typedef enum
+{
+    enKey_ShortPress,
+    enKey_LongPress,
+    enKey_DoubleClick,
+    enKey_LongPressStop,
+}tenKeyEventType;
+
+typedef struct
+{
+    tenKeyID Key;
+    tenKeyEventType Type;
+}tstKeyEvent;
+
 class ClockKey
 {
 private:
-    
+    QueueHandle_t pKeySendQueue = NULL;
     static void vClickLeft(void);
     static void vDoubleClickLeft(void);
     static void vLongPressStartLeft(void);
@@ -33,6 +54,7 @@ public:
     static OneButton *ButtonLeft;
     static OneButton *ButtonRight;
     static OneButton *ButtonOk;
+    void SetSendQueue(QueueHandle_t &Queue);
     ClockKey();
     ~ClockKey();    
     void Start(void);

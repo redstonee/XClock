@@ -121,32 +121,36 @@ void ClockKey::Start(){
   );
 }
 
+void ClockKey::SetSendQueue(QueueHandle_t &Queue)
+{
+    pKeySendQueue = Queue;
+}
 
 ClockKey::ClockKey()
 {
     // link the button 1 functions.
     ButtonLeft->attachClick(vClickLeft);
-    ButtonLeft->setClickTicks(100);
+    ButtonLeft->setClickTicks(80);
     ButtonLeft->attachDoubleClick(vDoubleClickLeft);
     ButtonLeft->attachLongPressStart(vLongPressStartLeft);
-    ButtonLeft->attachLongPressStop(vLongPressLeft);
-    ButtonLeft->attachDuringLongPress(vLongPressStopLeft);
+    ButtonLeft->attachLongPressStop(vLongPressStopLeft);
+    ButtonLeft->attachDuringLongPress(vLongPressLeft);
 
     // link the button 2 functions.
     ButtonRight->attachClick(vClickRight);
-    ButtonRight->setClickTicks(100);
+    ButtonRight->setClickTicks(80);
     ButtonRight->attachDoubleClick(vDoubleClickRight);
     ButtonRight->attachLongPressStart(vLongPressStartRight);
-    ButtonRight->attachLongPressStop(vLongPressRight);
-    ButtonRight->attachDuringLongPress(vLongPressStopRight);
+    ButtonRight->attachLongPressStop(vLongPressStopRight);
+    ButtonRight->attachDuringLongPress(vLongPressRight);
 
     // link the button 3 functions.
     ButtonOk->attachClick(vClickOk);
-    ButtonOk->setClickTicks(100);
+    ButtonOk->setClickTicks(80);
     ButtonOk->attachDoubleClick(vDoubleClickOk);
     ButtonOk->attachLongPressStart(vLongPressStartOk);
-    ButtonOk->attachLongPressStop(vLongPressOk);
-    ButtonOk->attachDuringLongPress(vLongPressStopOk);
+    ButtonOk->attachLongPressStop(vLongPressStopOk);
+    ButtonOk->attachDuringLongPress(vLongPressOk);
 }
 
 ClockKey::~ClockKey()
