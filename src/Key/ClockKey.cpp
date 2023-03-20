@@ -5,7 +5,7 @@
 OneButton *ClockKey::ButtonLeft = new OneButton(CLOCKKEY_LEFT_PIN);
 OneButton *ClockKey::ButtonRight = new OneButton(CLOCKKEY_RIGHT_PIN);
 OneButton *ClockKey::ButtonOk = new OneButton(CLOCKKEY_OK_PIN);
-
+QueueHandle_t ClockKey::pKeySendQueue = NULL;
 // ----- button 1 callback functions
 
 // This function will be called when the button1 was pressed 1 time (and no 2. button press followed).
@@ -73,8 +73,10 @@ void ClockKey::vLongPressStopRight() {
 // ... and the same for button 3:
 
 void ClockKey::vClickOk() {
-  boReqSound(enSndID_Ding,1);
-  Serial.println("Button Ok click.");
+    tstKeyEvent key={enKey_OK,enKey_ShortPress};
+    SendKeyToQ(&key);
+    boReqSound(enSndID_Ding,1);
+    Serial.println("Button Ok click.");
 } // clickOk
 
 
@@ -124,6 +126,25 @@ void ClockKey::Start(){
 void ClockKey::SetSendQueue(QueueHandle_t &Queue)
 {
     pKeySendQueue = Queue;
+}
+
+bool ClockKey::SendKeyToQ(tstKeyEvent *key)
+{
+    if( pKeySendQueue != NULL )
+    {
+        if( xQueueSend( pKeySendQueue,
+                       ( void * ) key,
+                       ( TickType_t ) 10 ) != pdPASS )
+        {
+            /* Failed to post the message, even after 10 ticks. */
+            return false;
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 ClockKey::ClockKey()

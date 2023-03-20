@@ -31,7 +31,7 @@ void setup() {
   keyHandler = new ClockKey();
   keyHandler->SetSendQueue(KeyQueue);
   keyHandler->Start();
-  vMatrixInit();
+  vMatrixInit(KeyQueue);
   pinMode(26, OUTPUT);//BAT ADC EN
   digitalWrite(26,HIGH);
   pinMode(16, OUTPUT);//MIC EN

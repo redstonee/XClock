@@ -9,6 +9,7 @@
 
 typedef enum
 {
+    enKey_Nokey,
     enKey_Left,
     enKey_Right,
     enKey_OK,
@@ -16,6 +17,7 @@ typedef enum
 
 typedef enum
 {
+    enKey_NoAct,
     enKey_ShortPress,
     enKey_LongPress,
     enKey_DoubleClick,
@@ -31,7 +33,7 @@ typedef struct
 class ClockKey
 {
 private:
-    QueueHandle_t pKeySendQueue = NULL;
+    static QueueHandle_t pKeySendQueue;
     static void vClickLeft(void);
     static void vDoubleClickLeft(void);
     static void vLongPressStartLeft(void);
@@ -50,6 +52,7 @@ private:
     static void vLongPressOk(void);
     static void vLongPressStopOk(void);  
     static void KeyLoop(void *param);  
+    static bool SendKeyToQ(tstKeyEvent*);
 public:
     static OneButton *ButtonLeft;
     static OneButton *ButtonRight;

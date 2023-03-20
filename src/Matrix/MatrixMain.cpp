@@ -8,6 +8,7 @@
 
 
 dot2d::Director* director = nullptr;
+QueueHandle_t pKeyRcvQueue = nullptr;
 
 //必须要实现的dot2d导演对象代理方法
 class MainDelegate : public dot2d::DirectorDelegate
@@ -53,18 +54,32 @@ class MainDelegate : public dot2d::DirectorDelegate
 
 void vMatrixMain(void *param)
 {
+    tstKeyEvent RcvKey = {enKey_Nokey,enKey_NoAct};
     for(;;)
     {
         vTaskDelay(10);
+        if(pKeyRcvQueue != nullptr)
+        {
+            xQueueReceive( pKeyRcvQueue,
+                          &( RcvKey ),
+                          ( TickType_t ) 0 );
+            if(RcvKey.Key != enKey_Nokey)
+            {
+                Serial.printf("Receive new key %d %d \n",RcvKey.Key,RcvKey.Type);
+                RcvKey.Key = enKey_Nokey;
+                RcvKey.Type = enKey_NoAct;
+            }
+        }
+        
         director->mainLoop();
     }
 }
 
-void vMatrixInit(void)
+void vMatrixInit(QueueHandle_t rcvQ)
 {
     //设置WS2812屏幕亮度
   FastLED.setBrightness(MATRIX_MAX_BRIGHTNESS);
-
+  pKeyRcvQueue = rcvQ;
 
   //----------------初始化Dot2d引擎及渲染画布----------------
   director = dot2d::Director::getInstance();                      //获取导演对象

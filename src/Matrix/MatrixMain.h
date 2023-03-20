@@ -1,6 +1,6 @@
 #ifndef __MATRIX_MAIN__
 #define __MATRIX_MAIN__
-
+#include "../Key/ClockKey.h"
 //LED矩阵宽
 #define MATRIX_WIDTH          32
 //LED矩阵高
@@ -10,6 +10,6 @@
 //屏幕最大亮度
 #define MATRIX_MAX_BRIGHTNESS 10
 
-void vMatrixInit(void);
+void vMatrixInit(QueueHandle_t);
 
 #endif
