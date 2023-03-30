@@ -114,6 +114,7 @@ public:
     
     bool decode(const uint8_t *fd,uint32_t size);
 
+    virtual ~GifClass();
     /* Return 1 if got a frame; 0 if got GIF trailer; -1 if error. */
     int32_t gd_get_frame(gd_GIF *gif, uint8_t *frame);
 
@@ -132,6 +133,8 @@ public:
     uint8_t gifheight();
 
 private:
+    void gif_freeDecoder();
+
     bool gif_buf_seek(const uint8_t *fd, int16_t len);
 
     int16_t gif_buf_read(const uint8_t *fd, uint8_t *dest, int16_t len);

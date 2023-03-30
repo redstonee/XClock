@@ -54,6 +54,8 @@ THE SOFTWARE.
 #include "dtActionManager.h"
 #include "dtActionInterval.h"
 #include "dtActionInstant.h"
+#include "dtActionEase.h"
+#include "dtTransition.h"
 
 
 //platform

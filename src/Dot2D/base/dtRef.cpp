@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 #include "dtRef.h"
 #include "dtAutoreleasePool.h"
-
+#include <Arduino.h>
 NS_DT_BEGIN
 
 Ref::Ref()
@@ -53,6 +53,7 @@ void Ref::release()
     if(_referenceCount == 0)
     {
         delete this;
+        
     }
 }
 

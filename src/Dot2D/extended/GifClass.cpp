@@ -71,6 +71,11 @@ bool GifClass::decode(const uint8_t *fd,uint32_t size)
     return true;
 }
 
+GifClass::~GifClass()
+{
+    gif_freeDecoder();
+}
+
 /* Return 1 if got a frame; 0 if got GIF trailer; -1 if error. */
 int32_t GifClass::gd_get_frame(gd_GIF *gif, uint8_t *frame)
 {
@@ -152,6 +157,14 @@ uint8_t GifClass::gifheight()
     return (uint8_t)_gif->height;
 }
 
+void GifClass::gif_freeDecoder()
+{
+    free(_screenBuffer);
+    _screenBuffer = nullptr;
+    free(_gif->table);
+    _gif->table = nullptr;
+    Serial.printf("Free gif\n");
+}
 
 bool GifClass::gif_buf_seek(const uint8_t *fd, int16_t len)
 {
@@ -325,7 +338,7 @@ gd_Table * GifClass::new_table()
     //         table->entries[key] = (Entry) {1, 0xFFF, key};
     // }
     // return table;
-    int32_t s = sizeof(gd_Table) + (sizeof(gd_Entry) * 4096);
+    int32_t s = sizeof(gd_Table) + (sizeof(gd_Entry) * 0x100);
     gd_Table *table = (gd_Table *)malloc(s);
     if (table)
     {
@@ -346,7 +359,7 @@ void GifClass::reset_table(gd_Table *table, uint16_t key_size)
     table->nentries = (1 << key_size) + 2;
     for (uint16_t key = 0; key < (1 << key_size); key++)
     {
-        table->entries[key] = (gd_Entry){1, 0xFFF, (uint8_t)key};
+        table->entries[key] = (gd_Entry){1, 0xFF, (uint8_t)key};
     }
 }
 
@@ -473,7 +486,7 @@ int8_t GifClass::read_image_data(gd_GIF *gif, int16_t interlace, uint8_t *frame)
             //     free(table);
             //     return -1;
             // }
-            if (gif->table->nentries == 0x1000)
+            if (gif->table->nentries == 256)
             {
                 // Serial.println("Table is full");
                 ret = 0;
@@ -507,7 +520,7 @@ int8_t GifClass::read_image_data(gd_GIF *gif, int16_t interlace, uint8_t *frame)
                    
                 frame[(gif->fy + y) * gif->width + gif->fx + x] = entry.suffix;           
             }
-            if (entry.prefix == 0xFFF)
+            if (entry.prefix == 0xFF)
             {
                 break; 
             }                
