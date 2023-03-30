@@ -9,7 +9,9 @@
 
 dot2d::Director* director = nullptr;
 QueueHandle_t pKeyRcvQueue = nullptr;
-
+dot2d::Matrix *  sence0 = nullptr;
+dot2d::ClockScene *  sence1 = nullptr;
+uint8_t SceneIndex = 0;
 //必须要实现的dot2d导演对象代理方法
 class MainDelegate : public dot2d::DirectorDelegate
 {
@@ -55,6 +57,10 @@ class MainDelegate : public dot2d::DirectorDelegate
 void vMatrixMain(void *param)
 {
     tstKeyEvent RcvKey = {enKey_Nokey,enKey_NoAct};
+    uint8_t sceneindex = 0;
+    //sence0 = dot2d::Matrix::create();
+    //sence1 = dot2d::ClockScene::create();
+    //director->runWithScene(sence1);
     for(;;)
     {
         vTaskDelay(10);
@@ -68,6 +74,16 @@ void vMatrixMain(void *param)
                 Serial.printf("Receive new key %d %d \n",RcvKey.Key,RcvKey.Type);
                 RcvKey.Key = enKey_Nokey;
                 RcvKey.Type = enKey_NoAct;
+                if(sceneindex == 0)
+                {             
+                    director->replaceScene(dot2d::TransitionSlideInL::create(1,dot2d::Matrix::create()));
+                    sceneindex = 1;
+                }
+                else
+                {               
+                    director->replaceScene(dot2d::TransitionSlideInR::create(1,dot2d::ClockScene::create()));
+                    sceneindex = 0;
+                }
             }
         }
         
@@ -80,7 +96,11 @@ void vMatrixInit(QueueHandle_t rcvQ)
     //设置WS2812屏幕亮度
   FastLED.setBrightness(MATRIX_MAX_BRIGHTNESS);
   pKeyRcvQueue = rcvQ;
-
+  //----------------Init scene list------------------------
+  //sence0 = dot2d::Matrix::create();
+  //Serial.printf("SceneMtri %x\n",&sence0);
+  //sence1 = dot2d::ClockScene::create();
+  //Serial.printf("SceneClk %x\n",&sence1);
   //----------------初始化Dot2d引擎及渲染画布----------------
   director = dot2d::Director::getInstance();                      //获取导演对象
   director->setDelegate(new MainDelegate());                      //设置导演代理
@@ -91,7 +111,7 @@ void vMatrixInit(QueueHandle_t rcvQ)
   xTaskCreate(
     vMatrixMain,    // Function that should be called
     "Matrix main task",   // Name of the task (for debugging)
-    8000,            // Stack size (bytes)
+    4000,            // Stack size (bytes)
     NULL,            // Parameter to pass
     1,               // Task priority
     NULL             // Task handle
