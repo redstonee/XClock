@@ -30,7 +30,8 @@ THE SOFTWARE.
 
 #include "dtDirector.h"
 #include "base/dtAutoreleasePool.h"
-
+#include "dtTransition.h"
+#include <Arduino.h>
 NS_DT_BEGIN
 
 
@@ -447,14 +448,19 @@ void Director::restartDirector()
 
 void Director::setNextScene()
 {
-    if (_runningScene)
+    bool runningIsTransition = dynamic_cast<TransitionScene*>(_runningScene) != nullptr;
+    bool newIsTransition = dynamic_cast<TransitionScene*>(_nextScene) != nullptr;
+    if (!newIsTransition)
     {
-        _runningScene->onExit();
-    }
-
-    if (_sendCleanupToScene && _runningScene)
-    {
-        _runningScene->cleanup();
+        if (_runningScene)
+        {
+            _runningScene->onExitTransitionDidStart();
+            _runningScene->onExit();
+        }
+        if (_sendCleanupToScene && _runningScene)
+        {
+            _runningScene->cleanup();
+        }
     }
 
     if (_runningScene)
@@ -464,10 +470,10 @@ void Director::setNextScene()
     _runningScene = _nextScene;
     _nextScene->retain();
     _nextScene = nullptr;
-
-    if (_runningScene)
+    if ((! runningIsTransition) && _runningScene)
     {
         _runningScene->onEnter();
+        _runningScene->onEnterTransitionDidFinish();
     }
 }
 

@@ -100,6 +100,7 @@ protected:
     
     DTRGB     _realColor;
 
+    bool _isTransitionFinished;       ///< flag to indicate whether the transition was finished
 public:
 
     static const int INVALID_TAG = -1;

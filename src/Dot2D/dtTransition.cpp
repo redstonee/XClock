@@ -271,7 +271,7 @@ ActionInterval* TransitionMoveInL::action()
 
 ActionInterval* TransitionMoveInL::easeActionWithAction(ActionInterval* action)
 {
-    return EaseOut::create(action, 2.0f);
+    return EaseOut::create(action, _duration);
 //    return [EaseElasticOut actionWithAction:action period:0.4f];
 }
 
@@ -374,7 +374,7 @@ void TransitionMoveInB::initScenes()
 // One solution is to use DONT_RENDER_IN_SUBPIXELS images, but NO
 // The other issue is that in some transitions (and I don't know why)
 // the order should be reversed (In in top of Out or vice-versa).
-#define ADJUST_FACTOR 0.5f
+//#define ADJUST_FACTOR 0.5f
 TransitionSlideInL::TransitionSlideInL()
 {
 }
@@ -410,18 +410,18 @@ void TransitionSlideInL::sceneOrder()
 void TransitionSlideInL:: initScenes()
 {
     Size s = Director::getInstance()->getCanvasSize();
-    _inScene->setPosition(-(s.width-ADJUST_FACTOR),0.0f);
+    _inScene->setPosition(-(s.width),0.0f);
 }
 
 ActionInterval* TransitionSlideInL::action()
 {
     Size s = Director::getInstance()->getCanvasSize();
-    return MoveBy::create(_duration, Vec2(s.width-ADJUST_FACTOR,0.0f));
+    return MoveBy::create(_duration, Vec2(s.width,0.0f));
 }
 
 ActionInterval* TransitionSlideInL::easeActionWithAction(ActionInterval* action)
 {
-    return EaseOut::create(action, 2.0f);
+    return EaseOut::create(action, _duration);
 }
 
 TransitionSlideInL* TransitionSlideInL::create(float t, Scene* scene)
@@ -466,14 +466,14 @@ void TransitionSlideInR::sceneOrder()
 void TransitionSlideInR::initScenes()
 {
     Size s = Director::getInstance()->getCanvasSize();
-    _inScene->setPosition(s.width-ADJUST_FACTOR,0);
+    _inScene->setPosition(s.width,0);
 }
 
 
 ActionInterval* TransitionSlideInR:: action()
 {
     Size s = Director::getInstance()->getCanvasSize();
-    return MoveBy::create(_duration, Vec2(-(s.width-ADJUST_FACTOR),0.0f));
+    return MoveBy::create(_duration, Vec2(-(s.width),0.0f));
 }
 
 
@@ -507,14 +507,14 @@ void TransitionSlideInT::sceneOrder()
 void TransitionSlideInT::initScenes()
 {
     Size s = Director::getInstance()->getCanvasSize();
-    _inScene->setPosition(0,s.height-ADJUST_FACTOR);
+    _inScene->setPosition(0,s.height);
 }
 
 
 ActionInterval* TransitionSlideInT::action()
 {
     Size s = Director::getInstance()->getCanvasSize();
-    return MoveBy::create(_duration, Vec2(0.0f,-(s.height-ADJUST_FACTOR)));
+    return MoveBy::create(_duration, Vec2(0.0f,-(s.height)));
 }
 
 //
@@ -547,14 +547,14 @@ void TransitionSlideInB::sceneOrder()
 void TransitionSlideInB:: initScenes()
 {
     Size s = Director::getInstance()->getCanvasSize();
-    _inScene->setPosition(0,-(s.height-ADJUST_FACTOR));
+    _inScene->setPosition(0,-(s.height));
 }
 
 
 ActionInterval* TransitionSlideInB:: action()
 {
     Size s = Director::getInstance()->getCanvasSize();
-    return MoveBy::create(_duration, Vec2(0.0f,s.height-ADJUST_FACTOR));
+    return MoveBy::create(_duration, Vec2(0.0f,s.height));
 }
 
 

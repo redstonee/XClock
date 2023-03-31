@@ -54,6 +54,7 @@ Node::Node()
 , _tag(Node::INVALID_TAG)
 , _running(false)
 , _visible(true)
+, _isTransitionFinished(false)
 {
     _director = Director::getInstance();
     _actionManager = _director->getActionManager();
@@ -250,6 +251,10 @@ void Node::addChildHelper(Node* child, int localZOrder, int tag)
     if( _running )
     {
         child->onEnter();
+        if (_isTransitionFinished)
+        {
+            child->onEnterTransitionDidFinish();
+        }
     }
 }
 
@@ -393,10 +398,9 @@ void Node::onEnter()
     {
         ++__attachedNodeCount;
     }
-
+    _isTransitionFinished = false;
     for( const auto &child: _children)
         child->onEnter();
-    
     this->resume();
     
     _running = true;
@@ -405,6 +409,7 @@ void Node::onEnter()
 
 void Node::onEnterTransitionDidFinish()
 {
+    _isTransitionFinished = true;
     for( const auto &child: _children)
         child->onEnterTransitionDidFinish();
 }
