@@ -113,6 +113,8 @@ class GifClass
 public:
     
     bool decode(const uint8_t *fd,uint32_t size);
+    
+    GifClass();
 
     virtual ~GifClass();
     /* Return 1 if got a frame; 0 if got GIF trailer; -1 if error. */

@@ -54,7 +54,12 @@ bool FFTLayer::initLayer()
     {
         coutoffFrequencies[i] = basePot * coutoffFrequencies[i - 1];
     }
-    canvasSprite = CanvasSprite::create(size.width,size.height);
+    music_icon = FrameSprite::create(SpriteFrame::create(icon_music,sizeof(icon_music),BMP_GIF));
+    music_icon->setPosition(0,0);
+    music_icon->setAutoSwitch(true);
+    canvasSprite = CanvasSprite::create(FREQUENCY_BANDS,size.height);
+    canvasSprite->setPosition(8,0);
+    this->addChild(music_icon);
     this->addChild(canvasSprite);
     this->scheduleUpdate();
     return true;
@@ -75,10 +80,10 @@ void FFTLayer::update(float dt)
     fft->Compute(FFT_FORWARD);
     fft->ComplexToMagnitude();
 
-    double median[24];
-    double max[24];
-    int oldHeight[24]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
-    int oldMax[24]= {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+    double median[FREQUENCY_BANDS];
+    double max[FREQUENCY_BANDS];
+    int oldHeight[FREQUENCY_BANDS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+    int oldMax[FREQUENCY_BANDS]= {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
     int index = 0;
     double hzPerSample = (1.0 * SAMPLING_FREQ) / SAMPLES; //
     double hz = 0;
@@ -113,7 +118,7 @@ void FFTLayer::update(float dt)
         }
     }
 
-    for (int i = 0; i < FREQUENCY_BANDS; i++) 
+    for (int i; i < FREQUENCY_BANDS; i++) 
     {
         int newHeight = 0;
         int newMax = 0;

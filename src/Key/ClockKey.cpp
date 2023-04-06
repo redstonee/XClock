@@ -10,7 +10,9 @@ QueueHandle_t ClockKey::pKeySendQueue = NULL;
 
 // This function will be called when the button1 was pressed 1 time (and no 2. button press followed).
 void ClockKey::vClickLeft() {
-  boReqSound(enSndID_Alarm1,1);
+  //boReqSound(enSndID_Alarm1,1);
+  tstKeyEvent key={enKey_Left,enKey_ShortPress};
+  SendKeyToQ(&key);
   Serial.println("Button Left click.");
 } // clickLeft
 
@@ -18,6 +20,8 @@ void ClockKey::vClickLeft() {
 // This function will be called when the button1 was pressed 2 times in a short timeframe.
 void ClockKey::vDoubleClickLeft() {
   boReqSound(enSndID_Alarm2,1);
+  tstKeyEvent key={enKey_Left,enKey_DoubleClick};
+  SendKeyToQ(&key);
   Serial.println("Button Left doubleclick.");
 } // doubleclickLeft
 
@@ -25,18 +29,24 @@ void ClockKey::vDoubleClickLeft() {
 // This function will be called once, when the button1 is pressed for a long time.
 void ClockKey::vLongPressStartLeft() {
   boReqSound(enSndID_Ding,1);
+  tstKeyEvent key={enKey_Left,enKey_LongPressStart};
+  SendKeyToQ(&key);
   Serial.println("Button Left longPress start");
 } // longPressStartLeft
 
 
 // This function will be called often, while the button1 is pressed for a long time.
 void ClockKey::vLongPressLeft() {
+  tstKeyEvent key={enKey_Left,enKey_LongPress};
+  SendKeyToQ(&key);
   Serial.println("Button Left longPress...");
 } // longPressLeft
 
 
 // This function will be called once, when the button1 is released after beeing pressed for a long time.
 void ClockKey::vLongPressStopLeft() {
+  tstKeyEvent key={enKey_Left,enKey_LongPressStop};
+  SendKeyToQ(&key);
   Serial.println("Button Left longPress stop");
 } // longPressStopLeft
 
@@ -44,29 +54,39 @@ void ClockKey::vLongPressStopLeft() {
 // ... and the same for button 2:
 
 void ClockKey::vClickRight() {
-  boReqSound(enSndID_DingDong,1);
+  //boReqSound(enSndID_DingDong,1);
+  tstKeyEvent key={enKey_Right,enKey_ShortPress};
+  SendKeyToQ(&key);
   Serial.println("Button Right click.");
 } // clickRight
 
 
 void ClockKey::vDoubleClickRight() {
-  boReqSound(enSndID_Ding,1);
+  //boReqSound(enSndID_Ding,1);
+  tstKeyEvent key={enKey_Right,enKey_DoubleClick};
+  SendKeyToQ(&key);
   Serial.println("Button Right doubleclick.");
 } // doubleclickRight
 
 
 void ClockKey::vLongPressStartRight() {
-  boReqSound(enSndID_Ding,1);
+  //boReqSound(enSndID_Ding,1);
+  tstKeyEvent key={enKey_Right,enKey_LongPressStart};
+  SendKeyToQ(&key);
   Serial.println("Button Right longPress start");
 } // longPressStartRight
 
 
 void ClockKey::vLongPressRight() {
-  boReqSound(enSndID_Ding,1);
+  //boReqSound(enSndID_Ding,1);
+  tstKeyEvent key={enKey_Right,enKey_LongPress};
+  SendKeyToQ(&key);
   Serial.println("Button Right longPress...");
 } // longPressRight
 
 void ClockKey::vLongPressStopRight() {
+  tstKeyEvent key={enKey_Right,enKey_LongPressStop};
+  SendKeyToQ(&key);
   Serial.println("Button Right longPress stop");
 } // longPressStopRight
 
@@ -75,29 +95,37 @@ void ClockKey::vLongPressStopRight() {
 void ClockKey::vClickOk() {
     tstKeyEvent key={enKey_OK,enKey_ShortPress};
     SendKeyToQ(&key);
-    boReqSound(enSndID_Ding,1);
+    //boReqSound(enSndID_Ding,1);
     Serial.println("Button Ok click.");
 } // clickOk
 
 
 void ClockKey::vDoubleClickOk() {
-  boReqSound(enSndID_Ding,1);
+  //boReqSound(enSndID_Ding,1);
+  tstKeyEvent key={enKey_OK,enKey_DoubleClick};
+  SendKeyToQ(&key);
   Serial.println("Button Ok doubleclick.");
 } // doubleclick3
 
 
 void ClockKey::vLongPressStartOk() {
-  boReqSound(enSndID_Ding,1);
+  //boReqSound(enSndID_Ding,1);
+  tstKeyEvent key={enKey_OK,enKey_LongPressStart};
+  SendKeyToQ(&key);
   Serial.println("Button Ok longPress start");
 } // longPressStartOk
 
 
 void ClockKey::vLongPressOk() {
-  boReqSound(enSndID_Ding,1);
+  //boReqSound(enSndID_Ding,1);
+  tstKeyEvent key={enKey_OK,enKey_LongPress};
+  SendKeyToQ(&key);
   Serial.println("Button Ok longPress...");
 } // longPressOk
 
 void ClockKey::vLongPressStopOk() {
+  tstKeyEvent key={enKey_OK,enKey_LongPressStop};
+  SendKeyToQ(&key);
   Serial.println("Button Ok longPress stop");
 } // longPressStopOk
 

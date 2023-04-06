@@ -45,6 +45,8 @@ struct BmpRGB
 class BmpClass
 {
 public:
+    BmpClass();
+    virtual ~BmpClass();
     bool decode(const uint8_t *fd,uint32_t size);
 
     uint32_t getColor(uint8_t x,uint8_t y)const;
@@ -53,11 +55,9 @@ public:
 
     uint8_t bmpheight();
 private:
-    const uint8_t *fd_addr;
+    const uint8_t *fd_addr = nullptr;
     uint16_t bmtype, bmdataptr;                              //from header
     uint32_t bmhdrsize, bmwidth, bmheight, bmbpp, bmpltsize; //from DIB Header
-    uint16_t *bmplt;                                        //palette- stored encoded for LCD
-    uint16_t *bmpRow;
     uint16_t bmbpl;                                          //bytes per line- derived
     BmpRGB getcol_plt(uint8_t x,uint8_t y) const;
     BmpRGB getcol_Rgb565(uint8_t x,uint8_t y) const;

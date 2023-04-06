@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "main.h"
 #include "FastLED.h"
 #include "Dot2D/dot2d.h"
 #include "Matrix/MatrixMain.h"
@@ -6,11 +7,12 @@
 #include "RTC/SD3078.h"
 #include "Sound/Sound.h"
 
-
 ClockKey* keyHandler = nullptr;
-QueueHandle_t KeyQueue = NULL;
-//SD3078* SD3078Time = nullptr;
+QueueHandle_t KeyQueue = nullptr;
+SD3078* SD3078Time = nullptr;
 tst3078Time ClockTime = {0x00,0x17,0x93,0x07,0x12,0x02,0x23,};
+tst3078Time stCurTime = {0x00,};
+tstBattSts stBattsts = {0x00,};
 int8_t Tempture = 0;
 
 void vCreateKeyQueue(void)
@@ -23,17 +25,78 @@ void vCreateKeyQueue(void)
                          sizeof( tstKeyEvent ) );
 }
 
+
+uint32_t u32BattFilter(uint32_t volt)
+{
+    static uint32_t buffer[BAT_FILTER_CNT] = {0,};
+    static uint8_t newdataindex = 0;
+    static uint8_t datacnt = 0;
+    uint32_t filteredvolt = 0;
+    buffer[newdataindex] = volt;
+    if(datacnt < BAT_FILTER_CNT)
+    {
+        datacnt++;
+    }
+    if(++newdataindex >= BAT_FILTER_CNT)
+    {
+        newdataindex = 0;
+    }
+    for(uint8_t i = 0; i < BAT_FILTER_CNT; i++)
+    {
+        filteredvolt += buffer[i];
+    }
+    filteredvolt = filteredvolt/datacnt;
+    return filteredvolt;
+}
+
+tstBattSts stUpdateBattSts(void)
+{
+    uint8_t BatLvl = 0;
+    uint32_t Volt = 0;
+    tstBattSts batt_sts = {0,0};
+    digitalWrite(BAT_ADC_EN_PORT,HIGH);
+    vTaskDelay(10);
+    Volt = u32BattFilter(analogReadMilliVolts(BAT_ADC_CH));
+    if(Volt > BAT_EMPTY_VOLT)
+    {
+        batt_sts.BattLvl = (Volt - BAT_EMPTY_VOLT)/((BAT_FULL_VOLT-BAT_EMPTY_VOLT)/BAT_FULL_LVL);
+    }
+    else
+    {
+        batt_sts.BattLvl = 0;
+    }
+    digitalWrite(BAT_ADC_EN_PORT,LOW);
+    batt_sts.boCharging = (LOW == digitalRead(BAT_CHARGE_STS_PORT));
+    return batt_sts;
+}
+
+tst3078Time stUpdateTime(void)
+{
+    tst3078Time curtime = {0,};
+    SD3078Time->ReadTime(&curtime);
+    return curtime;
+}
+
+tst3078Time stGetCurTime(void)
+{
+    return stCurTime;
+}
+
+tstBattSts stGetBattSts(void)
+{
+    return stBattsts;
+}
+
 void setup() {
   //----------------开启串口通信----------------
-  Serial.begin(9600);
-  Serial.printf("Setup function excuted!\n");
+  Serial.begin(115200);
   vCreateKeyQueue();
   keyHandler = new ClockKey();
   keyHandler->SetSendQueue(KeyQueue);
   keyHandler->Start();
   vMatrixInit(KeyQueue);
-  pinMode(26, OUTPUT);//BAT ADC EN
-  digitalWrite(26,HIGH);
+  pinMode(BAT_ADC_EN_PORT, OUTPUT);//BAT ADC EN
+  pinMode(BAT_CHARGE_STS_PORT, INPUT);//battery charging status
   pinMode(16, OUTPUT);//MIC EN
   digitalWrite(16,HIGH);
   if(digitalPinCanOutput(26))
@@ -44,9 +107,10 @@ void setup() {
   {
       Serial.printf("Pin16 can output!\n");
   }
-  //SD3078Time = new SD3078();
+  SD3078Time = new SD3078();
   //SD3078Time->SetTime(&ClockTime);
   vSoundInit();
+  stCurTime = stUpdateTime();
 }
 
 // void vPrintTaskInfo(void)
@@ -93,6 +157,9 @@ void loop() {
   // Serial.printf("-----Free Heap Mem : %d [%.2f%%]-----\n",
   //         ESP.getFreeHeap(),
   //         ESP.getFreeHeap()/(double)ESP.getHeapSize()*100);
+  vTaskDelay(500);
+  stBattsts = stUpdateBattSts();
+  stCurTime = stUpdateTime();
 }
 
 

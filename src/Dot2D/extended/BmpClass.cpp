@@ -25,12 +25,17 @@ bool BmpClass::decode(const uint8_t *fd,uint32_t size)
         bmpltsize = fd[46] + (fd[47] << 8); //palette size
     }
     bmbpl = ((bmbpp * bmwidth + 31) / 32) * 4; //bytes per line
-    Serial.printf("bmpdataaddr:%x\n",bmdataptr);
-    Serial.printf("bmbpl:%d\n",bmbpl);
-    Serial.printf("bmbpp:%d\n",bmbpp);
-    Serial.printf("bmpltsize:%d\n",bmpltsize);
     return true;
     // Serial.printf("bmtype: %d, bmhdrsize: %d, bmwidth: %d, bmheight: %d, bmbpp: %d\n", bmtype, bmhdrsize, bmwidth, bmheight, bmbpp);
+}
+
+BmpClass::BmpClass()
+{
+}
+
+BmpClass::~BmpClass()
+{
+    fd_addr = nullptr;
 }
 
 uint32_t BmpClass::getColor(uint8_t x,uint8_t y) const

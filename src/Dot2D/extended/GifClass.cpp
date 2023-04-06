@@ -71,6 +71,10 @@ bool GifClass::decode(const uint8_t *fd,uint32_t size)
     return true;
 }
 
+GifClass::GifClass()
+{
+}
+
 GifClass::~GifClass()
 {
     gif_freeDecoder();
@@ -120,8 +124,16 @@ void GifClass::gd_rewind(gd_GIF *gif)
 
 void GifClass::gd_close_gif(gd_GIF *gif)
 {
-    free(gif->table);
-    free(gif);
+    
+    if(gif != nullptr)
+    {
+        if(gif->table != nullptr)
+        {
+            free(gif->table);
+        }
+        free(gif);
+    }
+    
 }
 
 
@@ -158,12 +170,20 @@ uint8_t GifClass::gifheight()
 }
 
 void GifClass::gif_freeDecoder()
-{
-    free(_screenBuffer);
-    _screenBuffer = nullptr;
-    free(_gif->table);
-    _gif->table = nullptr;
-    Serial.printf("Free gif\n");
+{   
+    if(_screenBuffer != nullptr)
+    {
+        free(_screenBuffer);
+        _screenBuffer = nullptr;        
+    }
+    
+    
+    if(_gif != nullptr)
+    {
+        free(_gif->table);
+        _gif->table = nullptr;        
+    }    
+    
 }
 
 bool GifClass::gif_buf_seek(const uint8_t *fd, int16_t len)
@@ -342,8 +362,7 @@ gd_Table * GifClass::new_table()
     gd_Table *table = (gd_Table *)malloc(s);
     if (table)
     {
-        Serial.print(F("new_table() malloc: "));
-        Serial.println(s);
+
     }
     else
     {

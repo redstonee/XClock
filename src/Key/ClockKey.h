@@ -19,9 +19,10 @@ typedef enum
 {
     enKey_NoAct,
     enKey_ShortPress,
-    enKey_LongPress,
     enKey_DoubleClick,
+    enKey_LongPressStart,    
     enKey_LongPressStop,
+    enKey_LongPress,
 }tenKeyEventType;
 
 typedef struct
