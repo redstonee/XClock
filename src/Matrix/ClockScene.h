@@ -6,6 +6,14 @@
 
 NS_DT_BEGIN
 
+typedef enum
+{
+	State_TimeDis = 0,
+	State_TimeSetMin = 1,
+	State_TimeSetHour,
+	State_TimeSetWeek,
+}tenTimeState;
+
 class ClockScene : public Scene
 {
 
@@ -21,17 +29,6 @@ public:
 
 class TimeLayer : public Layer
 {
-public:
-	enum class TimeState
-    {
-        State_TimeDis = 0,
-        State_TimeSetMin = 1,
-        State_TimeSetHour,
-		State_TimeSetWeek,
-		State_TimeSetDay,
-		State_TimeSetMonth,
-        State_TimeSetYear,
-    };
 protected:
     TextSprite *Hour_1 = nullptr;
     SpriteCanvas *Hour1canvas = nullptr;
@@ -49,11 +46,16 @@ protected:
     SpriteCanvas *Sec1canvas = nullptr;
     TextSprite *Sec_2 = nullptr;
     SpriteCanvas *Sec2canvas = nullptr;
+	CanvasSprite *Week = nullptr;
+	SpriteCanvas *Weekcanvas = nullptr;
     SD3078* SD3078Time = nullptr;
     tst3078Time ClockTime;
+	tst3078Time ClockTimeSetting;
     float interval;
     bool ScrollUp = false;
 	uint8_t ColorIndex = 0;
+	DTRGB timecolor;
+	tenTimeState enTimests = State_TimeDis;
 public:
 	
     STATIC_CREATE(TimeLayer);
@@ -64,7 +66,7 @@ public:
 
 	void BtnClickHandler(int8_t, Event*);
 
-	void BtnDoubleClickHandler(int8_t, Event*);
+	//void BtnDoubleClickHandler(int8_t, Event*);
 
 	void BtnLongPressStartHandler(int8_t, Event*);
 
@@ -73,6 +75,12 @@ public:
 	void BtnDuringLongPressHandler(int8_t, Event*);
 
 	void TimeStateMachine(int8_t,int8_t);
+
+	void UpdateColor(int8_t);
+
+	void SendSettingTime(tst3078Time);
+
+	void DrawWeek(uint8_t);
 };
 
 const unsigned char icon_sun[] PROGMEM  = {

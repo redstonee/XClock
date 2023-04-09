@@ -74,6 +74,7 @@ tst3078Time stUpdateTime(void)
 {
     tst3078Time curtime = {0,};
     SD3078Time->ReadTime(&curtime);
+    //Serial.printf("year %x %x %x Week %d\n",curtime.u8Year,curtime.u8Month,curtime.u8Day,curtime.u8Week);
     return curtime;
 }
 
@@ -94,7 +95,7 @@ void setup() {
   keyHandler = new ClockKey();
   keyHandler->SetSendQueue(KeyQueue);
   keyHandler->Start();
-  vMatrixInit(KeyQueue);
+  
   pinMode(BAT_ADC_EN_PORT, OUTPUT);//BAT ADC EN
   pinMode(BAT_CHARGE_STS_PORT, INPUT);//battery charging status
   pinMode(16, OUTPUT);//MIC EN
@@ -111,6 +112,7 @@ void setup() {
   //SD3078Time->SetTime(&ClockTime);
   vSoundInit();
   stCurTime = stUpdateTime();
+  vMatrixInit(KeyQueue);
 }
 
 // void vPrintTaskInfo(void)
