@@ -22,4 +22,6 @@ tst3078Time stGetCurTime(void);
 
 tstBattSts stGetBattSts(void);
 
+QueueHandle_t pGetTimeSettingQ(void);
+
 #endif

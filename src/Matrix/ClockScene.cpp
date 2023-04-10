@@ -123,7 +123,7 @@ void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
                 if(key_event == enKey_ShortPress)
                 {
                     enTimests = State_TimeDis;
-                    SendSettingTime(ClockTimeSetting);
+                    SendSettingTime(&ClockTimeSetting);
                 }
             }
             else if(key_type == enKey_Left)
@@ -185,9 +185,17 @@ void TimeLayer::UpdateColor(int8_t key_type)
     DrawWeek(ClockTime.u8Week);
 }
 
-void TimeLayer::SendSettingTime(tst3078Time settingtime)
+void TimeLayer::SendSettingTime(tst3078Time* settingtime)
 {
-
+    if(TimeSettingQ != nullptr)
+    {
+        if( xQueueSend( TimeSettingQ,
+                       ( void * ) settingtime,
+                       ( TickType_t ) 10 ) != pdPASS )
+        {
+            /* Failed to post the message, even after 10 ticks. */
+        }
+    }
 }
 
 void TimeLayer::DrawWeek(uint8_t week)
@@ -226,6 +234,7 @@ void TimeLayer::DrawWeek(uint8_t week)
 bool TimeLayer::initLayer()
 {
     ClockTime = stGetCurTime();  
+    TimeSettingQ = pGetTimeSettingQ();
     ColorIndex = 80;  
     CRGB ColorFromPat = ColorFromPalette( currentPalette, ColorIndex);
     auto listener = EventListenerButton::create();

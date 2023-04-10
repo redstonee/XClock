@@ -9,6 +9,7 @@
 
 ClockKey* keyHandler = nullptr;
 QueueHandle_t KeyQueue = nullptr;
+QueueHandle_t TimeSettingQ = nullptr;
 SD3078* SD3078Time = nullptr;
 tst3078Time ClockTime = {0x00,0x17,0x93,0x07,0x12,0x02,0x23,};
 tst3078Time stCurTime = {0x00,};
@@ -23,6 +24,16 @@ void vCreateKeyQueue(void)
                          /* Size of each item is big enough to hold the
                          whole structure. */
                          sizeof( tstKeyEvent ) );
+}
+
+void vCreateTimeSettingQ(void)
+{
+    TimeSettingQ = xQueueCreate(
+                         /* The number of items the queue can hold. */
+                         3,
+                         /* Size of each item is big enough to hold the
+                         whole structure. */
+                         sizeof( tst3078Time ) );
 }
 
 
@@ -83,6 +94,22 @@ tst3078Time stGetCurTime(void)
     return stCurTime;
 }
 
+QueueHandle_t pGetTimeSettingQ(void)
+{
+    return TimeSettingQ;
+}
+
+void vRcvTimeSettingReq(void)
+{
+    tst3078Time RcvTime = {0xff,};
+    xQueueReceive( TimeSettingQ,&( RcvTime ),( TickType_t ) 0 );
+    if(RcvTime.u8Sec != 0xff)/*new time*/
+    {
+        //Serial.printf("Receive new setting time!\n");
+        SD3078Time->SetTime(&RcvTime);
+    }
+}
+
 tstBattSts stGetBattSts(void)
 {
     return stBattsts;
@@ -92,6 +119,7 @@ void setup() {
   //----------------开启串口通信----------------
   Serial.begin(115200);
   vCreateKeyQueue();
+  vCreateTimeSettingQ();
   keyHandler = new ClockKey();
   keyHandler->SetSendQueue(KeyQueue);
   keyHandler->Start();
@@ -162,6 +190,7 @@ void loop() {
   vTaskDelay(500);
   stBattsts = stUpdateBattSts();
   stCurTime = stUpdateTime();
+  vRcvTimeSettingReq();
 }
 
 

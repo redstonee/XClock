@@ -51,6 +51,7 @@ protected:
     SD3078* SD3078Time = nullptr;
     tst3078Time ClockTime;
 	tst3078Time ClockTimeSetting;
+	QueueHandle_t TimeSettingQ;
     float interval;
     bool ScrollUp = false;
 	uint8_t ColorIndex = 0;
@@ -78,7 +79,7 @@ public:
 
 	void UpdateColor(int8_t);
 
-	void SendSettingTime(tst3078Time);
+	void SendSettingTime(tst3078Time*);
 
 	void DrawWeek(uint8_t);
 };
