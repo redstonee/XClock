@@ -4,6 +4,7 @@
 #include "Matrix.h"
 #include "MatrixMain.h"
 #include "ClockScene.h"
+#include "CalendarScene.h"
 #include "BatteryScene.h"
 #include "FFT.h"
 //#include "Dot2D/math/dtMath.h"
@@ -72,6 +73,9 @@ dot2d::Scene* GetSceneByIdx(uint8_t idx)
             break;
         case Feature_Clock:
             TgtScene = dot2d::ClockScene::create();
+            break;
+        case Feature_CalYear:
+            TgtScene = dot2d::CalYearScene::create();
             break;
         case Feature_Battery:
             TgtScene = dot2d::BattScene::create();

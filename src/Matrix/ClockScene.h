@@ -48,7 +48,6 @@ protected:
     SpriteCanvas *Sec2canvas = nullptr;
 	CanvasSprite *Week = nullptr;
 	SpriteCanvas *Weekcanvas = nullptr;
-    SD3078* SD3078Time = nullptr;
     tst3078Time ClockTime;
 	tst3078Time ClockTimeSetting;
 	QueueHandle_t TimeSettingQ;

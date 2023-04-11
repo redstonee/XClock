@@ -20,6 +20,7 @@ typedef enum
     Feature_CountDown,
     Feature_AlarmClk,
     Feature_Clock,
+    Feature_CalYear,
     Feature_Battery,
     Feature_Music,
     Feature_ScoreBoard,
