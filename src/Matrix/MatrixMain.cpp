@@ -76,6 +76,9 @@ dot2d::Scene* GetSceneByIdx(uint8_t idx)
             break;
         case Feature_CalYear:
             TgtScene = dot2d::CalYearScene::create();
+            break;            
+        case Feature_CalMonth:
+            TgtScene = dot2d::CalMonthScene::create();
             break;
         case Feature_Battery:
             TgtScene = dot2d::BattScene::create();

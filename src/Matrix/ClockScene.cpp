@@ -26,20 +26,11 @@ void TimeLayer::BtnClickHandler(int8_t keyCode, Event* event)
     TimeStateMachine(keyCode,enKey_ShortPress);
 }
 
-// void TimeLayer::BtnDoubleClickHandler(int8_t keyCode, Event* event)
-// {
-//     TimeStateMachine(keyCode,enKey_DoubleClick);
-// }
-
 void TimeLayer::BtnLongPressStartHandler(int8_t keyCode , Event * event )
 {
     TimeStateMachine(keyCode,enKey_LongPressStart);
 }
 
-void TimeLayer::BtnLongPressStopHandler(int8_t keyCode, Event* event)
-{
-    TimeStateMachine(keyCode,enKey_LongPressStop);
-}
 void TimeLayer::BtnDuringLongPressHandler(int8_t keyCode, Event* event)
 {
     TimeStateMachine(keyCode,enKey_LongPress);
@@ -143,7 +134,6 @@ void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
             break;
         default:break;
     }
-    Serial.printf("enTimests %d \n",enTimests);
 }
 
 void TimeLayer::UpdateColor(int8_t key_type)
@@ -239,7 +229,6 @@ bool TimeLayer::initLayer()
     CRGB ColorFromPat = ColorFromPalette( currentPalette, ColorIndex);
     auto listener = EventListenerButton::create();
     listener ->onBtnDuringLongPress = DT_CALLBACK_2(TimeLayer::BtnDuringLongPressHandler,this);
-    listener ->onBtnLongPressStop = DT_CALLBACK_2(TimeLayer::BtnLongPressStopHandler,this);
     listener ->onBtnLongPressStart = DT_CALLBACK_2(TimeLayer::BtnLongPressStartHandler,this);
     listener ->onBtnClick = DT_CALLBACK_2(TimeLayer::BtnClickHandler,this);    
     _eventDispatcher->addEventListenerWithSceneGraphPriority ( listener, this );

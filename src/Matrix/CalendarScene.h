@@ -6,6 +6,13 @@
 
 NS_DT_BEGIN
 
+typedef enum
+{
+	State_MonthDis = 0,
+	State_MonthSet = 1,
+	State_DaySet,
+}tenMonthState;
+
 class CalYearScene : public Scene
 {
 
@@ -45,8 +52,6 @@ public:
 
 	void BtnDuringLongPressHandler(int8_t, Event*);
 
-	void TimeStateMachine(int8_t,int8_t);
-
 	void SendSettingYear(tst3078Time*);
 
 };
@@ -71,10 +76,13 @@ protected:
     SpriteCanvas *Monthcanvas = nullptr;
     TextSprite *Day = nullptr;
     SpriteCanvas *Daycanvas = nullptr;
+	TextSprite *Split = nullptr;
+	SpriteCanvas *Splitcanvas = nullptr;
     tst3078Time ClockTime;
 	tst3078Time ClockTimeSetting;
 	QueueHandle_t TimeSettingQ;
 	uint8_t ColorIndex = 0;
+	tenMonthState enMonthState = State_MonthDis;
 public:
 	
     STATIC_CREATE(MonthLayer);
@@ -87,11 +95,9 @@ public:
 
 	void BtnLongPressStartHandler(int8_t, Event*);
 
-	void BtnLongPressStopHandler(int8_t, Event*);
-
 	void BtnDuringLongPressHandler(int8_t, Event*);
 
-	void TimeStateMachine(int8_t,int8_t);
+	void MonthStateMachine(int8_t,int8_t);
 
 	void SendSettingMonth(tst3078Time*);
 
