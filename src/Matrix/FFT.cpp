@@ -23,10 +23,12 @@ THE SOFTWARE.
 ****************************************************************************/
 
 #include "FFT.h"
-
+#include "FastLED.h"
 #include <Arduino.h>
 
 NS_DT_BEGIN
+
+CRGBPalette16 FFTPalette( RainbowColors_p );
 
 bool FFT::init()
 {
@@ -48,11 +50,13 @@ bool FFTLayer::initLayer()
     fft = new arduinoFFT(realComponent,imagComponent,SAMPLES,SAMPLING_FREQ);
     reference = log10(60.0);
     // 计算截止频率，以对数标度为基数 POt
-    double basePot = pow(SAMPLING_FREQ / 2.0, 1.0 / FREQUENCY_BANDS);
+    double basePot = pow(SAMPLING_FREQ, 1.0 / FREQUENCY_BANDS);
     coutoffFrequencies[0] = basePot;
     for (int i = 1 ; i < FREQUENCY_BANDS; i++ ) 
     {
         coutoffFrequencies[i] = basePot * coutoffFrequencies[i - 1];
+        maxinband[i] = 0;
+        median_pre[i] = 0;
     }
     music_icon = FrameSprite::create(SpriteFrame::create(icon_music,sizeof(icon_music),BMP_GIF));
     music_icon->setPosition(0,0);
@@ -67,12 +71,13 @@ bool FFTLayer::initLayer()
 
 void FFTLayer::update(float dt)
 {
+    static uint8_t color_index_offset = 0;
     Size size = this->getContentSize();
     SpriteCanvas* canvas = canvasSprite->getSpriteCanvas();
     canvas->canvasReset();
     for (int i=0; i<SAMPLES; i++)
     {
-        realComponent[i] = (analogReadMilliVolts(4))/16;
+        realComponent[i] = (analogReadMilliVolts(ADC_PIN))/4;
         imagComponent[i] = 0;
     }
     fft->DCRemoval();
@@ -81,97 +86,89 @@ void FFTLayer::update(float dt)
     fft->ComplexToMagnitude();
 
     double median[FREQUENCY_BANDS];
-    double max[FREQUENCY_BANDS];
-    int oldHeight[FREQUENCY_BANDS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
-    int oldMax[FREQUENCY_BANDS]= {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
-    int index = 0;
-    double hzPerSample = (1.0 * SAMPLING_FREQ) / SAMPLES; //
+    int index = 0;    
     double hz = 0;
-    double maxinband = 0;
     double sum = 0;
     int count = 0;
-    for (int i = 0; i < (SAMPLES / 2) ; i++) 
+    for (int i = 0; i < SAMPLES ; i++) /*计算每个频率段的中值和最大值*/
     {
         count++;
         sum += realComponent[i];
-        if (realComponent[i] >  max[index] ) 
+        if (hz >= coutoffFrequencies[index]) //达到此段的截止频率，清零开始下个段的计算
         {
-            max[index] = realComponent[i];
-        }
-        if (hz > coutoffFrequencies[index]) 
-        {
-            median[index] = sum / count;
+            if ( sum > 0.0) 
+            {
+                median[index] =  sum / count;
+                median[index] =  (median[index] + median_pre[index])/2;
+                if (median[index] > maxinband[index]) 
+                {
+                    maxinband[index]  = median[index];
+                }                
+            }
             sum = 0.0;
             count = 0;
             index++;
-            max[index] = 0;
             median[index]  = 0;
         }
         hz += hzPerSample;
     }
-    // 计算每个频段的中值和最大值
-    if ( sum > 0.0) 
+    if ( sum > 0.0) //The last one
     {
         median[index] =  sum / count;
-        if (median[index] > maxinband) {
-        maxinband = median[index];
-        }
+        median[index] =  (median[index] + median_pre[index])/2;
+        if (median[index] > maxinband[index]) 
+        {
+            maxinband[index]  = median[index];
+        }                
     }
-
     for (int i; i < FREQUENCY_BANDS; i++) 
     {
-        int newHeight = 0;
-        int newMax = 0;
+        int Height = 0;
+        int Max = 0;
         // 计算实际分贝
-        if (median[i] > 0 && max[i] > 0 ) 
+        if (median[i] > 0 ) 
         {
-            newHeight = 15.0 * (log10(median[i] ) - reference);
-            newMax = 15.0 * (log10(max[i] ) - reference);
+            Height = 10.0 * (log10(median[i] ) - reference);            
         }
-
+        if(maxinband[i] > 0)
+        {
+            Max = 10.0 * (log10(maxinband[i] ) - reference);
+            maxinband[i] = maxinband[i] -15;
+        }
         // 调整最小和最大级别
-        if (newHeight < 0 ||  newMax < 0) 
+        if (Height < 0) 
         {
-            newHeight = 1;
-            newMax = 1;
+            Height = 0;
         }
-        if (newHeight >= CONTENT_HIGHT) 
+        if (Height >= CONTENT_HIGHT) 
         {
-            newHeight = CONTENT_HIGHT;
+            Height = CONTENT_HIGHT;
         }
-        if (newMax >= CONTENT_HIGHT) 
+        if (Max < 1) 
         {
-            newMax = CONTENT_HIGHT;
+            Max = 1;
         }
-        if(oldMax[i]!=0 || newMax != 0)
+        if (Max >= CONTENT_HIGHT) 
         {
-            if(newMax > oldMax[i])
-            {
-                newMax = (oldMax[i]*2 + newMax*8)/10;
-            }
-            else
-            {
-                newMax = (oldMax[i]*6 + newMax*4)/10;
-            }
+            Max = CONTENT_HIGHT;
         }
-        if(oldHeight[i]!=0 || newHeight != 0)
+        if(Height)
         {
-            if(newHeight > oldHeight[i])
+            for(uint8_t k = 0; k < Height; k++)
             {
-                newHeight = (oldHeight[i]*2 + newHeight*8)/10;
-            }
-            else
-            {
-                newHeight = (oldHeight[i]*8 + newHeight*2)/10;
+                CRGB ColorFromPat = ColorFromPalette( FFTPalette, i*8+k + color_index_offset);
+                DTRGB DotColor;
+                DotColor.r = ColorFromPat.r;
+                DotColor.g = ColorFromPat.g;
+                DotColor.b = ColorFromPat.b;
+                canvas->drawPixel(i, 8 - k, DotColor);
             }
         }
-        
-        canvas->writeLine(i, 8, i, 9 - newHeight, DTRGB(255,255,255));
-        canvas->drawPixel(i, 8 - newMax, DTRGB(255,0,0));
-        oldMax[i] = newMax;
-        oldHeight[i] = newHeight;
-
+        canvas->drawPixel(i, 8 - Max, DTRGB(255,255,255));
+        median_pre[i] = median[i];
     }
+    color_index_offset++;
+    
 }
 
 
