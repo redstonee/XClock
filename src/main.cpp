@@ -115,6 +115,27 @@ tstBattSts stGetBattSts(void)
     return stBattsts;
 }
 
+uint8_t u8GetAlarmClkNum(void)
+{
+    return 1;
+}
+
+tstAlarmClk stGetAlarmClk(uint8_t index)
+{
+    tstAlarmClk alarmclk = {0,0,0};
+    return alarmclk;
+}
+
+bool boAddAlarmClk(tstAlarmClk alarmclk)
+{
+    return true;
+}
+
+bool boDelAlarmClk(uint8_t index)
+{
+    return true;
+}
+
 void setup() {
   //----------------开启串口通信----------------
   Serial.begin(115200);

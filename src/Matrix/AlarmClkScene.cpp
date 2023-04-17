@@ -3,7 +3,6 @@
 #include "Dot2D/third/Picopixel.h"
 #include "Dot2D/third/TomThumb.h"
 #include "../RTC/SD3078.h"
-#include "../main.h"
 #include "FastLED.h"
 #include "../Key/ClockKey.h"
 
@@ -26,7 +25,7 @@ bool AlarmClkScene::init()
 bool AlarmClkLayer::initLayer()
 {
     CRGBPalette16 currentPalette( RainbowColors_p );
-    ClockTime = stGetCurTime();
+    ClockTime = u8GetAlarmClkNum();
     auto listener = EventListenerButton::create();
     listener ->onBtnDuringLongPress = DT_CALLBACK_2(AlarmClkLayer::BtnDuringLongPressHandler,this);
     listener ->onBtnLongPressStart = DT_CALLBACK_2(AlarmClkLayer::BtnLongPressStartHandler,this);
@@ -147,17 +146,17 @@ void AlarmClkLayer::AlarmStateMachine(int8_t key_type, int8_t key_event)
     uint8_t day_temp = (ClockTimeSetting.u8Day>>4)*10 + (ClockTimeSetting.u8Day&0x0f);
     switch(enAlarmState)
     {
-        case enAlarmState:
+        case State_AlarmDis:
             if(key_type == enKey_OK)
             {
                 if(key_event == enKey_LongPressStart)
                 {
-                    enAlarmState = State_DaySet;
+                    enAlarmState = State_AlarmSetMin;
                     ClockTimeSetting = ClockTime;
                 }
             }
             break;
-        case State_DaySet:            
+        case State_AlarmSetMin:            
             if(key_type == enKey_OK)
             {
                 if(key_event == enKey_ShortPress)

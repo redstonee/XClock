@@ -3,6 +3,7 @@
 
 #include "Dot2D/dot2d.h"
 #include "../RTC/SD3078.h"
+#include "../main.h"
 
 NS_DT_BEGIN
 
@@ -30,6 +31,8 @@ public:
 class AlarmClkLayer : public Layer
 {
 protected:
+	uint8_t u8CurrentAlarm = 0;
+	uint8_t u8TotalAlarmNum = 0;
     TextSprite *Hour = nullptr;
     SpriteCanvas *Hourcanvas = nullptr;
     TextSprite *Min = nullptr;
@@ -38,9 +41,8 @@ protected:
 	SpriteCanvas *TimePtcanvas = nullptr;
     CanvasSprite *Week = nullptr;
 	SpriteCanvas *Weekcanvas = nullptr;
-    tst3078Time ClockTime;
-	tst3078Time ClockTimeSetting;
-	QueueHandle_t AlarmClkSettingQ;
+    tstAlarmClk AlarmTime;
+	tstAlarmClk AlarmTimeSetting;
 	tenAlarmState enAlarmState = State_AlarmDis;
 public:
 	
