@@ -122,11 +122,11 @@ uint8_t u8GetAlarmClkNum(void)
 
 tstAlarmClk stGetAlarmClk(uint8_t index)
 {
-    tstAlarmClk alarmclk = {0,0,0};
+    tstAlarmClk alarmclk = {0,0,0,false};
     return alarmclk;
 }
 
-bool boAddAlarmClk(tstAlarmClk alarmclk)
+bool boAddAlarmClk(tstAlarmClk *alarmclk)
 {
     return true;
 }

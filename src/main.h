@@ -23,6 +23,7 @@ typedef struct
     uint8_t u8Min;
     uint8_t u8Hour;
     uint8_t u8Week;//every bit mean one day, bit0 monday, bit1 tuesday...
+    bool boActive;
 }tstAlarmClk;
 
 tst3078Time stGetCurTime(void);
@@ -31,7 +32,7 @@ uint8_t u8GetAlarmClkNum(void);
 
 tstAlarmClk stGetAlarmClk(uint8_t index);
 
-bool boAddAlarmClk(tstAlarmClk alarmclk);
+bool boAddAlarmClk(tstAlarmClk *alarmclk);
 
 bool boDelAlarmClk(uint8_t index);
 
