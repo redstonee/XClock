@@ -41,6 +41,7 @@ protected:
 	SpriteCanvas *TimePtcanvas = nullptr;
     CanvasSprite *Week = nullptr;
 	SpriteCanvas *Weekcanvas = nullptr;
+	uint8_t SettingWeekIdx = 0;
     tstAlarmClk AlarmTime;
 	tstAlarmClk AlarmTimeSetting;
 	tenAlarmState enAlarmState = State_AlarmDis;
@@ -57,6 +58,14 @@ public:
 	void BtnLongPressStartHandler(int8_t, Event*);
 
 	void BtnDuringLongPressHandler(int8_t, Event*);
+
+	void StateDisHandle(int8_t,int8_t);
+
+	void StateSetMinHandle(int8_t,int8_t);
+
+	void StateSetHourHandle(int8_t,int8_t);
+
+	void StateSetWeekHandle(int8_t,int8_t);
 
 	void AlarmStateMachine(int8_t,int8_t);
 

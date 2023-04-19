@@ -36,6 +36,8 @@ bool boAddAlarmClk(tstAlarmClk *alarmclk);
 
 bool boDelAlarmClk(uint8_t index);
 
+bool boSetAlarmClk(uint8_t index,tstAlarmClk* alarmclk);
+
 tstBattSts stGetBattSts(void);
 
 QueueHandle_t pGetTimeSettingQ(void);

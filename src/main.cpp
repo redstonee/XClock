@@ -136,6 +136,11 @@ bool boDelAlarmClk(uint8_t index)
     return true;
 }
 
+bool boSetAlarmClk(uint8_t index,tstAlarmClk* alarmclk)
+{
+    return true;
+}
+
 void setup() {
   //----------------开启串口通信----------------
   Serial.begin(115200);

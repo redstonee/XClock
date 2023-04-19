@@ -28,7 +28,8 @@ bool AlarmClkLayer::initLayer()
     u8TotalAlarmNum = u8GetAlarmClkNum();
     if(u8TotalAlarmNum)
     {
-       AlarmTime = stGetAlarmClk(1);
+        u8CurrentAlarm = 0;
+        AlarmTime = stGetAlarmClk(u8CurrentAlarm);
     }
     else
     {
@@ -147,6 +148,9 @@ void AlarmClkLayer::AlarmUpdate(float dt)
     //     Hourcanvas->canvasReset();
     //     Hourcanvas->print(month.c_str());
     // }
+    
+    Serial.printf("Alarm Clk sts:%d alarm idx:%d week idx:%d time: %d:%d:%x \n",enAlarmState,u8CurrentAlarm,SettingWeekIdx,AlarmTime.u8Hour,AlarmTime.u8Min,AlarmTime.u8Week);
+
 }
 
 void AlarmClkLayer::BtnClickHandler(int8_t keyCode, Event* event)
@@ -164,75 +168,180 @@ void AlarmClkLayer::BtnDuringLongPressHandler(int8_t keyCode, Event* event)
     AlarmStateMachine(keyCode,enKey_LongPress);
 }
 
-void AlarmClkLayer::AlarmStateMachine(int8_t key_type, int8_t key_event)
+void AlarmClkLayer::StateDisHandle(int8_t key_type, int8_t key_event)
 {
-    // uint8_t month_temp = (ClockTimeSetting.u8Month>>4)*10 + (ClockTimeSetting.u8Month&0x0f);
-    // uint8_t day_temp = (ClockTimeSetting.u8Day>>4)*10 + (ClockTimeSetting.u8Day&0x0f);
-    // switch(enAlarmState)
-    // {
-    //     case State_AlarmDis:
-    //         if(key_type == enKey_OK)
-    //         {
-    //             if(key_event == enKey_LongPressStart)
-    //             {
-    //                 enAlarmState = State_AlarmSetMin;
-    //                 ClockTimeSetting = AlarmTime;
-    //             }
-    //         }
-    //         break;
-    //     case State_AlarmSetMin:            
-    //         if(key_type == enKey_OK)
-    //         {
-    //             if(key_event == enKey_ShortPress)
-    //             {
-    //                 enAlarmState = State_AlarmSetHour;
-    //             }
-    //         }
-    //         else if(key_type == enKey_Left)
-    //         {
-                
-    //             if(--day_temp > 31)
-    //             {
-    //                day_temp = 31;
-    //             }
-    //         }
-    //         else if(key_type == enKey_Right)
-    //         {
-    //             if(++day_temp > 31)
-    //             {
-    //                 day_temp = 0;
-    //             }
-    //         }
-    //         ClockTimeSetting.u8Day = ((day_temp/10)<<4) + (day_temp%10);
-    //         break;
-    //     case State_AlarmSetHour:
-    //         if(key_type == enKey_OK)
-    //         {
-    //             if(key_event == enKey_ShortPress)
-    //             {
-    //                 enAlarmState = enAlarmState;
-    //                 SendSettingAlarm(&ClockTimeSetting);
-    //             }
-    //         }
-    //         else if(key_type == enKey_Left)
-    //         {
-                
-    //             if(--month_temp > 12)
-    //             {
-    //                month_temp = 12;
-    //             }
-    //         }
-    //         else if(key_type == enKey_Right)
-    //         {
-    //             if(++month_temp > 12)
-    //             {
-    //                 month_temp = 0;
-    //             }
-    //         }
-    //         ClockTimeSetting.u8Month = ((month_temp/10)<<4) + (month_temp%10);
-    //         break;
-    //     default:break;
-    // }    
+    if(enKey_OK == key_type)
+    {
+        if(enKey_ShortPress == key_event)//next alarm clock
+        {
+            if(++u8CurrentAlarm >= u8TotalAlarmNum)
+            {
+                u8CurrentAlarm = 0;
+            }
+            AlarmTime = stGetAlarmClk(u8CurrentAlarm);
+        }
+        else if(enKey_LongPressStart == key_event)//enter setting state
+        {
+            enAlarmState = State_AlarmSetMin;
+        }
+    }
+    else if(enKey_Left == key_type)
+    {
+        if(enKey_ShortPress == key_event) //previous alarm clock
+        {
+            if(--u8CurrentAlarm >= u8TotalAlarmNum)
+            {
+                u8CurrentAlarm = u8TotalAlarmNum;
+            }
+            AlarmTime = stGetAlarmClk(u8CurrentAlarm);
+        }
+        else if(enKey_DoubleClick == key_event)//disable the alarm clock
+        {
+            AlarmTime.boActive = false;
+        }
+        else if(enKey_LongPressStart == key_event)//add new alarm clock
+        {
+            tstAlarmClk newAlarmClk = {0,0,0,false};
+            if(boAddAlarmClk(&newAlarmClk))
+            {
+                u8CurrentAlarm++;
+                u8TotalAlarmNum = u8GetAlarmClkNum();
+                AlarmTime = stGetAlarmClk(u8CurrentAlarm);
+            }
+        }
+    }
+    else if(enKey_Right == key_type)
+    {
+        if(enKey_ShortPress == key_event) //next alarm clock
+        {
+            if(++u8CurrentAlarm >= u8TotalAlarmNum)
+            {
+                u8CurrentAlarm = 0;
+            }
+            AlarmTime = stGetAlarmClk(u8CurrentAlarm);
+        }
+        else if(enKey_DoubleClick == key_event)//enable the alarm clock
+        {
+                AlarmTime.boActive = true;
+        }
+        else if(enKey_LongPressStart == key_event)//delete the alarm clock
+        {
+            if(boDelAlarmClk(u8CurrentAlarm))
+            {
+                u8CurrentAlarm--;
+                u8TotalAlarmNum = u8GetAlarmClkNum();
+                AlarmTime = stGetAlarmClk(u8CurrentAlarm);
+            }
+        }
+    }
+}
+
+void AlarmClkLayer::StateSetMinHandle(int8_t key_type, int8_t key_event)
+{
+    if(enKey_OK == key_type)
+    {
+        if(enKey_ShortPress == key_event)//enter hour setting state
+        {
+            enAlarmState = State_AlarmSetHour;
+        }
+    }
+    else if(enKey_Left == key_type)
+    {
+        /*minutes - 1*/
+        if(--AlarmTime.u8Min >= 60)
+        {
+            AlarmTime.u8Min = 60;
+        }
+    }
+    else if(enKey_Right == key_type)
+    {
+        /*minutes + 1*/
+        if(++AlarmTime.u8Min >= 60)
+        {
+            AlarmTime.u8Min = 0;
+        }
+    }
+}
+
+void AlarmClkLayer::StateSetHourHandle(int8_t key_type, int8_t key_event)
+{
+    if(enKey_OK == key_type)
+    {
+        if(enKey_ShortPress == key_event)//enter week setting state
+        {
+            enAlarmState = State_AlarmSetWeek;
+            SettingWeekIdx = 0;
+        }
+    }
+    else if(enKey_Left == key_type)
+    {
+        /*hour - 1*/
+        if(--AlarmTime.u8Hour >= 24)
+        {
+            AlarmTime.u8Hour = 23;
+        }
+    }
+    else if(enKey_Right == key_type)
+    {
+        /*hour + 1*/
+        if(++AlarmTime.u8Hour >= 24)
+        {
+            AlarmTime.u8Hour = 0;
+        }
+    }
+}
+
+void AlarmClkLayer::StateSetWeekHandle(int8_t key_type, int8_t key_event)
+{
+    if(enKey_OK == key_type)
+    {
+        if(enKey_ShortPress == key_event)//current day need enable
+        {
+            AlarmTime.u8Week |= (1<<SettingWeekIdx);
+        }
+        else if(enKey_LongPressStart == key_event)//finish this alarm setting go back to display state
+        {
+            boSetAlarmClk(u8CurrentAlarm,&AlarmTime);
+            enAlarmState = State_AlarmDis;
+        }
+    }
+    else if(enKey_Left == key_type)
+    {
+        /*week index -1*/
+        if(--SettingWeekIdx >=6)
+        {
+            SettingWeekIdx = 6;
+        }
+    }
+    else if(enKey_Right == key_type)
+    {
+        /*minutes + 1*/
+        if(++SettingWeekIdx >=7)
+        {
+            SettingWeekIdx = 0;
+        }
+    }
+}
+
+void AlarmClkLayer::AlarmStateMachine(int8_t key_type, int8_t key_event)
+{  
+    switch (enAlarmState)
+    {
+        case State_AlarmDis:
+            StateDisHandle(key_type,key_event);
+            break;
+        case State_AlarmSetMin:
+            StateSetMinHandle(key_type,key_event);
+            break;
+        case State_AlarmSetHour:
+            StateSetHourHandle(key_type,key_event);
+            break;
+        case State_AlarmSetWeek:
+            StateSetWeekHandle(key_type,key_event);
+            break;
+        default:
+            break;
+    }
 }
 
 void AlarmClkLayer::SendSettingAlarm(tst3078Time* settingtime)
