@@ -122,7 +122,7 @@ uint8_t u8GetAlarmClkNum(void)
 
 tstAlarmClk stGetAlarmClk(uint8_t index)
 {
-    tstAlarmClk alarmclk = {0,0,0,false};
+    tstAlarmClk alarmclk = {20,7,4,false};
     return alarmclk;
 }
 

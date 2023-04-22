@@ -19,7 +19,7 @@ void ClockKey::vClickLeft() {
 
 // This function will be called when the button1 was pressed 2 times in a short timeframe.
 void ClockKey::vDoubleClickLeft() {
-  boReqSound(enSndID_Alarm2,1);
+  //boReqSound(enSndID_Alarm2,1);
   tstKeyEvent key={enKey_Left,enKey_DoubleClick};
   SendKeyToQ(&key);
   Serial.println("Button Left doubleclick.");
@@ -28,7 +28,7 @@ void ClockKey::vDoubleClickLeft() {
 
 // This function will be called once, when the button1 is pressed for a long time.
 void ClockKey::vLongPressStartLeft() {
-  boReqSound(enSndID_Ding,1);
+  //boReqSound(enSndID_Ding,1);
   tstKeyEvent key={enKey_Left,enKey_LongPressStart};
   SendKeyToQ(&key);
   Serial.println("Button Left longPress start");
@@ -179,7 +179,7 @@ ClockKey::ClockKey()
 {
     // link the button 1 functions.
     ButtonLeft->attachClick(vClickLeft);
-    ButtonLeft->setClickTicks(80);
+    ButtonLeft->setClickTicks(100);
     ButtonLeft->attachDoubleClick(vDoubleClickLeft);
     ButtonLeft->attachLongPressStart(vLongPressStartLeft);
     ButtonLeft->attachLongPressStop(vLongPressStopLeft);
@@ -187,7 +187,7 @@ ClockKey::ClockKey()
 
     // link the button 2 functions.
     ButtonRight->attachClick(vClickRight);
-    ButtonRight->setClickTicks(80);
+    ButtonRight->setClickTicks(100);
     ButtonRight->attachDoubleClick(vDoubleClickRight);
     ButtonRight->attachLongPressStart(vLongPressStartRight);
     ButtonRight->attachLongPressStop(vLongPressStopRight);
@@ -195,7 +195,7 @@ ClockKey::ClockKey()
 
     // link the button 3 functions.
     ButtonOk->attachClick(vClickOk);
-    ButtonOk->setClickTicks(80);
+    ButtonOk->setClickTicks(100);
     ButtonOk->attachDoubleClick(vDoubleClickOk);
     ButtonOk->attachLongPressStart(vLongPressStartOk);
     ButtonOk->attachLongPressStop(vLongPressStopOk);

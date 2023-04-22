@@ -275,7 +275,7 @@ bool TimeLayer::initLayer()
     this->addChild(Min_2);
     this->addChild(Week);
     this->scheduleUpdate();
-    this->schedule(DT_SCHEDULE_SELECTOR(TimeLayer::TimeUpdate),0.5);
+    this->schedule(DT_SCHEDULE_SELECTOR(TimeLayer::TimeUpdate),0.1);
     //MoveBy *moveBy1 = MoveBy::create(0.5,Vec2(0,5));
     //MoveBy *moveBy2 = MoveBy::create(0.5,Vec2(0,5));
     //SpriteCanvas *TestSprite = Min_2->getSpriteCanvas();

@@ -60,14 +60,18 @@ bool AlarmClkLayer::initLayer()
         clkcolor.g = 255;
         clkcolor.b = 255;
     }    
-    std::string hour = std::to_string(AlarmTime.u8Hour>>4) + std::to_string((AlarmTime.u8Hour&0x0f));
+    std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);
     Hour = TextSprite::create(Size(8,5),Size(8,5),clkcolor,hour,TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     Hourcanvas = Hour->getSpriteCanvas();
     TimePt = TextSprite::create(Size(2,5),Size(2,5),clkcolor,":",TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     TimePtcanvas = TimePt->getSpriteCanvas();
-    std::string min = std::to_string(AlarmTime.u8Min>>4) + std::to_string((AlarmTime.u8Min&0x0f));
+    std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
     Min = TextSprite::create(Size(8,5),Size(8,5),clkcolor,min,TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     Mincanvas = Min->getSpriteCanvas();
+    Week = CanvasSprite::create(21,2);
+    Weekcanvas = Week->getSpriteCanvas();
+    DrawWeek();
+    Week->setPosition(10,6);
     Hour->setTransparent(true);
     Hour->setPosition(12,1);
     TimePt->setTransparent(true);
@@ -78,79 +82,31 @@ bool AlarmClkLayer::initLayer()
     this->addChild(Hour);
     this->addChild(TimePt);
     this->addChild(Min);
+    this->addChild(Week);
     this->scheduleUpdate();
-    this->schedule(DT_SCHEDULE_SELECTOR(AlarmClkLayer::AlarmUpdate),0.5);
+    this->schedule(DT_SCHEDULE_SELECTOR(AlarmClkLayer::AlarmUpdate),0.1);
     return true;
 }
 
 void AlarmClkLayer::AlarmUpdate(float dt)
 {
-    // tst3078Time time;
-    // time = stGetCurTime();
-    // static tst3078Time OldSettingTime = {0,};
-    // static tenAlarmState OldState = State_AlarmDis;
-    // if(State_AlarmDis == enAlarmState)
-    // {
-    //     if(0 != Hour->getNumberOfRunningActions())
-    //     {
-    //         Hour->stopAllActions();
-    //         Hour->setVisible(true);
-    //     }
-    //     if(0 != Min->getNumberOfRunningActions())
-    //     {
-    //         Min->stopAllActions();
-    //         Min->setVisible(true);
-    //     }
-    //     if(time.u8Day != AlarmTime.u8Day)
-    //     {
-    //         std::string day = std::to_string(time.u8Day>>4) + std::to_string((time.u8Day&0x0f));
-    //         Mincanvas->canvasReset();
-    //         Mincanvas->print(day.c_str());
-    //     }
-    //     if(time.u8Month != AlarmTime.u8Month)
-    //     {
-    //         std::string month = std::to_string(time.u8Month>>4) + std::to_string((time.u8Month&0x0f));
-    //         Hourcanvas->canvasReset();
-    //         Hourcanvas->print(month.c_str());
-    //     }
-    //     AlarmTime = time;
-    // }
-    // else if(State_AlarmSetMin == enAlarmState)
-    // {
-    //     if(0 != Hour->getNumberOfRunningActions())
-    //     {
-    //         Hour->stopAllActions();
-    //         Hour->setVisible(true);
-    //     }
-    //     if(0 == Min->getNumberOfRunningActions())
-    //     {
-    //         Min->runAction(RepeatForever::create(Blink::create(1,2)));
-    //     }
-    //     std::string day = std::to_string(ClockTimeSetting.u8Day>>4) + std::to_string((ClockTimeSetting.u8Day&0x0f));
-    //     Mincanvas->canvasReset();
-    //     Mincanvas->print(day.c_str());
-    // }
-    // else if(State_AlarmSetHour == enAlarmState)
-    // {
-    //     if(0 != Min->getNumberOfRunningActions())
-    //     {
-    //         Min->stopAllActions();
-    //         std::string day = std::to_string(ClockTimeSetting.u8Day>>4) + std::to_string((ClockTimeSetting.u8Day&0x0f));
-    //         Mincanvas->canvasReset();
-    //         Mincanvas->print(day.c_str());
-    //         Min->setVisible(true);
-    //     }
-    //     if(0 == Hour->getNumberOfRunningActions())
-    //     {
-    //         Hour->runAction(RepeatForever::create(Blink::create(1,2)));
-    //     }
-    //     std::string month = std::to_string(ClockTimeSetting.u8Month>>4) + std::to_string((ClockTimeSetting.u8Month&0x0f));
-    //     Hourcanvas->canvasReset();
-    //     Hourcanvas->print(month.c_str());
-    // }
-    
-    Serial.printf("Alarm Clk sts:%d alarm idx:%d week idx:%d time: %d:%d:%x \n",enAlarmState,u8CurrentAlarm,SettingWeekIdx,AlarmTime.u8Hour,AlarmTime.u8Min,AlarmTime.u8Week);
-
+    switch(enAlarmState)
+    {
+        case State_AlarmDis:
+            StateDisShow();
+            break;
+        case State_AlarmSetMin:
+            StateSetMinShow();
+            break;
+        case State_AlarmSetHour:
+            StateSetHourShow();
+            break;
+        case State_AlarmSetWeek:
+            StateSetWeekShow();
+            break;
+        default:break;
+    }
+    //Serial.printf("Alarm Clk sts:%d alarm idx:%d week idx:%d time: %d:%d:%x \n",enAlarmState,u8CurrentAlarm,SettingWeekIdx,AlarmTime.u8Hour,AlarmTime.u8Min,AlarmTime.u8Week);
 }
 
 void AlarmClkLayer::BtnClickHandler(int8_t keyCode, Event* event)
@@ -166,6 +122,192 @@ void AlarmClkLayer::BtnLongPressStartHandler(int8_t keyCode, Event* event)
 void AlarmClkLayer::BtnDuringLongPressHandler(int8_t keyCode, Event* event)
 {
     AlarmStateMachine(keyCode,enKey_LongPress);
+}
+
+void AlarmClkLayer::DrawWeek(void)
+{
+    Weekcanvas->canvasReset();
+    if(State_AlarmSetWeek != enAlarmState)
+    {
+        for(uint8_t i = 0;i < 7;i++)
+        {
+            if(AlarmTime.u8Week & (1<<i))
+            {
+                Weekcanvas->drawLine(i*3,1,i*3 + 1,1,DTRGB(0,255,0));
+            }
+            else
+            {
+                Weekcanvas->drawLine(i*3,1,i*3 + 1,1,DTRGB(255,255,255));
+            }
+        }
+    }
+    else
+    {
+        for(uint8_t i = 0;i < 7;i++)
+        {
+            if(AlarmTime.u8Week & (1<<i))
+            {
+                if(SettingWeekIdx == i)
+                {
+                    Weekcanvas->drawLine(i*3,0,i*3 + 1,0,DTRGB(0,255,0));
+                }
+                else
+                {
+                    Weekcanvas->drawLine(i*3,1,i*3 + 1,1,DTRGB(0,255,0));
+                }
+                
+            }
+            else
+            {
+                if(SettingWeekIdx == i)
+                {
+                    Weekcanvas->drawLine(i*3,0,i*3 + 1,0,DTRGB(255,255,255));
+                }
+                else
+                {
+                    Weekcanvas->drawLine(i*3,1,i*3 + 1,1,DTRGB(255,255,255));
+                }
+                
+            }
+        }
+    }
+}
+
+void AlarmClkLayer::StateDisShow(void)
+{
+    static tstAlarmClk oldAlarmClk= {0,0,0,false};
+    DTRGB textcolor = {255,255,255};
+    if(AlarmTime.boActive)
+    {
+        textcolor.r = 0;
+        textcolor.g = 255;
+        textcolor.b = 0;
+    }
+    if(0 != Hour->getNumberOfRunningActions())
+    {
+        Hour->stopAllActions();
+        Hour->setVisible(true);
+    }
+    if(0 != Min->getNumberOfRunningActions())
+    {
+        Min->stopAllActions();
+        Min->setVisible(true);
+    }
+    if(AlarmTime.u8Hour != oldAlarmClk.u8Hour)
+    {
+        std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);        
+        Hourcanvas->setTextColor(textcolor);
+        Hourcanvas->canvasReset();
+        Hourcanvas->print(hour.c_str());
+    }
+    if(AlarmTime.u8Min != oldAlarmClk.u8Min)
+    {
+        Mincanvas->setTextColor(textcolor);
+        std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
+        Mincanvas->canvasReset();
+        Mincanvas->print(min.c_str());
+    }
+    if(AlarmTime.u8Week != oldAlarmClk.u8Week)
+    {
+        DrawWeek();
+    }
+    oldAlarmClk = AlarmTime;
+}
+
+void AlarmClkLayer::StateSetMinShow(void)
+{
+    static tstAlarmClk oldAlarmClk= {0,0,0,false};
+    if(0 != Hour->getNumberOfRunningActions())
+    {
+        Hour->stopAllActions();
+        Hour->setVisible(true);
+    }
+    if(0 == Min->getNumberOfRunningActions())
+    {
+        Min->runAction(RepeatForever::create(Blink::create(1,2)));
+    }
+    // if(AlarmTime.u8Hour != oldAlarmClk.u8Hour)
+    // {
+    //     std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);        
+    //     Hourcanvas->canvasReset();
+    //     Hourcanvas->print(hour.c_str());
+    // }
+    if(AlarmTime.u8Min != oldAlarmClk.u8Min)
+    {
+        std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
+        Mincanvas->canvasReset();
+        Mincanvas->print(min.c_str());
+    }
+    if(AlarmTime.u8Week != oldAlarmClk.u8Week)
+    {
+        DrawWeek();
+    }
+    oldAlarmClk = AlarmTime;
+}
+
+void AlarmClkLayer::StateSetHourShow(void)
+{
+    static tstAlarmClk oldAlarmClk= {0,0,0,false};
+    if(0 == Hour->getNumberOfRunningActions())
+    {
+        Hour->runAction(RepeatForever::create(Blink::create(1,2)));
+    }
+    if(0 != Min->getNumberOfRunningActions())
+    {
+        Min->stopAllActions();
+        Min->setVisible(true);
+    }
+    if(AlarmTime.u8Hour != oldAlarmClk.u8Hour)
+    {
+        std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);        
+        Hourcanvas->canvasReset();
+        Hourcanvas->print(hour.c_str());
+    }
+    // if(AlarmTime.u8Min != oldAlarmClk.u8Min)
+    // {
+    //     std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
+    //     Mincanvas->canvasReset();
+    //     Mincanvas->print(min.c_str());
+    // }
+    if(AlarmTime.u8Week != oldAlarmClk.u8Week)
+    {
+        DrawWeek();
+    }
+    oldAlarmClk = AlarmTime;
+}
+
+void AlarmClkLayer::StateSetWeekShow(void)
+{
+    static tstAlarmClk oldAlarmClk= {0,0,0,false};
+    static uint8_t oldSettingWeek = 0;
+    if(0 != Hour->getNumberOfRunningActions())
+    {
+        Hour->stopAllActions();
+        Hour->setVisible(true);
+    }
+    if(0 != Min->getNumberOfRunningActions())
+    {
+        Min->stopAllActions();
+        Min->setVisible(true);
+    }
+    // if(AlarmTime.u8Hour != oldAlarmClk.u8Hour)
+    // {
+    //     std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);        
+    //     Hourcanvas->canvasReset();
+    //     Hourcanvas->print(hour.c_str());
+    // }
+    // if(AlarmTime.u8Min != oldAlarmClk.u8Min)
+    // {
+    //     std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
+    //     Mincanvas->canvasReset();
+    //     Mincanvas->print(min.c_str());
+    // }
+    if((AlarmTime.u8Week != oldAlarmClk.u8Week) || (oldSettingWeek != SettingWeekIdx))
+    {
+        DrawWeek();
+    }
+    oldAlarmClk = AlarmTime;
+    oldSettingWeek = SettingWeekIdx;
 }
 
 void AlarmClkLayer::StateDisHandle(int8_t key_type, int8_t key_event)
@@ -250,7 +392,7 @@ void AlarmClkLayer::StateSetMinHandle(int8_t key_type, int8_t key_event)
         /*minutes - 1*/
         if(--AlarmTime.u8Min >= 60)
         {
-            AlarmTime.u8Min = 60;
+            AlarmTime.u8Min = 59;
         }
     }
     else if(enKey_Right == key_type)
@@ -297,11 +439,20 @@ void AlarmClkLayer::StateSetWeekHandle(int8_t key_type, int8_t key_event)
     {
         if(enKey_ShortPress == key_event)//current day need enable
         {
-            AlarmTime.u8Week |= (1<<SettingWeekIdx);
+            if(AlarmTime.u8Week & (1<<SettingWeekIdx))
+            {
+                AlarmTime.u8Week &= ~(1<<SettingWeekIdx);
+            }
+            else
+            {
+                AlarmTime.u8Week |= (1<<SettingWeekIdx);
+            }
+            
         }
         else if(enKey_LongPressStart == key_event)//finish this alarm setting go back to display state
         {
             boSetAlarmClk(u8CurrentAlarm,&AlarmTime);
+            SettingWeekIdx = 0;
             enAlarmState = State_AlarmDis;
         }
     }
@@ -344,17 +495,5 @@ void AlarmClkLayer::AlarmStateMachine(int8_t key_type, int8_t key_event)
     }
 }
 
-void AlarmClkLayer::SendSettingAlarm(tst3078Time* settingtime)
-{
-    // if(TimeSettingQ != nullptr)
-    // {
-    //     if( xQueueSend( TimeSettingQ,
-    //                    ( void * ) settingtime,
-    //                    ( TickType_t ) 10 ) != pdPASS )
-    //     {
-    //         /* Failed to post the message, even after 10 ticks. */
-    //     }
-    // }
-}
 
 NS_DT_END

@@ -67,9 +67,17 @@ public:
 
 	void StateSetWeekHandle(int8_t,int8_t);
 
-	void AlarmStateMachine(int8_t,int8_t);
+	void StateDisShow(void);
 
-	void SendSettingAlarm(tst3078Time*);
+	void StateSetMinShow(void);
+
+	void StateSetHourShow(void);
+
+	void StateSetWeekShow(void);
+
+	void DrawWeek(void);
+
+	void AlarmStateMachine(int8_t,int8_t);
 
 };
 
