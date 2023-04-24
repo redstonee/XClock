@@ -5,6 +5,7 @@
 #include "Matrix/MatrixMain.h"
 #include "Key/ClockKey.h"
 #include "RTC/SD3078.h"
+#include "RTC/AlarmClk.h"
 #include "Sound/Sound.h"
 
 ClockKey* keyHandler = nullptr;
@@ -115,31 +116,31 @@ tstBattSts stGetBattSts(void)
     return stBattsts;
 }
 
-uint8_t u8GetAlarmClkNum(void)
-{
-    return 1;
-}
+// uint8_t u8GetAlarmClkNum(void)
+// {
+//     return 1;
+// }
 
-tstAlarmClk stGetAlarmClk(uint8_t index)
-{
-    tstAlarmClk alarmclk = {20,7,4,false};
-    return alarmclk;
-}
+// tstAlarmClk stGetAlarmClk(uint8_t index)
+// {
+//     tstAlarmClk alarmclk = {20,7,4,false};
+//     return alarmclk;
+// }
 
-bool boAddAlarmClk(tstAlarmClk *alarmclk)
-{
-    return true;
-}
+// bool boAddAlarmClk(tstAlarmClk *alarmclk)
+// {
+//     return true;
+// }
 
-bool boDelAlarmClk(uint8_t index)
-{
-    return true;
-}
+// bool boDelAlarmClk(uint8_t index)
+// {
+//     return true;
+// }
 
-bool boSetAlarmClk(uint8_t index,tstAlarmClk* alarmclk)
-{
-    return true;
-}
+// bool boSetAlarmClk(uint8_t index,tstAlarmClk* alarmclk)
+// {
+//     return true;
+// }
 
 void setup() {
   //----------------开启串口通信----------------
@@ -165,6 +166,7 @@ void setup() {
   SD3078Time = new SD3078();
   //SD3078Time->SetTime(&ClockTime);
   vSoundInit();
+  boInitAlarmClkList();
   stCurTime = stUpdateTime();
   vMatrixInit(KeyQueue);
 }

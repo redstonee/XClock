@@ -2,7 +2,6 @@
 #include "Dot2D/third/gfxfont.h"
 #include "Dot2D/third/Picopixel.h"
 #include "Dot2D/third/TomThumb.h"
-#include "../RTC/SD3078.h"
 #include "FastLED.h"
 #include "../Key/ClockKey.h"
 
@@ -333,13 +332,14 @@ void AlarmClkLayer::StateDisHandle(int8_t key_type, int8_t key_event)
         {
             if(--u8CurrentAlarm >= u8TotalAlarmNum)
             {
-                u8CurrentAlarm = u8TotalAlarmNum;
+                u8CurrentAlarm = u8TotalAlarmNum-1;
             }
             AlarmTime = stGetAlarmClk(u8CurrentAlarm);
         }
         else if(enKey_DoubleClick == key_event)//disable the alarm clock
         {
             AlarmTime.boActive = false;
+            boSetAlarmClk(u8CurrentAlarm,&AlarmTime);
         }
         else if(enKey_LongPressStart == key_event)//add new alarm clock
         {
@@ -365,6 +365,7 @@ void AlarmClkLayer::StateDisHandle(int8_t key_type, int8_t key_event)
         else if(enKey_DoubleClick == key_event)//enable the alarm clock
         {
                 AlarmTime.boActive = true;
+                boSetAlarmClk(u8CurrentAlarm,&AlarmTime);
         }
         else if(enKey_LongPressStart == key_event)//delete the alarm clock
         {
