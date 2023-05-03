@@ -8,6 +8,7 @@
 #include "AlarmClkScene.h"
 #include "BatteryScene.h"
 #include "FFT.h"
+#include "../Sound/Sound.h"
 //#include "Dot2D/math/dtMath.h"
 
 dot2d::Director* director = nullptr;
@@ -16,6 +17,7 @@ dot2d::Matrix *  sence0 = nullptr;
 dot2d::ClockScene *  sence1 = nullptr;
 uint8_t SceneIndex = Feature_Clock;
 tstMainSts stMainSts = {Feature_Clock,Feature_None};
+bool boAlarming = false;
 //必须要实现的dot2d导演对象代理方法
 class MainDelegate : public dot2d::DirectorDelegate
 {
@@ -127,6 +129,46 @@ dot2d::TransitionSlideInL* MainSceneTrans(tstKeyEvent rcvkey)
     return transition;
 }
 
+void vAlarmTask(void)
+{
+    uint8_t AlarmNum = u8GetAlarmClkNum();
+    tstAlarmClk AlarmClkTmp = {0,};
+    if(AlarmNum)
+    {
+        for(uint8_t i = 0; i < AlarmNum; i++)
+        {
+            AlarmClkTmp = stGetAlarmClk(i);
+            if(AlarmClkTmp.stAlarmSts == enAlarmSts_Alarming)
+            {
+                boAlarming = true;
+                if(enSndID_None == enGetCurSndID())
+                {
+                    boReqSound(enSndID_Alarm1,1);
+                }
+            }         
+        }
+    }    
+}
+
+void vAlarmClick(void)
+{
+    uint8_t AlarmNum = u8GetAlarmClkNum();
+    tstAlarmClk AlarmClkTmp = {0,};
+    if(AlarmNum)
+    {
+        for(uint8_t i = 0; i < AlarmNum; i++)
+        {
+            AlarmClkTmp = stGetAlarmClk(i);
+            if(AlarmClkTmp.stAlarmSts == enAlarmSts_Alarming)
+            {
+                boAlarming = false;
+                vStopSound();
+                vSetAlarmClkSts(i,enAlarmSts_AlarmClicked);
+            }         
+        }
+    } 
+}
+
 void vMatrixMain(void *param)
 {
     tstKeyEvent RcvKey = {enKey_Nokey,enKey_NoAct};
@@ -137,12 +179,16 @@ void vMatrixMain(void *param)
     for(;;)
     {
         vTaskDelay(25);
+        vAlarmTask();
         if(pKeyRcvQueue != nullptr)
         {
             xQueueReceive( pKeyRcvQueue,&( RcvKey ),( TickType_t ) 0 );
             if(RcvKey.Key != enKey_Nokey)
             {
-                
+                if(boAlarming)
+                {
+                    vAlarmClick();
+                }
                 if(stMainSts.enEnteredFeature == Feature_None)
                 {
                     if(RcvKey.Key != enKey_OK)
@@ -185,6 +231,8 @@ void vMatrixMain(void *param)
         director->mainLoop();
     }
 }
+
+
 
 void vMatrixInit(QueueHandle_t rcvQ)
 {

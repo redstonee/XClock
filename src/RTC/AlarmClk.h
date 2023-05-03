@@ -9,12 +9,21 @@
 #define PrefKey_AlarmWeek         "AlarmClkWeek"
 #define PrefKey_AlarmActive       "AlarmClkActive"
 
+typedef enum
+{    
+    enAlarmSts_AlarmIdle,
+    enAlarmSts_AlarmClicked,
+    enAlarmSts_Alarming,
+    enAlarmSts_WaitAlarmAgain
+}tenAlarmSts;
+
 typedef struct
 {
     uint8_t u8Min;
     uint8_t u8Hour;
     uint8_t u8Week;//every bit mean one day, bit6 Sunday, bit5 Saturday, bit4 Friday,bit3 Thursday,bit2 Wednesday, bit1 tuesday, bit0 Monday 
     bool boActive;
+    tenAlarmSts stAlarmSts;
 }tstAlarmClk;
 
 void boInitAlarmClkList(void);
@@ -28,5 +37,7 @@ bool boAddAlarmClk(tstAlarmClk *alarmclk);
 bool boDelAlarmClk(uint8_t index);
 
 bool boSetAlarmClk(uint8_t index,tstAlarmClk* alarmclk);
+
+void vSetAlarmClkSts(uint8_t,tenAlarmSts);
 
 #endif

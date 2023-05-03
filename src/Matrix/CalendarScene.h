@@ -37,6 +37,7 @@ protected:
 	tst3078Time ClockTimeSetting;
 	QueueHandle_t TimeSettingQ;
 	uint8_t ColorIndex = 0;
+	uint8_t PaletteIndex = 0;
 	bool boYearSetting = false;
 public:
 	
@@ -82,6 +83,7 @@ protected:
 	tst3078Time ClockTimeSetting;
 	QueueHandle_t TimeSettingQ;
 	uint8_t ColorIndex = 0;
+	uint8_t PaletteIndex = 0;
 	tenMonthState enMonthState = State_MonthDis;
 public:
 	

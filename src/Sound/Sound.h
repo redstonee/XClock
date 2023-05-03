@@ -14,6 +14,8 @@ typedef enum
 
 bool boReqSound(tenSoundID SndID, uint16_t times);
 
+tenSoundID enGetCurSndID(void);
+
 void vStopSound(void);
 
 void vSoundInit(void);

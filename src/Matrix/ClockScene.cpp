@@ -4,11 +4,13 @@
 #include "Dot2D/third/TomThumb.h"
 #include "../RTC/SD3078.h"
 #include "../main.h"
-#include "FastLED.h"
+#include "Palette.h"
 #include "../Key/ClockKey.h"
 
 NS_DT_BEGIN
-CRGBPalette16 currentPalette( RainbowColors_p );
+
+#define WeekColorIdxOffset       (80)
+
 bool ClockScene::init()
 {
     TimeLayer *ClockLayer = TimeLayer::create();
@@ -36,6 +38,11 @@ void TimeLayer::BtnDuringLongPressHandler(int8_t keyCode, Event* event)
     TimeStateMachine(keyCode,enKey_LongPress);
 }
 
+void TimeLayer::BtnDuringLongPressStopHandler(int8_t keyCode, Event* event)
+{
+    TimeStateMachine(keyCode,enKey_LongPressStop);
+}
+
 void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
 {
     uint8_t min_temp = (ClockTimeSetting.u8Min>>4)*10 + (ClockTimeSetting.u8Min&0x0f);
@@ -50,12 +57,28 @@ void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
                     enTimests = State_TimeSetMin;
                     ClockTimeSetting = ClockTime;
                 }
+                else if(key_event == enKey_ShortPress)
+                {
+                    PaletteIndex++;
+                    ColorIndex = 0; //reset the color index when change the palette
+                    if(false == boSetGlobalPaltIdx(PaletteIndex))//over the maxium palette size return false,restart from 0;
+                    {
+                        Serial.printf("Store Palette fail\n");
+                        PaletteIndex = 0;
+                        boSetGlobalPaltIdx(PaletteIndex);
+                    }
+                    boSetGlobalColorIdx(ColorIndex);
+                    PaletteIndex = u8GetGlobalPaltIdx();
+                    currentPalette = pGetPalette(PaletteIndex);
+                    UpdateColor(key_type,key_event);
+                    
+                }
             }
             else if(key_type == enKey_Left || key_type == enKey_Right)
             {
-                if(key_event == enKey_LongPress)
+                if(key_event == enKey_LongPress || key_event == enKey_ShortPress || key_event == enKey_LongPressStop)
                 {
-                    UpdateColor(key_type);
+                    UpdateColor(key_type,key_event);
                 }
             }
             break;
@@ -136,8 +159,9 @@ void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
     }
 }
 
-void TimeLayer::UpdateColor(int8_t key_type)
+void TimeLayer::UpdateColor(int8_t key_type, int8_t key_event)
 {
+    
     if(key_type == enKey_Left)
     {
         ColorIndex++;
@@ -146,11 +170,20 @@ void TimeLayer::UpdateColor(int8_t key_type)
     {
         ColorIndex--;
     }
+    if(key_event == enKey_LongPressStop || key_event == enKey_ShortPress)
+    {
+        boSetGlobalColorIdx(ColorIndex);           //store the color index when long press stop or short press
+    }
+    Serial.printf("PaletteIndex %d \n",PaletteIndex);
     Serial.printf("ColorIndex %d \n",ColorIndex);
     CRGB ColorFromPat = ColorFromPalette( currentPalette, ColorIndex);
     timecolor.r = ColorFromPat.r;
     timecolor.g = ColorFromPat.g;
     timecolor.b = ColorFromPat.b;
+    ColorFromPat = ColorFromPalette( currentPalette, ColorIndex+WeekColorIdxOffset);
+    weekcolor.r = ColorFromPat.r;
+    weekcolor.g = ColorFromPat.g;
+    weekcolor.b = ColorFromPat.b;
     Serial.printf("Color r:%d g:%d b%d \n",timecolor.r, timecolor.g , timecolor.b);
     Hour1canvas->setTextColor(timecolor);
     Hour2canvas->setTextColor(timecolor);
@@ -203,7 +236,7 @@ void TimeLayer::DrawWeek(uint8_t week)
                 }
                 else
                 {
-                    Weekcanvas->drawLine(i*3,0,i*3 + 1,0,DTRGB(255,0,0));
+                    Weekcanvas->drawLine(i*3,0,i*3 + 1,0,weekcolor);
                 }
             }
             else
@@ -214,7 +247,7 @@ void TimeLayer::DrawWeek(uint8_t week)
                 }
                 else
                 {
-                    Weekcanvas->drawLine(6*3,0,6*3 + 1,0,DTRGB(255,0,0));
+                    Weekcanvas->drawLine(6*3,0,6*3 + 1,0,weekcolor);
                 }
             }
         }
@@ -225,10 +258,14 @@ bool TimeLayer::initLayer()
 {
     ClockTime = stGetCurTime();  
     TimeSettingQ = pGetTimeSettingQ();
-    ColorIndex = 80;  
+    ColorIndex = u8GetGlobalColorIdx();
+    PaletteIndex = u8GetGlobalPaltIdx();
+    Serial.printf("PaletteIndex %d \n",PaletteIndex);
+    currentPalette = pGetPalette(PaletteIndex);
     CRGB ColorFromPat = ColorFromPalette( currentPalette, ColorIndex);
     auto listener = EventListenerButton::create();
     listener ->onBtnDuringLongPress = DT_CALLBACK_2(TimeLayer::BtnDuringLongPressHandler,this);
+    listener ->onBtnLongPressStop = DT_CALLBACK_2(TimeLayer::BtnDuringLongPressStopHandler,this);
     listener ->onBtnLongPressStart = DT_CALLBACK_2(TimeLayer::BtnLongPressStartHandler,this);
     listener ->onBtnClick = DT_CALLBACK_2(TimeLayer::BtnClickHandler,this);    
     _eventDispatcher->addEventListenerWithSceneGraphPriority ( listener, this );
@@ -242,6 +279,10 @@ bool TimeLayer::initLayer()
     timecolor.r = ColorFromPat.r;
     timecolor.g = ColorFromPat.g;
     timecolor.b = ColorFromPat.b;
+    ColorFromPat = ColorFromPalette( currentPalette, ColorIndex+WeekColorIdxOffset);
+    weekcolor.r = ColorFromPat.r;
+    weekcolor.g = ColorFromPat.g;
+    weekcolor.b = ColorFromPat.b;
     Hour_1 = TextSprite::create(Size(4,5),Size(4,5),timecolor,hour1,TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     Hour1canvas = Hour_1->getSpriteCanvas();
     Hour_2 = TextSprite::create(Size(4,5),Size(4,5),timecolor,hour2,TextSprite::TextAlign::TextAlignCenter,&TomThumb);

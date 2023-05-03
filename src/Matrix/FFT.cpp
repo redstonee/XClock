@@ -41,6 +41,7 @@ bool FFT::init()
 
 FFTLayer::~FFTLayer()
 {
+    digitalWrite(ADC_MIC_EN_PIN,LOW);
     DT_SAFE_FREE(fft);
 }
 
@@ -66,6 +67,8 @@ bool FFTLayer::initLayer()
     this->addChild(music_icon);
     this->addChild(canvasSprite);
     this->scheduleUpdate();
+    pinMode(ADC_MIC_EN_PIN, OUTPUT);//MIC EN
+    digitalWrite(ADC_MIC_EN_PIN,HIGH);
     return true;
 }
 

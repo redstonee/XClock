@@ -41,7 +41,8 @@ bool AlarmClkLayer::initLayer()
     auto listener = EventListenerButton::create();
     listener ->onBtnDuringLongPress = DT_CALLBACK_2(AlarmClkLayer::BtnDuringLongPressHandler,this);
     listener ->onBtnLongPressStart = DT_CALLBACK_2(AlarmClkLayer::BtnLongPressStartHandler,this);
-    listener ->onBtnClick = DT_CALLBACK_2(AlarmClkLayer::BtnClickHandler,this);    
+    listener ->onBtnClick = DT_CALLBACK_2(AlarmClkLayer::BtnClickHandler,this);   
+    listener ->onBtnDoubleClick = DT_CALLBACK_2(AlarmClkLayer::BtnDoubleClickHandler,this);  
     _eventDispatcher->addEventListenerWithSceneGraphPriority ( listener, this );
     FrameSprite* ClkIcon = FrameSprite::create(icon_ClockActive,sizeof(icon_ClockActive),BMP_GIF);
     ClkIcon->setPosition(0,0);
@@ -74,9 +75,9 @@ bool AlarmClkLayer::initLayer()
     Hour->setTransparent(true);
     Hour->setPosition(12,1);
     TimePt->setTransparent(true);
-    TimePt->setPosition(20,1);
+    TimePt->setPosition(19,1);
     Min->setTransparent(true);    
-    Min->setPosition(22,1);
+    Min->setPosition(21,1);
     this->addChild(ClkIcon);
     this->addChild(Hour);
     this->addChild(TimePt);
@@ -111,6 +112,11 @@ void AlarmClkLayer::AlarmUpdate(float dt)
 void AlarmClkLayer::BtnClickHandler(int8_t keyCode, Event* event)
 {
     AlarmStateMachine(keyCode,enKey_ShortPress);
+}
+
+void AlarmClkLayer::BtnDoubleClickHandler(int8_t keyCode, Event* event)
+{
+    AlarmStateMachine(keyCode,enKey_DoubleClick);
 }
 
 void AlarmClkLayer::BtnLongPressStartHandler(int8_t keyCode, Event* event)
@@ -192,24 +198,26 @@ void AlarmClkLayer::StateDisShow(void)
         Min->stopAllActions();
         Min->setVisible(true);
     }
-    if(AlarmTime.u8Hour != oldAlarmClk.u8Hour)
+    if(AlarmTime.u8Hour != oldAlarmClk.u8Hour || AlarmTime.boActive != oldAlarmClk.boActive)
     {
         std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);        
         Hourcanvas->setTextColor(textcolor);
         Hourcanvas->canvasReset();
         Hourcanvas->print(hour.c_str());
+        TimePtcanvas->setTextColor(textcolor);
+        TimePtcanvas->canvasReset();
+        TimePtcanvas->print(":");
     }
-    if(AlarmTime.u8Min != oldAlarmClk.u8Min)
+    if(AlarmTime.u8Min != oldAlarmClk.u8Min || AlarmTime.boActive != oldAlarmClk.boActive)
     {
         Mincanvas->setTextColor(textcolor);
         std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
         Mincanvas->canvasReset();
         Mincanvas->print(min.c_str());
     }
-    if(AlarmTime.u8Week != oldAlarmClk.u8Week)
-    {
-        DrawWeek();
-    }
+
+    DrawWeek();
+
     oldAlarmClk = AlarmTime;
 }
 
@@ -369,12 +377,16 @@ void AlarmClkLayer::StateDisHandle(int8_t key_type, int8_t key_event)
         }
         else if(enKey_LongPressStart == key_event)//delete the alarm clock
         {
-            if(boDelAlarmClk(u8CurrentAlarm))
+            if(u8TotalAlarmNum > 1)
             {
-                u8CurrentAlarm--;
-                u8TotalAlarmNum = u8GetAlarmClkNum();
-                AlarmTime = stGetAlarmClk(u8CurrentAlarm);
+                if(boDelAlarmClk(u8CurrentAlarm))
+                {
+                    u8CurrentAlarm--;
+                    u8TotalAlarmNum = u8GetAlarmClkNum();
+                    AlarmTime = stGetAlarmClk(u8CurrentAlarm);
+                }
             }
+            
         }
     }
 }

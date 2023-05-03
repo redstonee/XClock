@@ -56,6 +56,8 @@ public:
 
 	void BtnClickHandler(int8_t, Event*);
 
+	void BtnDoubleClickHandler(int8_t, Event*);
+
 	void BtnLongPressStartHandler(int8_t, Event*);
 
 	void BtnDuringLongPressHandler(int8_t, Event*);

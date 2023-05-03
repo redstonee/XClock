@@ -144,7 +144,7 @@ void ClockKey::Start(){
     xTaskCreate(
     KeyLoop,    // Function that should be called
     "Keyhandler main task",   // Name of the task (for debugging)
-    2000,            // Stack size (bytes)
+    1000,            // Stack size (bytes)
     NULL,            // Parameter to pass
     1,               // Task priority
     NULL             // Task handle

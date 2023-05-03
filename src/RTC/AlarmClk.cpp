@@ -27,6 +27,7 @@ void boInitAlarmClkList(void)
         alarm_tmp.u8Hour = pref.getUChar((PrefKey_AlarmHour + std::to_string(i)).c_str(),6);  
         alarm_tmp.u8Week = pref.getUChar((PrefKey_AlarmWeek + std::to_string(i)).c_str(),0x1f);
         alarm_tmp.boActive = pref.getBool((PrefKey_AlarmActive + std::to_string(i)).c_str(),false);
+        alarm_tmp.stAlarmSts = enAlarmSts_AlarmIdle;
         AlarmClkList.push_back(alarm_tmp);
     }
     pref.end();
@@ -127,4 +128,9 @@ bool boSetAlarmClk(uint8_t index,tstAlarmClk* alarmclk)
     }
     
     return res;
+}
+
+void vSetAlarmClkSts(uint8_t index,tenAlarmSts Status)
+{
+    AlarmClkList[index].stAlarmSts = Status;
 }

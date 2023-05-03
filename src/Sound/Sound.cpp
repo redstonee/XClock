@@ -65,7 +65,13 @@ bool boReqSound(tenSoundID SndID, uint16_t times)
     return result;
 }
 
-void boStopSound(void)
+
+tenSoundID enGetCurSndID(void)
+{
+    return RequestedSnd;
+}
+
+void vStopSound(void)
 {
     if (wav->isRunning())
     {

@@ -3,7 +3,7 @@
 
 #include "Dot2D/dot2d.h"
 #include "../RTC/SD3078.h"
-
+#include "FastLED.h"
 NS_DT_BEGIN
 
 typedef enum
@@ -54,7 +54,10 @@ protected:
     float interval;
     bool ScrollUp = false;
 	uint8_t ColorIndex = 0;
+	uint8_t PaletteIndex = 0;
+	CRGBPalette16 currentPalette;
 	DTRGB timecolor;
+	DTRGB weekcolor;
 	tenTimeState enTimests = State_TimeDis;
 public:
 	
@@ -70,9 +73,11 @@ public:
 
 	void BtnDuringLongPressHandler(int8_t, Event*);
 
+	void BtnDuringLongPressStopHandler(int8_t, Event*);
+
 	void TimeStateMachine(int8_t,int8_t);
 
-	void UpdateColor(int8_t);
+	void UpdateColor(int8_t,int8_t);
 
 	void SendSettingTime(tst3078Time*);
 

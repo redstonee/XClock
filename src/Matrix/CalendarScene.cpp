@@ -6,6 +6,7 @@
 #include "../main.h"
 #include "FastLED.h"
 #include "../Key/ClockKey.h"
+#include "Palette.h"
 
 NS_DT_BEGIN
 
@@ -23,10 +24,12 @@ bool CalYearScene::init()
 
 bool YearLayer::initLayer()
 {
-    CRGBPalette16 currentPalette( RainbowColors_p );
+    
+    ColorIndex = u8GetGlobalColorIdx();
+    PaletteIndex = u8GetGlobalPaltIdx();
     ClockTime = stGetCurTime();
     TimeSettingQ = pGetTimeSettingQ();
-    ColorIndex = 80;  
+    CRGBPalette16 currentPalette = pGetPalette(PaletteIndex);
     CRGB ColorFromPat = ColorFromPalette( currentPalette, ColorIndex);
     DTRGB Color;
     Color.r = ColorFromPat.r;
@@ -185,10 +188,11 @@ bool CalMonthScene::init()
 
 bool MonthLayer::initLayer()
 {
-    CRGBPalette16 currentPalette( RainbowColors_p );
     ClockTime = stGetCurTime();
     TimeSettingQ = pGetTimeSettingQ();
-    ColorIndex = 80;  
+    ColorIndex = u8GetGlobalColorIdx();
+    PaletteIndex = u8GetGlobalPaltIdx();
+    CRGBPalette16 currentPalette = pGetPalette(PaletteIndex);
     CRGB ColorFromPat = ColorFromPalette( currentPalette, ColorIndex);
     DTRGB Color;
     Color.r = ColorFromPat.r;
