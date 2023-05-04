@@ -71,13 +71,27 @@ bool AlarmClkLayer::initLayer()
     Week = CanvasSprite::create(21,2);
     Weekcanvas = Week->getSpriteCanvas();
     DrawWeek();
+    Switch = CanvasSprite::create(6,2);
+    Switchcanvas = Switch->getSpriteCanvas();
+    Switchcanvas->writeFillRect(0,0,2,2,DTRGB(255,0,0));
+    Switchcanvas->writeFillRect(2,0,2,2,DTRGB(255,255,255));
+    Switchcanvas->writeFillRect(4,0,2,2,DTRGB(0,255,0));
     Week->setPosition(10,6);
-    Hour->setTransparent(true);
-    Hour->setPosition(12,1);
-    TimePt->setTransparent(true);
-    TimePt->setPosition(19,1);
-    Min->setTransparent(true);    
-    Min->setPosition(21,1);
+    Hour->setTransparent(false);
+    Hour->setPosition(11,1);
+    TimePt->setTransparent(false);
+    TimePt->setPosition(18,1);
+    Min->setTransparent(false);    
+    Min->setPosition(20,1);
+    if(AlarmTime.boActive)
+    {
+        Switch->setPosition(26,3);
+    }
+    else
+    {
+        Switch->setPosition(28,3);
+    }    
+    this->addChild(Switch);
     this->addChild(ClkIcon);
     this->addChild(Hour);
     this->addChild(TimePt);
@@ -344,9 +358,15 @@ void AlarmClkLayer::StateDisHandle(int8_t key_type, int8_t key_event)
             }
             AlarmTime = stGetAlarmClk(u8CurrentAlarm);
         }
-        else if(enKey_DoubleClick == key_event)//disable the alarm clock
+        else if(enKey_DoubleClick == key_event)//enable the alarm clock
         {
-            AlarmTime.boActive = false;
+            if(false == AlarmTime.boActive)
+            {
+                AlarmTime.boActive = true;
+                MoveBy *Move = MoveBy::create(0.1,Vec2(-2,0));
+                Switch->runAction(Move);
+            }
+            
             boSetAlarmClk(u8CurrentAlarm,&AlarmTime);
         }
         else if(enKey_LongPressStart == key_event)//add new alarm clock
@@ -370,9 +390,14 @@ void AlarmClkLayer::StateDisHandle(int8_t key_type, int8_t key_event)
             }
             AlarmTime = stGetAlarmClk(u8CurrentAlarm);
         }
-        else if(enKey_DoubleClick == key_event)//enable the alarm clock
+        else if(enKey_DoubleClick == key_event)//disable the alarm clock
         {
-                AlarmTime.boActive = true;
+                if(true == AlarmTime.boActive)
+                {
+                    AlarmTime.boActive = false;
+                    MoveBy *Move = MoveBy::create(0.1,Vec2(2,0));
+                    Switch->runAction(Move);
+                }
                 boSetAlarmClk(u8CurrentAlarm,&AlarmTime);
         }
         else if(enKey_LongPressStart == key_event)//delete the alarm clock

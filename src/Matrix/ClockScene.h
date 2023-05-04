@@ -82,6 +82,14 @@ public:
 	void SendSettingTime(tst3078Time*);
 
 	void DrawWeek(uint8_t);
+
+	void StateTimeDisShow(void);
+
+	void StateSetMinShow(void);
+
+	void StateSetHourShow(void);
+
+	void StateSetWeekShow(void);
 };
 
 const unsigned char icon_sun[] PROGMEM  = {

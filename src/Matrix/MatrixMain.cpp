@@ -18,6 +18,7 @@ dot2d::ClockScene *  sence1 = nullptr;
 uint8_t SceneIndex = Feature_Clock;
 tstMainSts stMainSts = {Feature_Clock,Feature_None};
 bool boAlarming = false;
+TimerHandle_t FeatureEnterTO = nullptr;
 //必须要实现的dot2d导演对象代理方法
 class MainDelegate : public dot2d::DirectorDelegate
 {
@@ -111,9 +112,10 @@ dot2d::TransitionSlideInL* MainSceneTrans(tstKeyEvent rcvkey)
             {
                 stMainSts.enMainSceneIdx = Feature_First;
             }
+            transition = dot2d::TransitionSlideInR::create(SCENE_TRANSITION_DURATION,GetSceneByIdx(stMainSts.enMainSceneIdx));
         }
         
-        transition = dot2d::TransitionSlideInR::create(SCENE_TRANSITION_DURATION,GetSceneByIdx(stMainSts.enMainSceneIdx));
+        
     }
     else if(rcvkey.Key == enKey_Right)
     {
@@ -123,8 +125,9 @@ dot2d::TransitionSlideInL* MainSceneTrans(tstKeyEvent rcvkey)
             {
                 stMainSts.enMainSceneIdx = Feature_Last;
             }
+            transition = dot2d::TransitionSlideInL::create(SCENE_TRANSITION_DURATION,GetSceneByIdx(stMainSts.enMainSceneIdx));
         }
-        transition = dot2d::TransitionSlideInL::create(SCENE_TRANSITION_DURATION,GetSceneByIdx(stMainSts.enMainSceneIdx));
+        
     }
     return transition;
 }
@@ -193,11 +196,22 @@ void vMatrixMain(void *param)
                 {
                     if(RcvKey.Key != enKey_OK)
                     {
-                        director->replaceScene(MainSceneTrans(RcvKey));
+                        dot2d::TransitionSlideInL* transition = MainSceneTrans(RcvKey);
+                        if(nullptr != transition)
+                        {
+                            director->replaceScene(transition);
+                        }                        
                     }
                     else
                     {
                         stMainSts.enEnteredFeature = stMainSts.enMainSceneIdx;    //enter subfunctions
+                        if(Feature_Timer != stMainSts.enEnteredFeature && Feature_CountDown != stMainSts.enEnteredFeature)
+                        {
+                            if(nullptr != FeatureEnterTO)   /*Start a timeout timer to exit the feature*/
+                            {
+                                xTimerStart(FeatureEnterTO,10);
+                            }
+                        }                        
                     }
                 }
                 else
@@ -205,9 +219,23 @@ void vMatrixMain(void *param)
                     if(RcvKey.Key == enKey_OK && RcvKey.Type == enKey_DoubleClick)
                     {
                         stMainSts.enEnteredFeature = Feature_None;
+                        if(nullptr != FeatureEnterTO) /*Stop the timeout timer*/
+                        {
+                            if( xTimerIsTimerActive(FeatureEnterTO))
+                            {
+                                xTimerStop(FeatureEnterTO,10);
+                            }
+                        }
                     }
                     else
                     {
+                        if(nullptr != FeatureEnterTO)/*Restart the timeout timer if any key pressed*/
+                        {
+                            if( xTimerIsTimerActive(FeatureEnterTO))
+                            {
+                                xTimerReset(FeatureEnterTO,10);
+                            }                            
+                        }
                         dot2d::EventButton event(RcvKey.Key,(dot2d::EventButton::ButtonEventCode)RcvKey.Type);
                         auto dispatcher = dot2d::Director::getInstance()->getEventDispatcher();
                         dispatcher->dispatchEvent(&event);
@@ -215,16 +243,6 @@ void vMatrixMain(void *param)
                 }
                 RcvKey.Key = enKey_Nokey;
                 RcvKey.Type = enKey_NoAct;
-                // if(sceneindex == 0)
-                // {         
-                //     director->replaceScene(dot2d::TransitionSlideInL::create(0.5,dot2d::BattScene::create()));
-                //     sceneindex = 1;
-                // }
-                // else
-                // {           
-                //     director->replaceScene(dot2d::TransitionSlideInR::create(0.5,dot2d::ClockScene::create()));
-                //     sceneindex = 0;
-                // }
             }
         }
         
@@ -232,6 +250,16 @@ void vMatrixMain(void *param)
     }
 }
 
+void vFeatureTOCb(TimerHandle_t xTimer)
+{
+    stMainSts.enEnteredFeature = Feature_None;
+    stMainSts.enMainSceneIdx = Feature_Clock;
+    dot2d::TransitionSlideInL* transition = dot2d::TransitionSlideInR::create(SCENE_TRANSITION_DURATION,GetSceneByIdx(Feature_Clock));
+    if(nullptr != transition)
+    {
+        director->replaceScene(transition);
+    } 
+}
 
 
 void vMatrixInit(QueueHandle_t rcvQ)
@@ -254,6 +282,24 @@ void vMatrixInit(QueueHandle_t rcvQ)
   director->initDotCanvas(MATRIX_WIDTH,MATRIX_HEIGHT);            //初始化导演画布
   //director->runWithScene(dot2d::Matrix::create());
   director->runWithScene(dot2d::ClockScene::create());
+  FeatureEnterTO = xTimerCreate
+                   ( /* Just a text name, not used by the RTOS
+                     kernel. */
+                     "FeatureTimer",
+                     /* The timer period in ticks, must be
+                     greater than 0. */
+                     FeatureTimeout,
+                     /* The timers will auto-reload themselves
+                     when they expire. */
+                     pdFALSE,
+                     /* The ID is used to store a count of the
+                     number of times the timer has expired, which
+                     is initialised to 0. */
+                     ( void * ) 0,
+                     /* Each timer calls the same callback when
+                     it expires. */
+                     vFeatureTOCb
+                   );
   xTaskCreate(
     vMatrixMain,    // Function that should be called
     "Matrix main task",   // Name of the task (for debugging)
