@@ -90,6 +90,8 @@ public:
 	void StateSetHourShow(void);
 
 	void StateSetWeekShow(void);
+
+	void DigitalSwitchAnimation(TextSprite* OldDigitalSprt,uint8_t OldDigital, uint8_t NewDigital);
 };
 
 const unsigned char icon_sun[] PROGMEM  = {
