@@ -7,6 +7,8 @@
 #define CLOCKKEY_RIGHT_PIN      25
 #define CLOCKKEY_OK_PIN         33
 
+#define DurLongPressDelay          (10)
+
 typedef enum
 {
     enKey_Nokey,

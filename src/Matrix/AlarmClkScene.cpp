@@ -44,7 +44,15 @@ bool AlarmClkLayer::initLayer()
     listener ->onBtnClick = DT_CALLBACK_2(AlarmClkLayer::BtnClickHandler,this);   
     listener ->onBtnDoubleClick = DT_CALLBACK_2(AlarmClkLayer::BtnDoubleClickHandler,this);  
     _eventDispatcher->addEventListenerWithSceneGraphPriority ( listener, this );
-    FrameSprite* ClkIcon = FrameSprite::create(icon_ClockActive,sizeof(icon_ClockActive),BMP_GIF);
+    if(AlarmTime.boActive)
+    {
+        ClkIcon = FrameSprite::create(icon_ClockActive,sizeof(icon_ClockActive),BMP_GIF);
+    }
+    else
+    {
+        ClkIcon = FrameSprite::create(icon_ClockInactive,sizeof(icon_ClockInactive),BMP_BMP);
+    }
+    
     ClkIcon->setPosition(0,0);
     ClkIcon->setAutoSwitch(true);
     DTRGB clkcolor(255,255,255);
@@ -70,7 +78,7 @@ bool AlarmClkLayer::initLayer()
     Mincanvas = Min->getSpriteCanvas();
     Week = CanvasSprite::create(21,2);
     Weekcanvas = Week->getSpriteCanvas();
-    DrawWeek();
+    DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
     Switch = CanvasSprite::create(6,2);
     Switchcanvas = Switch->getSpriteCanvas();
     Switchcanvas->writeFillRect(0,0,2,2,DTRGB(255,0,0));
@@ -143,20 +151,20 @@ void AlarmClkLayer::BtnDuringLongPressHandler(int8_t keyCode, Event* event)
     AlarmStateMachine(keyCode,enKey_LongPress);
 }
 
-void AlarmClkLayer::DrawWeek(void)
+void AlarmClkLayer::DrawWeek(uint8_t week, tenAlarmState AlarmState,SpriteCanvas *weekcanvas,uint8_t settingidx)
 {
-    Weekcanvas->canvasReset();
-    if(State_AlarmSetWeek != enAlarmState)
+    weekcanvas->canvasReset();
+    if(State_AlarmSetWeek != AlarmState)
     {
         for(uint8_t i = 0;i < 7;i++)
         {
-            if(AlarmTime.u8Week & (1<<i))
+            if(week & (1<<i))
             {
-                Weekcanvas->drawLine(i*3,1,i*3 + 1,1,DTRGB(0,255,0));
+                weekcanvas->drawLine(i*3,1,i*3 + 1,1,DTRGB(0,255,0));
             }
             else
             {
-                Weekcanvas->drawLine(i*3,1,i*3 + 1,1,DTRGB(255,255,255));
+                weekcanvas->drawLine(i*3,1,i*3 + 1,1,DTRGB(255,255,255));
             }
         }
     }
@@ -164,27 +172,27 @@ void AlarmClkLayer::DrawWeek(void)
     {
         for(uint8_t i = 0;i < 7;i++)
         {
-            if(AlarmTime.u8Week & (1<<i))
+            if(week & (1<<i))
             {
-                if(SettingWeekIdx == i)
+                if(settingidx == i)
                 {
-                    Weekcanvas->drawLine(i*3,0,i*3 + 1,0,DTRGB(0,255,0));
+                    weekcanvas->drawLine(i*3,0,i*3 + 1,0,DTRGB(0,255,0));
                 }
                 else
                 {
-                    Weekcanvas->drawLine(i*3,1,i*3 + 1,1,DTRGB(0,255,0));
+                    weekcanvas->drawLine(i*3,1,i*3 + 1,1,DTRGB(0,255,0));
                 }
                 
             }
             else
             {
-                if(SettingWeekIdx == i)
+                if(settingidx == i)
                 {
-                    Weekcanvas->drawLine(i*3,0,i*3 + 1,0,DTRGB(255,255,255));
+                    weekcanvas->drawLine(i*3,0,i*3 + 1,0,DTRGB(255,255,255));
                 }
                 else
                 {
-                    Weekcanvas->drawLine(i*3,1,i*3 + 1,1,DTRGB(255,255,255));
+                    weekcanvas->drawLine(i*3,1,i*3 + 1,1,DTRGB(255,255,255));
                 }
                 
             }
@@ -192,16 +200,52 @@ void AlarmClkLayer::DrawWeek(void)
     }
 }
 
+void AlarmClkLayer::ClearAnimationTmp(void)
+{
+
+}
+
+
+void AlarmClkLayer::SwitchAlarmAnimation(tstAlarmClk OldAlarm,bool boUp)
+{
+
+}
+
 void AlarmClkLayer::StateDisShow(void)
 {
-    static tstAlarmClk oldAlarmClk= {0,0,0,false};
+    static tstAlarmClk oldAlarmClk= AlarmTime;
+    static uint8_t oldAlarmidx = 0;
     DTRGB textcolor = {255,255,255};
-    if(AlarmTime.boActive)
+    if(oldAlarmidx != u8CurrentAlarm)
     {
-        textcolor.r = 0;
-        textcolor.g = 255;
-        textcolor.b = 0;
+        if(AlarmTime.boActive)
+        {
+            Switch->setPosition(26,3);
+        }
+        else
+        {
+            Switch->setPosition(28,3);
+        }  
     }
+    if(oldAlarmClk.boActive != AlarmTime.boActive)
+    {
+        if(AlarmTime.boActive)
+        {
+            textcolor.r = 0;
+            textcolor.g = 255;
+            textcolor.b = 0;
+            ClkIcon->setSpriteFrame(SpriteFrame::create(icon_ClockActive,sizeof(icon_ClockActive),BMP_GIF));
+            MoveBy *Move = MoveBy::create(0.1,Vec2(-2,0));
+            Switch->runAction(Move);        
+        }
+        else
+        {
+            ClkIcon->setSpriteFrame(SpriteFrame::create(icon_ClockInactive,sizeof(icon_ClockInactive),BMP_BMP));
+            MoveBy *Move = MoveBy::create(0.1,Vec2(2,0));
+            Switch->runAction(Move);
+        }
+    }
+    
     if(0 != Hour->getNumberOfRunningActions())
     {
         Hour->stopAllActions();
@@ -230,9 +274,10 @@ void AlarmClkLayer::StateDisShow(void)
         Mincanvas->print(min.c_str());
     }
 
-    DrawWeek();
+    DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
 
     oldAlarmClk = AlarmTime;
+    oldAlarmidx = u8CurrentAlarm;
 }
 
 void AlarmClkLayer::StateSetMinShow(void)
@@ -261,7 +306,7 @@ void AlarmClkLayer::StateSetMinShow(void)
     }
     if(AlarmTime.u8Week != oldAlarmClk.u8Week)
     {
-        DrawWeek();
+        DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
     }
     oldAlarmClk = AlarmTime;
 }
@@ -292,7 +337,7 @@ void AlarmClkLayer::StateSetHourShow(void)
     // }
     if(AlarmTime.u8Week != oldAlarmClk.u8Week)
     {
-        DrawWeek();
+        DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
     }
     oldAlarmClk = AlarmTime;
 }
@@ -325,7 +370,7 @@ void AlarmClkLayer::StateSetWeekShow(void)
     // }
     if((AlarmTime.u8Week != oldAlarmClk.u8Week) || (oldSettingWeek != SettingWeekIdx))
     {
-        DrawWeek();
+        DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
     }
     oldAlarmClk = AlarmTime;
     oldSettingWeek = SettingWeekIdx;
@@ -363,8 +408,6 @@ void AlarmClkLayer::StateDisHandle(int8_t key_type, int8_t key_event)
             if(false == AlarmTime.boActive)
             {
                 AlarmTime.boActive = true;
-                MoveBy *Move = MoveBy::create(0.1,Vec2(-2,0));
-                Switch->runAction(Move);
             }
             
             boSetAlarmClk(u8CurrentAlarm,&AlarmTime);
@@ -389,14 +432,20 @@ void AlarmClkLayer::StateDisHandle(int8_t key_type, int8_t key_event)
                 u8CurrentAlarm = 0;
             }
             AlarmTime = stGetAlarmClk(u8CurrentAlarm);
+            if(AlarmTime.boActive)
+            {
+                Switch->setPosition(26,3);
+            }
+            else
+            {
+                Switch->setPosition(28,3);
+            }  
         }
         else if(enKey_DoubleClick == key_event)//disable the alarm clock
         {
                 if(true == AlarmTime.boActive)
                 {
                     AlarmTime.boActive = false;
-                    MoveBy *Move = MoveBy::create(0.1,Vec2(2,0));
-                    Switch->runAction(Move);
                 }
                 boSetAlarmClk(u8CurrentAlarm,&AlarmTime);
         }

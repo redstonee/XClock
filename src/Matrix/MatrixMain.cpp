@@ -147,6 +147,11 @@ void vAlarmTask(void)
                 if(enSndID_None == enGetCurSndID())
                 {
                     boReqSound(enSndID_Alarm1,1);
+                    dot2d::TransitionSlideInL* transition = dot2d::TransitionSlideInR::create(SCENE_TRANSITION_DURATION,GetSceneByIdx(Feature_Clock));
+                    if(nullptr != transition)
+                    {
+                        director->replaceScene(transition);
+                    } 
                 }
             }         
         }
@@ -175,10 +180,6 @@ void vAlarmClick(void)
 void vMatrixMain(void *param)
 {
     tstKeyEvent RcvKey = {enKey_Nokey,enKey_NoAct};
-    
-    //sence0 = dot2d::Matrix::create();
-    //sence1 = dot2d::ClockScene::create();
-    //director->runWithScene(sence1);
     for(;;)
     {
         vTaskDelay(25);
@@ -192,55 +193,59 @@ void vMatrixMain(void *param)
                 {
                     vAlarmClick();
                 }
-                if(stMainSts.enEnteredFeature == Feature_None)
-                {
-                    if(RcvKey.Key != enKey_OK)
-                    {
-                        dot2d::TransitionSlideInL* transition = MainSceneTrans(RcvKey);
-                        if(nullptr != transition)
-                        {
-                            director->replaceScene(transition);
-                        }                        
-                    }
-                    else
-                    {
-                        stMainSts.enEnteredFeature = stMainSts.enMainSceneIdx;    //enter subfunctions
-                        if(Feature_Timer != stMainSts.enEnteredFeature && Feature_CountDown != stMainSts.enEnteredFeature)
-                        {
-                            if(nullptr != FeatureEnterTO)   /*Start a timeout timer to exit the feature*/
-                            {
-                                xTimerStart(FeatureEnterTO,10);
-                            }
-                        }                        
-                    }
-                }
                 else
                 {
-                    if(RcvKey.Key == enKey_OK && RcvKey.Type == enKey_DoubleClick)
+                    if(stMainSts.enEnteredFeature == Feature_None)
                     {
-                        stMainSts.enEnteredFeature = Feature_None;
-                        if(nullptr != FeatureEnterTO) /*Stop the timeout timer*/
+                        if(RcvKey.Key != enKey_OK)
                         {
-                            if( xTimerIsTimerActive(FeatureEnterTO))
+                            dot2d::TransitionSlideInL* transition = MainSceneTrans(RcvKey);
+                            if(nullptr != transition)
                             {
-                                xTimerStop(FeatureEnterTO,10);
-                            }
+                                director->replaceScene(transition);
+                            }                        
+                        }
+                        else
+                        {
+                            stMainSts.enEnteredFeature = stMainSts.enMainSceneIdx;    //enter subfunctions
+                            if(Feature_Timer != stMainSts.enEnteredFeature && Feature_CountDown != stMainSts.enEnteredFeature)
+                            {
+                                if(nullptr != FeatureEnterTO)   /*Start a timeout timer to exit the feature*/
+                                {
+                                    xTimerStart(FeatureEnterTO,10);
+                                }
+                            }                        
                         }
                     }
                     else
                     {
-                        if(nullptr != FeatureEnterTO)/*Restart the timeout timer if any key pressed*/
+                        if(RcvKey.Key == enKey_OK && RcvKey.Type == enKey_DoubleClick)
                         {
-                            if( xTimerIsTimerActive(FeatureEnterTO))
+                            stMainSts.enEnteredFeature = Feature_None;
+                            if(nullptr != FeatureEnterTO) /*Stop the timeout timer*/
                             {
-                                xTimerReset(FeatureEnterTO,10);
-                            }                            
+                                if( xTimerIsTimerActive(FeatureEnterTO))
+                                {
+                                    xTimerStop(FeatureEnterTO,10);
+                                }
+                            }
                         }
-                        dot2d::EventButton event(RcvKey.Key,(dot2d::EventButton::ButtonEventCode)RcvKey.Type);
-                        auto dispatcher = dot2d::Director::getInstance()->getEventDispatcher();
-                        dispatcher->dispatchEvent(&event);
+                        else
+                        {
+                            if(nullptr != FeatureEnterTO)/*Restart the timeout timer if any key pressed*/
+                            {
+                                if( xTimerIsTimerActive(FeatureEnterTO))
+                                {
+                                    xTimerReset(FeatureEnterTO,10);
+                                }                            
+                            }
+                            dot2d::EventButton event(RcvKey.Key,(dot2d::EventButton::ButtonEventCode)RcvKey.Type);
+                            auto dispatcher = dot2d::Director::getInstance()->getEventDispatcher();
+                            dispatcher->dispatchEvent(&event);
+                        }
                     }
                 }
+                
                 RcvKey.Key = enKey_Nokey;
                 RcvKey.Type = enKey_NoAct;
             }

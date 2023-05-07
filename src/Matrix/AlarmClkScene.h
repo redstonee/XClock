@@ -7,6 +7,11 @@
 #include "../main.h"
 
 NS_DT_BEGIN
+#define AnimationHourTag      (1)
+#define AnimationMinTag       (2)
+#define AnimationPtTag        (3)
+#define AnimationWeekTag      (4)
+#define AnimationSWTag        (5)
 
 typedef enum
 {
@@ -34,6 +39,7 @@ class AlarmClkLayer : public Layer
 protected:
 	uint8_t u8CurrentAlarm = 0;
 	uint8_t u8TotalAlarmNum = 0;
+	FrameSprite*ClkIcon = nullptr;
     TextSprite *Hour = nullptr;
     SpriteCanvas *Hourcanvas = nullptr;
     TextSprite *Min = nullptr;
@@ -72,6 +78,10 @@ public:
 
 	void StateSetWeekHandle(int8_t,int8_t);
 
+	void SwitchAlarmAnimation(tstAlarmClk OldAlarm,bool boUp);
+
+	void ClearAnimationTmp(void);
+
 	void StateDisShow(void);
 
 	void StateSetMinShow(void);
@@ -80,7 +90,7 @@ public:
 
 	void StateSetWeekShow(void);
 
-	void DrawWeek(void);
+	void DrawWeek(uint8_t week, tenAlarmState AlarmState,SpriteCanvas *weekcanvas,uint8_t settingidx);
 
 	void AlarmStateMachine(int8_t,int8_t);
 

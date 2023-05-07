@@ -6,6 +6,7 @@
 #include "../main.h"
 #include "Palette.h"
 #include "../Key/ClockKey.h"
+#include "../RTC/AlarmClk.h"
 
 NS_DT_BEGIN
 
@@ -180,10 +181,22 @@ void TimeLayer::UpdateColor(int8_t key_type, int8_t key_event)
     timecolor.r = ColorFromPat.r;
     timecolor.g = ColorFromPat.g;
     timecolor.b = ColorFromPat.b;
-    ColorFromPat = ColorFromPalette( currentPalette, ColorIndex+WeekColorIdxOffset);
-    weekcolor.r = ColorFromPat.r;
-    weekcolor.g = ColorFromPat.g;
-    weekcolor.b = ColorFromPat.b;
+    // ColorFromPat = ColorFromPalette( currentPalette, ColorIndex+WeekColorIdxOffset);
+    // weekcolor.r = ColorFromPat.r;
+    // weekcolor.g = ColorFromPat.g;
+    // weekcolor.b = ColorFromPat.b;
+    if((timecolor.r > 235) && (timecolor.g > 235) && (timecolor.b > 235))
+    {
+        weekcolor.r = 0;
+        weekcolor.g = 255;
+        weekcolor.b = 0;
+    }
+    else
+    {
+        weekcolor.r = 100;
+        weekcolor.g = 100;
+        weekcolor.b = 100;
+    }
     Serial.printf("Color r:%d g:%d b%d \n",timecolor.r, timecolor.g , timecolor.b);
     Hour1canvas->setTextColor(timecolor);
     Hour2canvas->setTextColor(timecolor);
@@ -224,6 +237,8 @@ void TimeLayer::SendSettingTime(tst3078Time* settingtime)
 void TimeLayer::DrawWeek(uint8_t week)
 {
     Serial.printf("week %d \n",week);
+    DTRGB inactivecol = timecolor;
+    inactivecol.fadeToBlackBy(200);
     if(Weekcanvas != nullptr)
     {
         for(uint8_t i = 0;i < 7;i++)
@@ -232,22 +247,22 @@ void TimeLayer::DrawWeek(uint8_t week)
             {
                 if(i != (week-1))
                 {
-                    Weekcanvas->drawLine(i*3,0,i*3 + 1,0,timecolor);
+                    Weekcanvas->drawLine(i*3,0,i*3 + 1,0,inactivecol);
                 }
                 else
                 {
-                    Weekcanvas->drawLine(i*3,0,i*3 + 1,0,weekcolor);
+                    Weekcanvas->drawLine(i*3,0,i*3 + 1,0,timecolor);
                 }
             }
             else
             {
                 if(i != 6)
                 {
-                    Weekcanvas->drawLine(i*3,0,i*3 + 1,0,timecolor);
+                    Weekcanvas->drawLine(i*3,0,i*3 + 1,0,inactivecol);
                 }
                 else
                 {
-                    Weekcanvas->drawLine(6*3,0,6*3 + 1,0,weekcolor);
+                    Weekcanvas->drawLine(6*3,0,6*3 + 1,0,timecolor);
                 }
             }
         }
@@ -279,10 +294,20 @@ bool TimeLayer::initLayer()
     timecolor.r = ColorFromPat.r;
     timecolor.g = ColorFromPat.g;
     timecolor.b = ColorFromPat.b;
-    ColorFromPat = ColorFromPalette( currentPalette, ColorIndex+WeekColorIdxOffset);
-    weekcolor.r = ColorFromPat.r;
-    weekcolor.g = ColorFromPat.g;
-    weekcolor.b = ColorFromPat.b;
+    //ColorFromPat = ColorFromPalette( currentPalette, ColorIndex+WeekColorIdxOffset);
+    if((timecolor.r > 235) && (timecolor.g > 235) && (timecolor.b > 235))
+    {
+        weekcolor.r = 0;
+        weekcolor.g = 255;
+        weekcolor.b = 0;
+    }
+    else
+    {
+        weekcolor.r = 255;
+        weekcolor.g = 255;
+        weekcolor.b = 255;
+    }
+    
     Hour_1 = TextSprite::create(Size(4,5),Size(4,5),timecolor,hour1,TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     Hour1canvas = Hour_1->getSpriteCanvas();
     Hour_2 = TextSprite::create(Size(4,5),Size(4,5),timecolor,hour2,TextSprite::TextAlign::TextAlignCenter,&TomThumb);
@@ -295,17 +320,22 @@ bool TimeLayer::initLayer()
     Min2canvas = Min_2->getSpriteCanvas();
     Week = CanvasSprite::create(21,1);
     Weekcanvas = Week->getSpriteCanvas();
+    AlarmIcon = CanvasSprite::create(1,8);
+    AlarmIconCanvas = AlarmIcon->getSpriteCanvas();
+    AlarmIcon->setPosition(31,0);
+    AlarmIconCanvas->drawLine(0,0,0,7,DTRGB(0,255,0));
+    AlarmIcon->setVisible(false);    
     Hour_1->setTransparent(true);
-    Hour_1->setPosition(10,1);
+    Hour_1->setPosition(11,1);
     Hour_2->setTransparent(true);    
-    Hour_2->setPosition(14,1);
+    Hour_2->setPosition(15,1);
     MinPt->setTransparent(true);
-    MinPt->setPosition(18,1);
+    MinPt->setPosition(19,1);
     MinPt->runAction(RepeatForever::create(Blink::create(1,1)));
     Min_1->setTransparent(true);
-    Min_1->setPosition(20,1);
+    Min_1->setPosition(21,1);
     Min_2->setTransparent(true);
-    Min_2->setPosition(24,1);
+    Min_2->setPosition(25,1);
     Week->setPosition(10,7);
     DrawWeek(ClockTime.u8Week);
     this->addChild(Weather);
@@ -314,8 +344,8 @@ bool TimeLayer::initLayer()
     this->addChild(MinPt);
     this->addChild(Min_1);
     this->addChild(Min_2);
-    this->addChild(Week);
-    Week->setLocalZOrder(3);
+    this->addChild(Week,3);
+    this->addChild(AlarmIcon);  
     this->scheduleUpdate();
     this->schedule(DT_SCHEDULE_SELECTOR(TimeLayer::TimeUpdate),0.1);
     //MoveBy *moveBy1 = MoveBy::create(0.5,Vec2(0,5));
@@ -326,26 +356,86 @@ bool TimeLayer::initLayer()
     return true;
 }
 
-void TimeLayer::DigitalSwitchAnimation(TextSprite* OldDigitalSprt,uint8_t OldDigital, uint8_t NewDigital)
+void TimeLayer::CleanUpAnimationTmp(void)
+{
+    auto Hour1SprtTmp = getChildByTag(Hour1AniTmpTag);
+    if(Hour1SprtTmp)
+    {
+        if(0 == Hour1SprtTmp->getNumberOfRunningActions())
+        {
+            removeChild(Hour1SprtTmp);
+        }
+    }
+    auto Hour2SprtTmp = getChildByTag(Hour2AniTmpTag);
+    if(Hour2SprtTmp)
+    {
+        if(0 == Hour2SprtTmp->getNumberOfRunningActions())
+        {
+            removeChild(Hour2SprtTmp);
+        }
+    }
+    auto Min1SprtTmp = getChildByTag(Min1AniTmpTag);
+    if(Min1SprtTmp)
+    {
+        if(0 == Min1SprtTmp->getNumberOfRunningActions())
+        {
+            removeChild(Min1SprtTmp);
+        }
+    }
+    auto Min2SprtTmp = getChildByTag(Min2AniTmpTag);
+    if(Min2SprtTmp)
+    {
+        if(0 == Min2SprtTmp->getNumberOfRunningActions())
+        {
+            removeChild(Min2SprtTmp);
+        }
+    }
+}
+
+void TimeLayer::DigitalSwitchAnimation(TextSprite* OldDigitalSprt,uint8_t OldDigital, uint8_t NewDigital, int tmpTag)
 {
     TextSprite * SprtTmp = TextSprite::create(Size(4,5),Size(4,5),timecolor,std::to_string(OldDigital),TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     SprtTmp->setPosition(OldDigitalSprt->getPositionX(),OldDigitalSprt->getPositionY());
-    this->addChild(SprtTmp);
-    SprtTmp->setLocalZOrder(0);
+    this->addChild(SprtTmp,0,tmpTag);
     OldDigitalSprt->setPosition(OldDigitalSprt->getPositionX(),OldDigitalSprt->getPositionY() - 7);
     SpriteCanvas *OldCanvas = OldDigitalSprt->getSpriteCanvas();
     OldCanvas->canvasReset();
     OldCanvas->print(std::to_string(NewDigital).c_str());
     MoveBy* SwitchMove1 = MoveBy::create(0.5,Vec2(0,7));
     MoveBy* SwitchMove2 = MoveBy::create(0.5,Vec2(0,7));
-    SprtTmp->runAction(SwitchMove1);
+    Sequence *Seq = Sequence::createWithTwoActions(SwitchMove1, CallFunc::create(DT_CALLBACK_0(TimeLayer::CleanUpAnimationTmp,this)));
+    //Serial.printf("TmpSprt %x \n",SprtTmp);
+    SprtTmp->runAction(Seq);
+    //SprtTmp->runAction(SwitchMove1);
     OldDigitalSprt->runAction(SwitchMove2);
+}
+
+bool boActiveAlarm(void)
+{
+    bool res = false;
+    uint8_t AlarmNum = u8GetAlarmClkNum();
+    tstAlarmClk AlarmClkTmp = {0,};
+    if(AlarmNum)
+    {
+        for(uint8_t i = 0; i < AlarmNum; i++)
+        {
+            AlarmClkTmp = stGetAlarmClk(i);
+            if(AlarmClkTmp.stAlarmSts == enAlarmSts_Alarming)
+            {
+                res = true;
+                break;
+            }  
+        }
+    }
+    return res;    
 }
 
 void TimeLayer::StateTimeDisShow(void)
 {
     tst3078Time time = stGetCurTime();
     bool boReEnterflag = false;
+    static bool boPreAlarmActive = false;
+    bool boAlarmActive = boActiveAlarm();
     if(0 != Week->getNumberOfRunningActions())
     {
         Week->stopAllActions();
@@ -378,6 +468,22 @@ void TimeLayer::StateTimeDisShow(void)
         Week->setVisible(true);
         MinPt->setVisible(true);
     }
+    if(boPreAlarmActive != boAlarmActive)
+    {
+        if(boAlarmActive)
+        {
+            AlarmIcon->runAction(RepeatForever::create(Blink::create(1,1)));
+            AlarmIcon->setVisible(true);   
+            Serial.printf("Alarming \n");        
+        }
+        else
+        {
+            AlarmIcon->stopAllActions();
+            AlarmIcon->setVisible(false);   
+            Serial.printf("Alarming disable \n");
+        }
+    }
+
     if(time.u8Hour != ClockTime.u8Hour)
     {
         // std::string hour1 = std::to_string((time.u8Hour&0x70)>>4);
@@ -388,11 +494,11 @@ void TimeLayer::StateTimeDisShow(void)
         // Hour2canvas->print(hour2.c_str());
         if(((time.u8Hour&0x70)>>4) != ((ClockTime.u8Hour&0x70)>>4))
         {
-            DigitalSwitchAnimation(Min_1,((ClockTime.u8Hour&0x70)>>4),((time.u8Hour&0x70)>>4));
+            DigitalSwitchAnimation(Hour_1,((ClockTime.u8Hour&0x70)>>4),((time.u8Hour&0x70)>>4),Hour1AniTmpTag);
         }
         if((time.u8Hour&0x0f) != (ClockTime.u8Hour&0x0f))
         {
-            DigitalSwitchAnimation(Min_2,(ClockTime.u8Hour&0x0f),(time.u8Hour&0x0f));
+            DigitalSwitchAnimation(Hour_2,(ClockTime.u8Hour&0x0f),(time.u8Hour&0x0f),Hour2AniTmpTag);
         }
     }
     if(time.u8Min != ClockTime.u8Min)
@@ -405,11 +511,11 @@ void TimeLayer::StateTimeDisShow(void)
         // Min2canvas->print(min2.c_str());
         if(((time.u8Min&0xf0)>>4) != ((ClockTime.u8Min&0xf0)>>4))
         {
-            DigitalSwitchAnimation(Min_1,((ClockTime.u8Min&0xf0)>>4),((time.u8Min&0xf0)>>4));
+            DigitalSwitchAnimation(Min_1,((ClockTime.u8Min&0xf0)>>4),((time.u8Min&0xf0)>>4),Min1AniTmpTag);
         }
         if((time.u8Min&0x0f) != (ClockTime.u8Min&0x0f))
         {
-            DigitalSwitchAnimation(Min_2,(ClockTime.u8Min&0x0f),(time.u8Min&0x0f));
+            DigitalSwitchAnimation(Min_2,(ClockTime.u8Min&0x0f),(time.u8Min&0x0f),Min2AniTmpTag);
         }
     }
     if(time.u8Week != ClockTime.u8Week)
@@ -418,6 +524,7 @@ void TimeLayer::StateTimeDisShow(void)
         DrawWeek(time.u8Week);
     }
     ClockTime = time;
+    boPreAlarmActive = boAlarmActive;
 }
 
 void TimeLayer::StateSetMinShow(void)

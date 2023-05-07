@@ -37,9 +37,15 @@ void ClockKey::vLongPressStartLeft() {
 
 // This function will be called often, while the button1 is pressed for a long time.
 void ClockKey::vLongPressLeft() {
-  tstKeyEvent key={enKey_Left,enKey_LongPress};
-  SendKeyToQ(&key);
-  Serial.println("Button Left longPress...");
+  static uint16_t u16LongPresDelay = 0;
+  if(++u16LongPresDelay >= DurLongPressDelay)
+  {
+    u16LongPresDelay = 0;
+    tstKeyEvent key={enKey_Left,enKey_LongPress};
+    SendKeyToQ(&key);
+    Serial.println("Button Left longPress...");
+  }
+  
 } // longPressLeft
 
 
@@ -79,9 +85,14 @@ void ClockKey::vLongPressStartRight() {
 
 void ClockKey::vLongPressRight() {
   //boReqSound(enSndID_Ding,1);
-  tstKeyEvent key={enKey_Right,enKey_LongPress};
-  SendKeyToQ(&key);
-  Serial.println("Button Right longPress...");
+  static uint16_t u16LongPresDelay = 0;
+  if(++u16LongPresDelay >= DurLongPressDelay)
+  {
+    u16LongPresDelay = 0;
+    tstKeyEvent key={enKey_Right,enKey_LongPress};
+    SendKeyToQ(&key);
+    Serial.println("Button Right longPress...");
+  }
 } // longPressRight
 
 void ClockKey::vLongPressStopRight() {
@@ -118,9 +129,13 @@ void ClockKey::vLongPressStartOk() {
 
 void ClockKey::vLongPressOk() {
   //boReqSound(enSndID_Ding,1);
-  tstKeyEvent key={enKey_OK,enKey_LongPress};
-  SendKeyToQ(&key);
-  Serial.println("Button Ok longPress...");
+  static uint16_t u16LongPresDelay = 0;
+  if(++u16LongPresDelay >= DurLongPressDelay)
+  {
+    tstKeyEvent key={enKey_OK,enKey_LongPress};
+    SendKeyToQ(&key);
+    Serial.println("Button Ok longPress...");
+  }
 } // longPressOk
 
 void ClockKey::vLongPressStopOk() {

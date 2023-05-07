@@ -6,6 +6,12 @@
 #include "FastLED.h"
 NS_DT_BEGIN
 
+#define Hour1AniTmpTag  (1)
+#define Hour2AniTmpTag  (2)
+#define Min1AniTmpTag   (3)
+#define Min2AniTmpTag   (4)
+#define AlarmIconTag    (5)
+
 typedef enum
 {
 	State_TimeDis = 0,
@@ -48,6 +54,8 @@ protected:
     SpriteCanvas *Sec2canvas = nullptr;
 	CanvasSprite *Week = nullptr;
 	SpriteCanvas *Weekcanvas = nullptr;
+	CanvasSprite *AlarmIcon = nullptr;
+	SpriteCanvas *AlarmIconCanvas = nullptr;
     tst3078Time ClockTime;
 	tst3078Time ClockTimeSetting;
 	QueueHandle_t TimeSettingQ;
@@ -91,7 +99,9 @@ public:
 
 	void StateSetWeekShow(void);
 
-	void DigitalSwitchAnimation(TextSprite* OldDigitalSprt,uint8_t OldDigital, uint8_t NewDigital);
+	void DigitalSwitchAnimation(TextSprite* OldDigitalSprt,uint8_t OldDigital, uint8_t NewDigital, int tmpTag);
+
+	void CleanUpAnimationTmp(void);
 };
 
 const unsigned char icon_sun[] PROGMEM  = {

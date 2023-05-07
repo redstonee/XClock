@@ -64,17 +64,24 @@ tstAlarmClk stGetAlarmClk(uint8_t index)
 bool boAddAlarmClk(tstAlarmClk *alarmclk)
 {
     bool res = true;
-    uint8_t index = AlarmClkList.size();
-    tstAlarmClk alarm_tmp = *alarmclk;    
-    Preferences pref;
-    pref.begin(PrefKey_AlarmNameSpace);
-    pref.putUChar((PrefKey_AlarmMin + std::to_string(index)).c_str(),alarm_tmp.u8Min);  
-    pref.putUChar((PrefKey_AlarmHour + std::to_string(index)).c_str(),alarm_tmp.u8Hour);  
-    pref.putUChar((PrefKey_AlarmWeek + std::to_string(index)).c_str(),alarm_tmp.u8Week);
-    pref.putBool((PrefKey_AlarmActive + std::to_string(index)).c_str(),alarm_tmp.boActive);
-    pref.putUChar(PrefKey_AlarmNum,index+1);
-    pref.end();
-    AlarmClkList.push_back(alarm_tmp);
+    if(AlarmClkList.size() < 255)
+    {
+        uint8_t index = AlarmClkList.size();
+        tstAlarmClk alarm_tmp = *alarmclk;    
+        Preferences pref;
+        pref.begin(PrefKey_AlarmNameSpace);
+        pref.putUChar((PrefKey_AlarmMin + std::to_string(index)).c_str(),alarm_tmp.u8Min);  
+        pref.putUChar((PrefKey_AlarmHour + std::to_string(index)).c_str(),alarm_tmp.u8Hour);  
+        pref.putUChar((PrefKey_AlarmWeek + std::to_string(index)).c_str(),alarm_tmp.u8Week);
+        pref.putBool((PrefKey_AlarmActive + std::to_string(index)).c_str(),alarm_tmp.boActive);
+        pref.putUChar(PrefKey_AlarmNum,index+1);
+        pref.end();
+        AlarmClkList.push_back(alarm_tmp);
+    }
+    else
+    {
+        res = false;
+    }
     return res;
 }
 

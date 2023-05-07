@@ -12,7 +12,7 @@
 //换场时间
 #define SCENE_TRANSITION_DURATION  (0.5f)
 
-#define FeatureTimeout  (portTICK_PERIOD_MS*1000*10)
+#define FeatureTimeout  (portTICK_PERIOD_MS*1000*30)
 
 typedef enum
 {
