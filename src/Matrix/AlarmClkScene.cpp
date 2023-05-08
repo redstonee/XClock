@@ -208,7 +208,25 @@ void AlarmClkLayer::ClearAnimationTmp(void)
 
 void AlarmClkLayer::SwitchAlarmAnimation(tstAlarmClk OldAlarm,bool boUp)
 {
-
+    DTRGB clkcolor;
+    if(OldAlarm.boActive)
+    {
+        clkcolor.r = 0;
+        clkcolor.g = 255;
+        clkcolor.b = 0;
+    }
+    else
+    {
+        clkcolor.r = 255;
+        clkcolor.g = 255;
+        clkcolor.b = 255;
+    } 
+    TextSprite* HourTmp = TextSprite::create(Size(8,5),Size(8,5),clkcolor,(std::to_string(OldAlarm.u8Hour/10) + std::to_string(OldAlarm.u8Hour%10)),TextSprite::TextAlign::TextAlignCenter,&TomThumb);
+    TextSprite* TimePtTmp = TextSprite::create(Size(2,5),Size(2,5),clkcolor,":",TextSprite::TextAlign::TextAlignCenter,&TomThumb);
+    TextSprite* MinTmp = TextSprite::create(Size(8,5),Size(8,5),clkcolor,(std::to_string(OldAlarm.u8Min/10) + std::to_string(OldAlarm.u8Min%10)),TextSprite::TextAlign::TextAlignCenter,&TomThumb);
+    TextSprite* WeekTmp = CanvasSprite::create(21,2);
+    DrawWeek(OldAlarm.u8Week,enAlarmState,WeekTmp->getSpriteCanvas(),SettingWeekIdx);
+    CanvasSprite* SwitchTmp = CanvasSprite::create(6,2);
 }
 
 void AlarmClkLayer::StateDisShow(void)
