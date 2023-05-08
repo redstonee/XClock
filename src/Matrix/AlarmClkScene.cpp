@@ -69,7 +69,7 @@ bool AlarmClkLayer::initLayer()
         clkcolor.b = 255;
     }    
     std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);
-    Hour = TextSprite::create(Size(8,5),Size(8,5),clkcolor,hour,TextSprite::TextAlign::TextAlignCenter,&TomThumb);
+    Hour = TextSprite::create(Size(8,5),Size(8,5),clkcolor,hour,TextSprite::TextAlign::TextAlignRight,&TomThumb);
     Hourcanvas = Hour->getSpriteCanvas();
     TimePt = TextSprite::create(Size(2,5),Size(2,5),clkcolor,":",TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     TimePtcanvas = TimePt->getSpriteCanvas();
@@ -79,27 +79,27 @@ bool AlarmClkLayer::initLayer()
     Week = CanvasSprite::create(21,2);
     Weekcanvas = Week->getSpriteCanvas();
     DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
-    Switch = CanvasSprite::create(6,2);
-    Switchcanvas = Switch->getSpriteCanvas();
-    Switchcanvas->writeFillRect(0,0,2,2,DTRGB(255,0,0));
-    Switchcanvas->writeFillRect(2,0,2,2,DTRGB(255,255,255));
-    Switchcanvas->writeFillRect(4,0,2,2,DTRGB(0,255,0));
+    // Switch = CanvasSprite::create(6,2);
+    // Switchcanvas = Switch->getSpriteCanvas();
+    // Switchcanvas->writeFillRect(0,0,2,2,DTRGB(255,0,0));
+    // Switchcanvas->writeFillRect(2,0,2,2,DTRGB(255,255,255));
+    // Switchcanvas->writeFillRect(4,0,2,2,DTRGB(0,255,0));
     Week->setPosition(10,6);
     Hour->setTransparent(false);
-    Hour->setPosition(11,1);
+    Hour->setPosition(10,1);
     TimePt->setTransparent(false);
     TimePt->setPosition(18,1);
     Min->setTransparent(false);    
     Min->setPosition(20,1);
-    if(AlarmTime.boActive)
-    {
-        Switch->setPosition(26,3);
-    }
-    else
-    {
-        Switch->setPosition(28,3);
-    }    
-    this->addChild(Switch);
+    // if(AlarmTime.boActive)
+    // {
+    //     Switch->setPosition(26,3);
+    // }
+    // else
+    // {
+    //     Switch->setPosition(28,3);
+    // }    
+    // this->addChild(Switch);
     this->addChild(ClkIcon);
     this->addChild(Hour);
     this->addChild(TimePt);
@@ -202,13 +202,48 @@ void AlarmClkLayer::DrawWeek(uint8_t week, tenAlarmState AlarmState,SpriteCanvas
 
 void AlarmClkLayer::ClearAnimationTmp(void)
 {
+    auto HourSprtTmp = getChildByTag(AnimationHourTag);
+    if(HourSprtTmp)
+    {
+        if(0 == HourSprtTmp->getNumberOfRunningActions())
+        {
+            removeChild(HourSprtTmp);
+        }
+    }
+    auto PtSprtTmp = getChildByTag(AnimationPtTag);
+    if(PtSprtTmp)
+    {
+        if(0 == PtSprtTmp->getNumberOfRunningActions())
+        {
+            removeChild(PtSprtTmp);
+        }
+    }
 
+    auto MinSprtTmp = getChildByTag(AnimationMinTag);
+    if(MinSprtTmp)
+    {
+        if(0 == MinSprtTmp->getNumberOfRunningActions())
+        {
+            removeChild(MinSprtTmp);
+        }
+    }
+
+    auto WeekSprtTmp = getChildByTag(AnimationWeekTag);
+    if(WeekSprtTmp)
+    {
+        if(0 == WeekSprtTmp->getNumberOfRunningActions())
+        {
+            removeChild(WeekSprtTmp);
+        }
+    }
+    
 }
 
 
 void AlarmClkLayer::SwitchAlarmAnimation(tstAlarmClk OldAlarm,bool boUp)
 {
     DTRGB clkcolor;
+    DTRGB newclkcolor;
     if(OldAlarm.boActive)
     {
         clkcolor.r = 0;
@@ -221,12 +256,86 @@ void AlarmClkLayer::SwitchAlarmAnimation(tstAlarmClk OldAlarm,bool boUp)
         clkcolor.g = 255;
         clkcolor.b = 255;
     } 
-    TextSprite* HourTmp = TextSprite::create(Size(8,5),Size(8,5),clkcolor,(std::to_string(OldAlarm.u8Hour/10) + std::to_string(OldAlarm.u8Hour%10)),TextSprite::TextAlign::TextAlignCenter,&TomThumb);
+    if(AlarmTime.boActive)
+    {
+        newclkcolor.r = 0;
+        newclkcolor.g = 255;
+        newclkcolor.b = 0;
+    }
+    else
+    {
+        newclkcolor.r = 255;
+        newclkcolor.g = 255;
+        newclkcolor.b = 255;
+    } 
+    TextSprite* HourTmp = TextSprite::create(Size(8,5),Size(8,5),clkcolor,(std::to_string(OldAlarm.u8Hour/10) + std::to_string(OldAlarm.u8Hour%10)),TextSprite::TextAlign::TextAlignRight,&TomThumb);
+    HourTmp->setPosition(10,1);
+    HourTmp->setTransparent(false);   
     TextSprite* TimePtTmp = TextSprite::create(Size(2,5),Size(2,5),clkcolor,":",TextSprite::TextAlign::TextAlignCenter,&TomThumb);
+    TimePtTmp->setPosition(18,1);
+    TimePtTmp->setTransparent(false);    
     TextSprite* MinTmp = TextSprite::create(Size(8,5),Size(8,5),clkcolor,(std::to_string(OldAlarm.u8Min/10) + std::to_string(OldAlarm.u8Min%10)),TextSprite::TextAlign::TextAlignCenter,&TomThumb);
-    TextSprite* WeekTmp = CanvasSprite::create(21,2);
-    DrawWeek(OldAlarm.u8Week,enAlarmState,WeekTmp->getSpriteCanvas(),SettingWeekIdx);
-    CanvasSprite* SwitchTmp = CanvasSprite::create(6,2);
+    MinTmp->setPosition(20,1);
+    MinTmp->setTransparent(false);    
+    CanvasSprite* WeekTmp = CanvasSprite::create(21,2);
+    WeekTmp->setPosition(10,6);
+    WeekTmp->setTransparent(false);
+    DrawWeek(OldAlarm.u8Week,enAlarmState,WeekTmp->getSpriteCanvas(),SettingWeekIdx); 
+    
+    this->addChild(HourTmp,0,AnimationHourTag);
+    this->addChild(TimePtTmp,0,AnimationPtTag);
+    this->addChild(MinTmp,0,AnimationMinTag);
+    this->addChild(WeekTmp,0,AnimationWeekTag);
+
+    std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);        
+    Hourcanvas->setTextColor(newclkcolor);
+    Hourcanvas->canvasReset();
+    Hourcanvas->print(hour.c_str());
+    
+    TimePtcanvas->setTextColor(newclkcolor);
+    TimePtcanvas->canvasReset();
+    TimePtcanvas->print(":");    
+    
+    std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
+    Mincanvas->setTextColor(newclkcolor);    
+    Mincanvas->canvasReset();
+    Mincanvas->print(min.c_str());    
+    
+    DrawWeek(AlarmTime.u8Week,enAlarmState,Week->getSpriteCanvas(),SettingWeekIdx);
+    
+    if(boUp)
+    {
+        Sequence *Seq = Sequence::createWithTwoActions(MoveBy::create(0.5,Vec2(0,-8)), CallFunc::create(DT_CALLBACK_0(AlarmClkLayer::ClearAnimationTmp,this)));   
+        HourTmp->runAction(MoveBy::create(0.5,Vec2(0,-8)));
+        TimePtTmp->runAction(MoveBy::create(0.5,Vec2(0,-8)));
+        MinTmp->runAction(MoveBy::create(0.5,Vec2(0,-8)));
+        WeekTmp->runAction(Seq); 
+        Hour->setPosition(10,9);
+        Hour->runAction(MoveBy::create(0.5,Vec2(0,-8)));
+        TimePt->setPosition(18,9);
+        TimePt->runAction(MoveBy::create(0.5,Vec2(0,-8)));  
+        Min->setPosition(20,9);
+        Min->runAction(MoveBy::create(0.5,Vec2(0,-8)));
+        Week->setPosition(10,14);
+        Week->runAction(MoveBy::create(0.5,Vec2(0,-8)));
+    }
+    else
+    {
+        Sequence *Seq = Sequence::createWithTwoActions(MoveBy::create(0.5,Vec2(0,8)), CallFunc::create(DT_CALLBACK_0(AlarmClkLayer::ClearAnimationTmp,this)));   
+        HourTmp->runAction(MoveBy::create(0.5,Vec2(0,8)));
+        TimePtTmp->runAction(MoveBy::create(0.5,Vec2(0,8)));
+        MinTmp->runAction(MoveBy::create(0.5,Vec2(0,8)));
+        WeekTmp->runAction(Seq); 
+        Hour->setPosition(10,-7);
+        Hour->runAction(MoveBy::create(0.5,Vec2(0,8)));
+        TimePt->setPosition(18,-7);
+        TimePt->runAction(MoveBy::create(0.5,Vec2(0,8)));  
+        Min->setPosition(20,-7);
+        Min->runAction(MoveBy::create(0.5,Vec2(0,8)));
+        Week->setPosition(10,-2);
+        Week->runAction(MoveBy::create(0.5,Vec2(0,8)));
+    } 
+    
 }
 
 void AlarmClkLayer::StateDisShow(void)
@@ -234,17 +343,6 @@ void AlarmClkLayer::StateDisShow(void)
     static tstAlarmClk oldAlarmClk= AlarmTime;
     static uint8_t oldAlarmidx = 0;
     DTRGB textcolor = {255,255,255};
-    if(oldAlarmidx != u8CurrentAlarm)
-    {
-        if(AlarmTime.boActive)
-        {
-            Switch->setPosition(26,3);
-        }
-        else
-        {
-            Switch->setPosition(28,3);
-        }  
-    }
     if(oldAlarmClk.boActive != AlarmTime.boActive)
     {
         if(AlarmTime.boActive)
@@ -253,46 +351,51 @@ void AlarmClkLayer::StateDisShow(void)
             textcolor.g = 255;
             textcolor.b = 0;
             ClkIcon->setSpriteFrame(SpriteFrame::create(icon_ClockActive,sizeof(icon_ClockActive),BMP_GIF));
-            MoveBy *Move = MoveBy::create(0.1,Vec2(-2,0));
-            Switch->runAction(Move);        
+            // MoveBy *Move = MoveBy::create(0.1,Vec2(-2,0));
+            // Switch->runAction(Move);        
         }
         else
         {
             ClkIcon->setSpriteFrame(SpriteFrame::create(icon_ClockInactive,sizeof(icon_ClockInactive),BMP_BMP));
-            MoveBy *Move = MoveBy::create(0.1,Vec2(2,0));
-            Switch->runAction(Move);
+            // MoveBy *Move = MoveBy::create(0.1,Vec2(2,0));
+            // Switch->runAction(Move);
+        }
+    } 
+    
+    if(oldAlarmidx != u8CurrentAlarm)
+    {
+        if(oldAlarmidx < u8CurrentAlarm)
+        {
+            SwitchAlarmAnimation(oldAlarmClk,true);
+        }
+        else
+        {
+            SwitchAlarmAnimation(oldAlarmClk,false);
         }
     }
-    
-    if(0 != Hour->getNumberOfRunningActions())
+    else
     {
-        Hour->stopAllActions();
-        Hour->setVisible(true);
-    }
-    if(0 != Min->getNumberOfRunningActions())
-    {
-        Min->stopAllActions();
-        Min->setVisible(true);
-    }
-    if(AlarmTime.u8Hour != oldAlarmClk.u8Hour || AlarmTime.boActive != oldAlarmClk.boActive)
-    {
-        std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);        
-        Hourcanvas->setTextColor(textcolor);
-        Hourcanvas->canvasReset();
-        Hourcanvas->print(hour.c_str());
-        TimePtcanvas->setTextColor(textcolor);
-        TimePtcanvas->canvasReset();
-        TimePtcanvas->print(":");
-    }
-    if(AlarmTime.u8Min != oldAlarmClk.u8Min || AlarmTime.boActive != oldAlarmClk.boActive)
-    {
-        Mincanvas->setTextColor(textcolor);
-        std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
-        Mincanvas->canvasReset();
-        Mincanvas->print(min.c_str());
-    }
+        if(AlarmTime.u8Hour != oldAlarmClk.u8Hour || AlarmTime.boActive != oldAlarmClk.boActive)
+        {
+            std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);        
+            Hourcanvas->setTextColor(textcolor);
+            Hourcanvas->canvasReset();
+            Hourcanvas->print(hour.c_str());
+            TimePtcanvas->setTextColor(textcolor);
+            TimePtcanvas->canvasReset();
+            TimePtcanvas->print(":");
+        }
+        if(AlarmTime.u8Min != oldAlarmClk.u8Min || AlarmTime.boActive != oldAlarmClk.boActive)
+        {
+            Mincanvas->setTextColor(textcolor);
+            std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
+            Mincanvas->canvasReset();
+            Mincanvas->print(min.c_str());
+        }
 
-    DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
+        DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
+    }
+    
 
     oldAlarmClk = AlarmTime;
     oldAlarmidx = u8CurrentAlarm;
@@ -386,10 +489,11 @@ void AlarmClkLayer::StateSetWeekShow(void)
     //     Mincanvas->canvasReset();
     //     Mincanvas->print(min.c_str());
     // }
-    if((AlarmTime.u8Week != oldAlarmClk.u8Week) || (oldSettingWeek != SettingWeekIdx))
-    {
-        DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
-    }
+    // if((AlarmTime.u8Week != oldAlarmClk.u8Week) || (oldSettingWeek != SettingWeekIdx))
+    // {
+    //     DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
+    // }
+    DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
     oldAlarmClk = AlarmTime;
     oldSettingWeek = SettingWeekIdx;
 }
@@ -450,14 +554,6 @@ void AlarmClkLayer::StateDisHandle(int8_t key_type, int8_t key_event)
                 u8CurrentAlarm = 0;
             }
             AlarmTime = stGetAlarmClk(u8CurrentAlarm);
-            if(AlarmTime.boActive)
-            {
-                Switch->setPosition(26,3);
-            }
-            else
-            {
-                Switch->setPosition(28,3);
-            }  
         }
         else if(enKey_DoubleClick == key_event)//disable the alarm clock
         {

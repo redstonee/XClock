@@ -48,8 +48,9 @@ protected:
 	SpriteCanvas *TimePtcanvas = nullptr;
     CanvasSprite *Week = nullptr;
 	SpriteCanvas *Weekcanvas = nullptr;
-	CanvasSprite *Switch = nullptr;
-	SpriteCanvas *Switchcanvas = nullptr;
+	// FrameSprite *SwitchIcon = nullptr;
+	// CanvasSprite *Switch = nullptr;
+	// SpriteCanvas *Switchcanvas = nullptr;
 	uint8_t SettingWeekIdx = 0;
     tstAlarmClk AlarmTime;
 	tstAlarmClk AlarmTimeSetting;
