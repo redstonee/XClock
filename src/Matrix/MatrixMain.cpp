@@ -7,6 +7,7 @@
 #include "CalendarScene.h"
 #include "AlarmClkScene.h"
 #include "BatteryScene.h"
+#include "TimerScene.h"
 #include "FFT.h"
 #include "../Sound/Sound.h"
 //#include "Dot2D/math/dtMath.h"
@@ -67,7 +68,7 @@ dot2d::Scene* GetSceneByIdx(uint8_t idx)
     switch(idx)
     {
         case Feature_Timer:
-            TgtScene = dot2d::ClockScene::create();
+            TgtScene = dot2d::TimerScene::create();
             break;
         case Feature_CountDown:
             TgtScene = dot2d::BattScene::create();
