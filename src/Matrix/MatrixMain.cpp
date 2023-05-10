@@ -183,7 +183,7 @@ void vMatrixMain(void *param)
     tstKeyEvent RcvKey = {enKey_Nokey,enKey_NoAct};
     for(;;)
     {
-        vTaskDelay(25);
+        vTaskDelay(5);
         vAlarmTask();
         if(pKeyRcvQueue != nullptr)
         {
@@ -284,7 +284,7 @@ void vMatrixInit(QueueHandle_t rcvQ)
   //----------------初始化Dot2d引擎及渲染画布----------------
   director = dot2d::Director::getInstance();                      //获取导演对象
   director->setDelegate(new MainDelegate());                      //设置导演代理
-  director->setFramesPerSecond(20);                               //设置帧速率
+  director->setFramesPerSecond(30);                               //设置帧速率
   director->initDotCanvas(MATRIX_WIDTH,MATRIX_HEIGHT);            //初始化导演画布
   //director->runWithScene(dot2d::Matrix::create());
   director->runWithScene(dot2d::ClockScene::create());

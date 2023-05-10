@@ -1,6 +1,6 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
-
+#include <Arduino.h>
 #include "Dot2D/dot2d.h"
 
 NS_DT_BEGIN
@@ -21,8 +21,8 @@ public:
 class TimerLayer : public Layer
 {
 protected:
-    TextSprite *Hour = nullptr;
-    SpriteCanvas *Hourcanvas = nullptr;
+    TextSprite *MSec = nullptr;
+    SpriteCanvas *MSeccanvas = nullptr;
 	TextSprite *TimePt1 = nullptr;
 	SpriteCanvas *TimePt1canvas = nullptr;
     TextSprite *Min = nullptr;
