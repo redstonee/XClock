@@ -8,6 +8,7 @@
 #include "AlarmClkScene.h"
 #include "BatteryScene.h"
 #include "TimerScene.h"
+#include "CountDownTimer.h"
 #include "FFT.h"
 #include "../Sound/Sound.h"
 //#include "Dot2D/math/dtMath.h"
@@ -71,7 +72,7 @@ dot2d::Scene* GetSceneByIdx(uint8_t idx)
             TgtScene = dot2d::TimerScene::create();
             break;
         case Feature_CountDown:
-            TgtScene = dot2d::BattScene::create();
+            TgtScene = dot2d::CountDownScene::create();
             break;
         case Feature_AlarmClk:
             TgtScene = dot2d::AlarmClkScene::create();
@@ -90,9 +91,6 @@ dot2d::Scene* GetSceneByIdx(uint8_t idx)
             break;
         case Feature_Music:
             TgtScene = dot2d::FFT::create();
-            break;
-        case Feature_ScoreBoard:
-            TgtScene = dot2d::ClockScene::create();
             break;
         default:
             TgtScene = dot2d::ClockScene::create();

@@ -194,7 +194,7 @@ ClockKey::ClockKey()
 {
     // link the button 1 functions.
     ButtonLeft->attachClick(vClickLeft);
-    ButtonLeft->setClickTicks(100);
+    ButtonLeft->setClickTicks(150);
     ButtonLeft->attachDoubleClick(vDoubleClickLeft);
     ButtonLeft->attachLongPressStart(vLongPressStartLeft);
     ButtonLeft->attachLongPressStop(vLongPressStopLeft);
@@ -202,7 +202,7 @@ ClockKey::ClockKey()
 
     // link the button 2 functions.
     ButtonRight->attachClick(vClickRight);
-    ButtonRight->setClickTicks(100);
+    ButtonRight->setClickTicks(150);
     ButtonRight->attachDoubleClick(vDoubleClickRight);
     ButtonRight->attachLongPressStart(vLongPressStartRight);
     ButtonRight->attachLongPressStop(vLongPressStopRight);
@@ -210,7 +210,7 @@ ClockKey::ClockKey()
 
     // link the button 3 functions.
     ButtonOk->attachClick(vClickOk);
-    ButtonOk->setClickTicks(100);
+    ButtonOk->setClickTicks(150);
     ButtonOk->attachDoubleClick(vDoubleClickOk);
     ButtonOk->attachLongPressStart(vLongPressStartOk);
     ButtonOk->attachLongPressStop(vLongPressStopOk);
