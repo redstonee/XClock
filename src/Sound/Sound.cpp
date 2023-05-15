@@ -197,7 +197,7 @@ void vSoundInit(void)
         "Sound main task",   // Name of the task (for debugging)
         4000,            // Stack size (bytes)
         NULL,            // Parameter to pass
-        2,               // Task priority
+        3,               // Task priority
         NULL             // Task handle
     );
 }

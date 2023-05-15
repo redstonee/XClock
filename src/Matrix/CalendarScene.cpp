@@ -5,6 +5,7 @@
 #include "../RTC/SD3078.h"
 #include "../main.h"
 #include "FastLED.h"
+#include "Icon.h"
 #include "../Key/ClockKey.h"
 #include "Palette.h"
 

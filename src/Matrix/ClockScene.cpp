@@ -3,8 +3,10 @@
 #include "Dot2D/third/Picopixel.h"
 #include "Dot2D/third/TomThumb.h"
 #include "../RTC/SD3078.h"
+#include "../web/web.h"
 #include "../main.h"
 #include "Palette.h"
+#include "Icon.h"
 #include "../Key/ClockKey.h"
 #include "../RTC/AlarmClk.h"
 
@@ -23,6 +25,121 @@ bool ClockScene::init()
     return true;
 }
 
+const unsigned char* pGetWeatherIcon(uint8_t weathercode,uint32_t *Length)
+{
+    const unsigned char *point = nullptr;
+    /**https://seniverse.yuque.com/hyper_data/api_v3/yev2c3#M1KBK*/
+    switch(weathercode)
+    {
+        case 0:
+            point = icon_Sunny;
+            *Length = sizeof(icon_Sunny);
+            break;
+        case 1:
+            point = icon_Clear;
+            *Length = sizeof(icon_Clear);
+            break;
+        case 2:
+            point = icon_Sunny;
+            *Length = sizeof(icon_Sunny);
+            break;
+        case 3:
+            point = icon_Clear;
+            *Length = sizeof(icon_Clear);
+            break;
+        case 4:
+            point = icon_Cloudly;
+            *Length = sizeof(icon_Cloudly);
+            break;
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+            point = icon_PartCloudy;
+            *Length = sizeof(icon_PartCloudy);
+            break;
+        case 9:
+            point = icon_Overcase;
+            *Length = sizeof(icon_Overcase);
+            break;
+        case 10:
+            point = icon_Shower;
+            *Length = sizeof(icon_Shower);
+            break;
+        case 11:
+            point = icon_ThunderShower;
+            *Length = sizeof(icon_ThunderShower);
+            break;
+        case 12:
+            point = icon_ThunderShower;
+            *Length = sizeof(icon_ThunderShower);
+            break;
+        case 13:
+            point = icon_LightRain;
+            *Length = sizeof(icon_LightRain);
+            break;
+        case 14:
+            point = icon_HeavyRain;
+            *Length = sizeof(icon_HeavyRain);
+            break;
+        case 15:
+        case 16:
+        case 17:
+        case 18:
+            point = icon_Storm;
+            *Length = sizeof(icon_Storm);
+            break;
+        case 19:
+        case 20:
+            point = icon_HeavyRain;
+            *Length = sizeof(icon_HeavyRain);
+            break;
+        case 21:
+            point = icon_SnowFlurry;
+            *Length = sizeof(icon_SnowFlurry);
+            break;
+        case 22:
+        case 23:
+        case 24:
+        case 25:
+            point = icon_Snow;
+            *Length = sizeof(icon_Snow);
+            break;
+        case 26:
+        case 27:
+        case 28:
+        case 29:
+            point = icon_Sand;
+            *Length = sizeof(icon_Sand);
+            break;
+        case 30:
+        case 31:
+        case 32:
+        case 33:
+        case 34:
+            point = icon_Foggy;
+            *Length = sizeof(icon_Foggy);
+            break;
+        case 35:
+            point = icon_Sunny;
+            *Length = sizeof(icon_Sunny);
+            break;
+        case 36:
+            point = icon_Foggy;
+            *Length = sizeof(icon_Foggy);
+            break;
+        case 37:
+        case 38:
+            point = icon_Sunny;
+            *Length = sizeof(icon_Sunny);
+            break;
+        default:
+            point = icon_Sunny;
+            *Length = sizeof(icon_Sunny);
+            break;
+    }
+    return point;
+}
 
 void TimeLayer::BtnClickHandler(int8_t keyCode, Event* event)
 {
@@ -288,7 +405,13 @@ bool TimeLayer::initLayer()
     std::string hour2 = std::to_string((ClockTime.u8Hour&0x0f));
     std::string min1 = std::to_string((ClockTime.u8Min&0xf0)>>4);
     std::string min2 = std::to_string((ClockTime.u8Min&0x0f));
-    FrameSprite* Weather = FrameSprite::create(icon_cloudy,sizeof(icon_cloudy),BMP_GIF);
+    uint8_t WeatherCode = 0;
+    WeatherCode = (uint8_t)GetCurWeatherCode();
+    Serial.printf("Weather code:%d", WeatherCode);
+    uint32_t gifsize = 0;
+    const unsigned char *picon = pGetWeatherIcon(WeatherCode,&gifsize);
+    Serial.printf("Weather icon:%x", picon);
+    Weather = FrameSprite::create(picon,gifsize,BMP_GIF);
     Weather->setPosition(0,0);
     Weather->setAutoSwitch(true);
     timecolor.r = ColorFromPat.r;
@@ -397,12 +520,13 @@ void TimeLayer::DigitalSwitchAnimation(TextSprite* OldDigitalSprt,uint8_t OldDig
     TextSprite * SprtTmp = TextSprite::create(Size(4,5),Size(4,5),timecolor,std::to_string(OldDigital),TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     SprtTmp->setPosition(OldDigitalSprt->getPositionX(),OldDigitalSprt->getPositionY());
     this->addChild(SprtTmp,0,tmpTag);
-    OldDigitalSprt->setPosition(OldDigitalSprt->getPositionX(),OldDigitalSprt->getPositionY() - 7);
+    Vec2 TgtPos(OldDigitalSprt->getPositionX(), 1);
+    OldDigitalSprt->setPosition(OldDigitalSprt->getPositionX(),-6);
     SpriteCanvas *OldCanvas = OldDigitalSprt->getSpriteCanvas();
     OldCanvas->canvasReset();
     OldCanvas->print(std::to_string(NewDigital).c_str());
     MoveBy* SwitchMove1 = MoveBy::create(0.5,Vec2(0,7));
-    MoveBy* SwitchMove2 = MoveBy::create(0.5,Vec2(0,7));
+    MoveTo* SwitchMove2 = MoveTo::create(0.5,TgtPos);
     Sequence *Seq = Sequence::createWithTwoActions(SwitchMove1, CallFunc::create(DT_CALLBACK_0(TimeLayer::CleanUpAnimationTmp,this)));
     //Serial.printf("TmpSprt %x \n",SprtTmp);
     SprtTmp->runAction(Seq);
@@ -432,10 +556,19 @@ bool boActiveAlarm(void)
 
 void TimeLayer::StateTimeDisShow(void)
 {
+    static uint8_t WeatherCodeOld = 0;
+    uint8_t WeatherCode = 0;
+    //WeatherCode = (uint8_t)GetCurWeatherCode();
     tst3078Time time = stGetCurTime();
     bool boReEnterflag = false;
     static bool boPreAlarmActive = false;
     bool boAlarmActive = boActiveAlarm();
+    uint32_t gifsize = 0;
+    const unsigned char *picon = pGetWeatherIcon(WeatherCode,&gifsize);
+    if(WeatherCodeOld != WeatherCode)
+    {
+        Weather->setSpriteFrame(SpriteFrame::create(picon,gifsize,BMP_GIF));
+    }
     if(0 != Week->getNumberOfRunningActions())
     {
         Week->stopAllActions();
@@ -525,6 +658,7 @@ void TimeLayer::StateTimeDisShow(void)
     }
     ClockTime = time;
     boPreAlarmActive = boAlarmActive;
+    WeatherCodeOld = WeatherCode;
 }
 
 void TimeLayer::StateSetMinShow(void)
@@ -687,7 +821,7 @@ void TimeLayer::StateSetWeekShow(void)
 }
 
 void TimeLayer::TimeUpdate(float dt)
-{
+{   
     if(enTimests == State_TimeDis)
     {   
         StateTimeDisShow();

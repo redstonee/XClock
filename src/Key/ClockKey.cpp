@@ -161,7 +161,7 @@ void ClockKey::Start(){
     "Keyhandler main task",   // Name of the task (for debugging)
     1000,            // Stack size (bytes)
     NULL,            // Parameter to pass
-    1,               // Task priority
+    5,               // Task priority
     NULL             // Task handle
   );
 }

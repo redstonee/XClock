@@ -12,6 +12,7 @@
 #define BAT_FULL_LVL        (100)
 #define BAT_FILTER_CNT      (20)
 #define MIC_ADC_EN_PORT     (16)
+#define MIC_ADC_PORT        (4)
 #define AlarmRecallTimeout  (portTICK_PERIOD_MS*1000*60*2)
 typedef struct 
 {
@@ -27,6 +28,10 @@ QueueHandle_t pGetTimeSettingQ(void);
 
 bool RequestWakeup(void);
 
+bool boNeedWakeup(void);
+
 bool ClearWakeupRequest(void);
+
+void vSetWeatherFlag(bool flag);
 
 #endif

@@ -21,6 +21,7 @@ uint8_t SceneIndex = Feature_Clock;
 tstMainSts stMainSts = {Feature_Clock,Feature_None};
 bool boAlarming = false;
 TimerHandle_t FeatureEnterTO = nullptr;
+TimerHandle_t SleepTO = nullptr;
 //必须要实现的dot2d导演对象代理方法
 class MainDelegate : public dot2d::DirectorDelegate
 {
@@ -188,6 +189,7 @@ void vMatrixMain(void *param)
             xQueueReceive( pKeyRcvQueue,&( RcvKey ),( TickType_t ) 0 );
             if(RcvKey.Key != enKey_Nokey)
             {
+                xTimerReset(SleepTO,10);
                 if(boAlarming)
                 {
                     vAlarmClick();
@@ -265,6 +267,20 @@ void vFeatureTOCb(TimerHandle_t xTimer)
     } 
 }
 
+void vSleepTOCb(TimerHandle_t xTimer)
+{
+    Serial.printf("Sleep timeout\n");
+    if(stMainSts.enEnteredFeature == Feature_None && stMainSts.enMainSceneIdx != Feature_CountDown && stMainSts.enMainSceneIdx != Feature_Timer)
+    {
+        director->clearDotCanvas(dot2d::DTRGB(0,0,0));
+        ClearWakeupRequest();
+    }
+    else
+    {
+        xTimerReset(SleepTO,10);
+    }    
+}
+
 
 void vMatrixInit(QueueHandle_t rcvQ)
 {
@@ -280,6 +296,7 @@ void vMatrixInit(QueueHandle_t rcvQ)
   //sence1 = dot2d::ClockScene::create();
   //Serial.printf("SceneClk %x\n",&sence1);
   //----------------初始化Dot2d引擎及渲染画布----------------
+  RequestWakeup();
   director = dot2d::Director::getInstance();                      //获取导演对象
   director->setDelegate(new MainDelegate());                      //设置导演代理
   director->setFramesPerSecond(30);                               //设置帧速率
@@ -304,12 +321,32 @@ void vMatrixInit(QueueHandle_t rcvQ)
                      it expires. */
                      vFeatureTOCb
                    );
-  xTaskCreate(
+    SleepTO = xTimerCreate
+                   ( /* Just a text name, not used by the RTOS
+                     kernel. */
+                     "FeatureTimer",
+                     /* The timer period in ticks, must be
+                     greater than 0. */
+                     SleepTimeout,
+                     /* The timers will auto-reload themselves
+                     when they expire. */
+                     pdFALSE,
+                     /* The ID is used to store a count of the
+                     number of times the timer has expired, which
+                     is initialised to 0. */
+                     ( void * ) 0,
+                     /* Each timer calls the same callback when
+                     it expires. */
+                     vSleepTOCb
+                   );
+  xTimerStart(SleepTO,10);
+  xTaskCreatePinnedToCore(
     vMatrixMain,    // Function that should be called
     "Matrix main task",   // Name of the task (for debugging)
     4000,            // Stack size (bytes)
     NULL,            // Parameter to pass
-    1,               // Task priority
-    NULL             // Task handle
+    4,               // Task priority
+    NULL,             // Task handle
+    1                 //core, fastled seems must pin to core 1 and wifi pin to core0, otherwise the fastled will have flicker
   );
 }

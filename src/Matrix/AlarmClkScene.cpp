@@ -3,6 +3,7 @@
 #include "Dot2D/third/Picopixel.h"
 #include "Dot2D/third/TomThumb.h"
 #include "FastLED.h"
+#include "Icon.h"
 #include "../Key/ClockKey.h"
 
 NS_DT_BEGIN

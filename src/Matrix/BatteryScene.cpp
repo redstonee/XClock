@@ -3,6 +3,7 @@
 #include "Dot2D/third/Picopixel.h"
 #include "Dot2D/third/TomThumb.h"
 #include "../main.h"
+#include "Icon.h"
 #include <Arduino.h>
 NS_DT_BEGIN
 
