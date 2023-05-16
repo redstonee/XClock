@@ -23,7 +23,7 @@ String wifi_pass = "";                     //暂时存储wifi账号密码
 const char *ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 8 * 3600;
 const int daylightOffset_sec = 0;
-
+TimerHandle_t ConnectTO = nullptr;
 /*天气*/
 const char* Weatherhost = "api.seniverse.com"; //服务器地址
 const int WeatherhttpPort = 80; //端口号
@@ -329,9 +329,34 @@ void vGetNetTime()
     }
 }
 
+void vConnectTOCb(TimerHandle_t xTimer)
+{
+     Serial.println("Connect timeout");
+    esp_wifi_deinit();
+    ClearWakeupRequest();
+}
+
 void SetupWifi(void)
 {
     RequestWakeup();
+    ConnectTO = xTimerCreate
+                   ( /* Just a text name, not used by the RTOS
+                     kernel. */
+                     "ConnectWifiTimer",
+                     /* The timer period in ticks, must be
+                     greater than 0. */
+                     (portTICK_PERIOD_MS*1000*20),
+                     /* The timers will auto-reload themselves
+                     when they expire. */
+                     pdFALSE,
+                     /* The ID is used to store a count of the
+                     number of times the timer has expired, which
+                     is initialised to 0. */
+                     ( void * ) 0,
+                     /* Each timer calls the same callback when
+                     it expires. */
+                     vConnectTOCb
+                   );
     WiFi.hostname(HOST_NAME);             //设置设备名        
     connectToWiFi(connectTimeOut_s);
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);

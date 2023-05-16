@@ -267,13 +267,19 @@ void vFeatureTOCb(TimerHandle_t xTimer)
     } 
 }
 
+void vOffSeqFinishCb()
+{
+    ClearWakeupRequest();
+}
+
 void vSleepTOCb(TimerHandle_t xTimer)
 {
     Serial.printf("Sleep timeout\n");
     if(stMainSts.enEnteredFeature == Feature_None && stMainSts.enMainSceneIdx != Feature_CountDown && stMainSts.enMainSceneIdx != Feature_Timer)
     {
-        director->clearDotCanvas(dot2d::DTRGB(0,0,0));
-        ClearWakeupRequest();
+        dot2d::MoveTo* MoveOff = dot2d::MoveTo::create(0.5,dot2d::Vec2(0,8));
+        dot2d::Sequence *OffSeq = dot2d::Sequence::createWithTwoActions(MoveOff, dot2d::CallFunc::create(vOffSeqFinishCb));
+        director->getRunningScene()->runAction(OffSeq);        
     }
     else
     {

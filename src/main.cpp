@@ -345,7 +345,7 @@ void setup() {
     stBattsts = stUpdateBattSts();
     vCheckAlarms(stCurTime);
     
-    if(stCurTime.u8Min == 0x00)
+    if(stCurTime.u8Min == 0x00 && stCurTime.u8Sec == 0x00)
     {
         Serial.printf("SetUp wifi\n");
         SetupWifi();

@@ -14,7 +14,7 @@
 
 #define FeatureTimeout  (portTICK_PERIOD_MS*1000*30)
 
-#define SleepTimeout    (portTICK_PERIOD_MS*1000*60*1)//5 minutes
+#define SleepTimeout    (portTICK_PERIOD_MS*1000*60*5)//5 minutes
 
 typedef enum
 {
