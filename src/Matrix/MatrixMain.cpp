@@ -189,6 +189,15 @@ void vMatrixMain(void *param)
             xQueueReceive( pKeyRcvQueue,&( RcvKey ),( TickType_t ) 0 );
             if(RcvKey.Key != enKey_Nokey)
             {
+                if( xTimerIsTimerActive(SleepTO))
+                {
+                    xTimerReset(SleepTO,10);
+                } 
+                if(8 ==director->getRunningScene()->getPositionY())
+                {
+                    dot2d::MoveTo* MoveUp = dot2d::MoveTo::create(0.5,dot2d::Vec2(0,0));
+                    director->getRunningScene()->runAction(MoveUp);    
+                }
                 xTimerReset(SleepTO,10);
                 if(boAlarming)
                 {
@@ -287,6 +296,13 @@ void vSleepTOCb(TimerHandle_t xTimer)
     }    
 }
 
+void vResetSleepTimer()
+{
+    if( xTimerIsTimerActive(SleepTO))
+    {
+        xTimerReset(SleepTO,10);
+    } 
+}
 
 void vMatrixInit(QueueHandle_t rcvQ)
 {

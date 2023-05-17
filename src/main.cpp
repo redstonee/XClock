@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <arduinoFFT.h>
+#include <WiFi.h>
 #include "main.h"
 #include "FastLED.h"
 #include "Dot2D/dot2d.h"
@@ -297,6 +298,7 @@ void vCheckAlarms(tst3078Time time)
 void vGotoSleep(void)
 {
     Serial.printf("Go to sleep\n");
+    digitalWrite(MIC_ADC_EN_PORT, LOW);
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_33,0);
     esp_sleep_enable_timer_wakeup(1000000);
     esp_deep_sleep_start();
@@ -304,6 +306,7 @@ void vGotoSleep(void)
 
 bool boNoisy()
 {
+    digitalWrite(MIC_ADC_EN_PORT, HIGH);
     for (int i=0; i<64; i++)
     {
         realComponent[i] = analogReadMilliVolts(4);
@@ -421,6 +424,15 @@ void loop() {
     if(false == boNeedWakeup())
     {
         vGotoSleep();
+    }
+    if(stCurTime.u8Min == 0x00 && stCurTime.u8Sec == 0x00)
+    {
+        Serial.printf("SetUp wifi\n");
+        SetupWifi();
+    }
+    if(boNoisy())
+    {
+        vResetSleepTimer();
     }
     //uint32_t ADC1 = analogReadMilliVolts(MIC_ADC_PORT);
     // uint32_t ADC2 = analogReadMilliVolts(MIC_ADC_PORT);

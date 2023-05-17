@@ -41,5 +41,5 @@ typedef struct
 
 
 void vMatrixInit(QueueHandle_t);
-
+void vResetSleepTimer();
 #endif

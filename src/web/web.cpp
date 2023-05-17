@@ -313,6 +313,7 @@ void parseWeatherJson(WiFiClient client) {
     Serial.println(temperature);
     SetCurWeatherCode(code_int);
     esp_wifi_deinit();
+    xTimerStop(ConnectTO,10);
     ClearWakeupRequest();
 }
 
@@ -361,6 +362,7 @@ void SetupWifi(void)
     connectToWiFi(connectTimeOut_s);
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
     WeatherRequest();
+    xTimerStart(ConnectTO,10);
 }
 
 void vWebLoop(void *param)
