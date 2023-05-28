@@ -77,6 +77,7 @@ void vStopSound(void)
     {
 
         wav->stop();
+        digitalWrite(21,LOW);
         if(NULL != xMutex_ReqSnd)
         {
             if( xSemaphoreTake( xMutex_ReqSnd, ( TickType_t ) 100 ) == pdTRUE )
@@ -107,6 +108,7 @@ void vSoundLoop(void *param)
             if (!wav->loop())
             {
                 wav->stop();
+                digitalWrite(21,LOW);
                 if(NULL != xMutex_ReqSnd)
                 {
                     if( xSemaphoreTake( xMutex_ReqSnd, ( TickType_t ) 100 ) == pdTRUE )
@@ -115,6 +117,7 @@ void vSoundLoop(void *param)
                         if(0 < --u16ReqTime)
                         {
                             file->open(SndList[RequestedSnd].pSndData, SndList[RequestedSnd].u32DataLen);
+                            digitalWrite(21,HIGH);
                             wav->begin(file, out);
                         }
                         else
@@ -147,6 +150,7 @@ void vSoundLoop(void *param)
                         //digitalWrite(21,HIGH);
                         //Serial.printf("SoundData:%d len:%d!\n",SndList[RequestedSnd].pSndData[64],SndList[RequestedSnd].u32DataLen);
                         file->open(SndList[RequestedSnd].pSndData, SndList[RequestedSnd].u32DataLen);
+                        digitalWrite(21,HIGH);
                         wav->begin(file, out);
                         //Serial.printf("begin!\n");
                     }
@@ -169,7 +173,8 @@ void vSoundLoop(void *param)
 void vSoundInit(void)
 {
     pinMode(21, OUTPUT);//Sound SD_Mode
-    digitalWrite(21,HIGH);
+    //digitalWrite(21,HIGH);
+    digitalWrite(21,LOW);
     audioLogger = &Serial;
     file = new AudioFileSourcePROGMEM();
     if(file == NULL)

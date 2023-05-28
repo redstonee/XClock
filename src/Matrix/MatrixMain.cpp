@@ -278,7 +278,7 @@ void vFeatureTOCb(TimerHandle_t xTimer)
 
 void vOffSeqFinishCb()
 {
-    ClearWakeupRequest();
+    ClearWakeupRequest(true);
 }
 
 void vSleepTOCb(TimerHandle_t xTimer)
@@ -318,7 +318,7 @@ void vMatrixInit(QueueHandle_t rcvQ)
   //sence1 = dot2d::ClockScene::create();
   //Serial.printf("SceneClk %x\n",&sence1);
   //----------------初始化Dot2d引擎及渲染画布----------------
-  RequestWakeup();
+  RequestWakeup(true);
   director = dot2d::Director::getInstance();                      //获取导演对象
   director->setDelegate(new MainDelegate());                      //设置导演代理
   director->setFramesPerSecond(30);                               //设置帧速率

@@ -8,13 +8,13 @@
 //点阵屏驱动引脚
 #define MATRIX_LED_PIN        17
 //屏幕最大亮度
-#define MATRIX_MAX_BRIGHTNESS 10
+#define MATRIX_MAX_BRIGHTNESS 5
 //换场时间
 #define SCENE_TRANSITION_DURATION  (0.5f)
 
 #define FeatureTimeout  (portTICK_PERIOD_MS*1000*30)
 
-#define SleepTimeout    (portTICK_PERIOD_MS*1000*60*5)//5 minutes
+#define SleepTimeout    (portTICK_PERIOD_MS*1000*60*3)//5 minutes
 
 typedef enum
 {

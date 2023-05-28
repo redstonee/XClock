@@ -14,6 +14,8 @@
 ClockKey* keyHandler = nullptr;
 QueueHandle_t KeyQueue = nullptr;
 QueueHandle_t TimeSettingQ = nullptr;
+SemaphoreHandle_t xTimeSemp = nullptr;
+SemaphoreHandle_t xBattStatusSemp = nullptr;
 SemaphoreHandle_t xWakeReqCntSemp = nullptr;
 SD3078* SD3078Time = nullptr;
 tst3078Time ClockTime = {0x00,0x17,0x93,0x07,0x12,0x02,0x23,};
@@ -21,6 +23,7 @@ tst3078Time stCurTime = {0x00,};
 tstBattSts stBattsts = {0x00,};
 int8_t Tempture = 0;
 int8_t i8SleepReqCnt = 0;
+int8_t i8SleepReqHMICnt = 0;
 double realComponent[64];
 double imagComponent[64];
 arduinoFFT* fft = new arduinoFFT(realComponent,imagComponent,64,8000);
@@ -45,6 +48,24 @@ void vCreateTimeSettingQ(void)
                          sizeof( tst3078Time ) );
 }
 
+void vCreateTimeSemp(void)
+{
+    xTimeSemp = xSemaphoreCreateMutex();
+    if(xTimeSemp == nullptr)
+    {
+        Serial.printf("create time sem failed\n");
+    }
+}
+
+void vCreateBattSemp(void)
+{
+    xBattStatusSemp = xSemaphoreCreateMutex();
+    if(xBattStatusSemp == nullptr)
+    {
+        Serial.printf("create sem failed\n");
+    }
+}
+
 void vCreateSleepSemp(void)
 {
     xWakeReqCntSemp = xSemaphoreCreateMutex();
@@ -54,7 +75,7 @@ void vCreateSleepSemp(void)
     }
 }
 
-bool RequestWakeup(void)
+bool RequestWakeup(bool boHMIDis)
 {
     bool res = true;
     if( xWakeReqCntSemp != NULL )
@@ -67,7 +88,14 @@ bool RequestWakeup(void)
             shared resource. */
 
             /* ... */
-            i8SleepReqCnt++;
+            if(boHMIDis)
+            {
+                i8SleepReqHMICnt++;
+            }
+            else
+            {
+                i8SleepReqCnt++;
+            }
             /* We have finished accessing the shared resource.  Release the
             semaphore. */
             xSemaphoreGive( xWakeReqCntSemp );
@@ -87,7 +115,7 @@ bool RequestWakeup(void)
     return res;
 }
 
-bool boNeedWakeup(void)
+bool boNeedWakeup(bool boHMIDis)
 {
     bool res = true;
     if( xWakeReqCntSemp != NULL )
@@ -99,14 +127,29 @@ bool boNeedWakeup(void)
             /* We were able to obtain the semaphore and can now access the
             shared resource. */
             /* ... */
-            if(i8SleepReqCnt > 0)
+            if(boHMIDis)
             {
-                res = true;
+                if(i8SleepReqHMICnt > 0)
+                {
+                    res = true;
+                }
+                else
+                {
+                    res = false;
+                }
             }
             else
             {
-                res = false;
+                if(i8SleepReqCnt > 0)
+                {
+                    res = true;
+                }
+                else
+                {
+                    res = false;
+                }
             }
+            
             /* We have finished accessing the shared resource.  Release the
             semaphore. */
             xSemaphoreGive( xWakeReqCntSemp );
@@ -121,7 +164,7 @@ bool boNeedWakeup(void)
     return res;
 }
 
-bool ClearWakeupRequest(void)
+bool ClearWakeupRequest(bool boHMIDis)
 {
     bool res = true;
     if( xWakeReqCntSemp != NULL )
@@ -134,10 +177,20 @@ bool ClearWakeupRequest(void)
             shared resource. */
 
             /* ... */
-            if(i8SleepReqCnt)
+            if(boHMIDis)
             {
-                i8SleepReqCnt--;
-            }    
+                if(i8SleepReqHMICnt)
+                {
+                    i8SleepReqHMICnt--;
+                }  
+            }
+            else
+            {
+                if(i8SleepReqCnt)
+                {
+                    i8SleepReqCnt--;
+                }  
+            }
             /* We have finished accessing the shared resource.  Release the
             semaphore. */
             xSemaphoreGive( xWakeReqCntSemp );
@@ -191,6 +244,7 @@ tstBattSts stUpdateBattSts(void)
     if(Volt > BAT_EMPTY_VOLT)
     {
         batt_sts.BattLvl = (Volt - BAT_EMPTY_VOLT)/((BAT_FULL_VOLT-BAT_EMPTY_VOLT)/BAT_FULL_LVL);
+        batt_sts.BattLvl = batt_sts.BattLvl > BAT_FULL_LVL ? BAT_FULL_LVL : batt_sts.BattLvl;
     }
     else
     {
@@ -205,33 +259,62 @@ tst3078Time stUpdateTime(void)
 {
     tst3078Time curtime = {0,};
     SD3078Time->ReadTime(&curtime);
-    //Serial.printf("year %x %x %x Week %d\n",curtime.u8Year,curtime.u8Month,curtime.u8Day,curtime.u8Week);
+    //Serial.printf("%x:%x:%x Week %d\n",curtime.u8Hour,curtime.u8Min,curtime.u8Sec,curtime.u8Week);
     return curtime;
+}
+
+void vSetCurTime(tst3078Time CurTime)
+{
+    if( xTimeSemp != NULL )
+    {
+        /* See if we can obtain the semaphore.  If the semaphore is not
+        available wait 10 ticks to see if it becomes free. */
+        if( xSemaphoreTake( xTimeSemp, ( TickType_t ) 10 ) == pdTRUE )
+        {
+            /* We were able to obtain the semaphore and can now access the
+            shared resource. */
+
+            /* ... */
+            stCurTime = CurTime;
+            /* We have finished accessing the shared resource.  Release the
+            semaphore. */
+            xSemaphoreGive( xTimeSemp );
+        }
+        else
+        {
+            /* We could not obtain the semaphore and can therefore not access
+            the shared resource safely. */
+            Serial.printf("get time sem failed\n");
+        }
+    }
 }
 
 tst3078Time stGetCurTime(void)
 {
-    // tst3078Time stTime = {0,0x00,0x01,0x01,0x05,0x05,0x23};
-    // static uint16_t cnt = 0;
-    // static uint8_t min_temp = 0;
-    // static uint8_t hour_temp = 0;
-    // if(++cnt>=5)
-    // {
-    //     cnt = 0;
-    //     if(++min_temp >= 60)
-    //     {
-    //         min_temp = 0;
-    //         if(++hour_temp >= 24)
-    //         {
-    //             hour_temp = 0;
-    //         }            
-    //     }
-        
-    // }
-    // stTime.u8Min = ((min_temp/10)<<4) + (min_temp%10);
-    // stTime.u8Hour = (((hour_temp/10)<<4) + (hour_temp%10))|0x80;
-    // return stTime;
-    return stCurTime;
+    tst3078Time time_tmp;
+    if( xTimeSemp != NULL )
+    {
+        /* See if we can obtain the semaphore.  If the semaphore is not
+        available wait 10 ticks to see if it becomes free. */
+        if( xSemaphoreTake( xTimeSemp, ( TickType_t ) 10 ) == pdTRUE )
+        {
+            /* We were able to obtain the semaphore and can now access the
+            shared resource. */
+
+            /* ... */
+            time_tmp = stCurTime;
+            /* We have finished accessing the shared resource.  Release the
+            semaphore. */
+            xSemaphoreGive( xTimeSemp );
+        }
+        else
+        {
+            /* We could not obtain the semaphore and can therefore not access
+            the shared resource safely. */
+            Serial.printf("get time sem failed\n");
+        }
+    }
+    return time_tmp;
 }
 
 QueueHandle_t pGetTimeSettingQ(void)
@@ -250,9 +333,58 @@ void vRcvTimeSettingReq(void)
     }
 }
 
+void vSetBattSts(tstBattSts batt)
+{
+    if( xBattStatusSemp != NULL )
+    {
+        /* See if we can obtain the semaphore.  If the semaphore is not
+        available wait 10 ticks to see if it becomes free. */
+        if( xSemaphoreTake( xBattStatusSemp, ( TickType_t ) 10 ) == pdTRUE )
+        {
+            /* We were able to obtain the semaphore and can now access the
+            shared resource. */
+
+            /* ... */
+            stBattsts = batt;
+            /* We have finished accessing the shared resource.  Release the
+            semaphore. */
+            xSemaphoreGive( xBattStatusSemp );
+        }
+        else
+        {
+            /* We could not obtain the semaphore and can therefore not access
+            the shared resource safely. */
+            Serial.printf("get batt sem failed\n");
+        }
+    }
+}
+
 tstBattSts stGetBattSts(void)
 {
-    return stBattsts;
+    tstBattSts batt_tmp;
+    if( xBattStatusSemp != NULL )
+    {
+        /* See if we can obtain the semaphore.  If the semaphore is not
+        available wait 10 ticks to see if it becomes free. */
+        if( xSemaphoreTake( xBattStatusSemp, ( TickType_t ) 10 ) == pdTRUE )
+        {
+            /* We were able to obtain the semaphore and can now access the
+            shared resource. */
+
+            /* ... */
+            batt_tmp = stBattsts;
+            /* We have finished accessing the shared resource.  Release the
+            semaphore. */
+            xSemaphoreGive( xBattStatusSemp );
+        }
+        else
+        {
+            /* We could not obtain the semaphore and can therefore not access
+            the shared resource safely. */
+            Serial.printf("get batt sem failed\n");
+        }
+    }
+    return batt_tmp;
 }
 
 void vCheckAlarms(tst3078Time time)
@@ -274,7 +406,7 @@ void vCheckAlarms(tst3078Time time)
                     {
                         Serial.printf("Alarming!\n");
                         vSetAlarmClkSts(i,enAlarmSts_Alarming);
-                        RequestWakeup();
+                        RequestWakeup(true);
                     }
                 }
                 else if(AlarmClkTmp.stAlarmSts == enAlarmSts_AlarmClicked || AlarmClkTmp.stAlarmSts== enAlarmSts_Alarming)
@@ -285,7 +417,7 @@ void vCheckAlarms(tst3078Time time)
                     {
                         Serial.printf("Alarming disabled!\n");
                         vSetAlarmClkSts(i,enAlarmSts_AlarmIdle);
-                        ClearWakeupRequest();
+                        ClearWakeupRequest(true);
                     }
                 }
             }              
@@ -299,6 +431,7 @@ void vGotoSleep(void)
 {
     Serial.printf("Go to sleep\n");
     digitalWrite(MIC_ADC_EN_PORT, LOW);
+    digitalWrite(LED_POWER_PORT,LOW);
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_33,0);
     esp_sleep_enable_timer_wakeup(1000000);
     esp_deep_sleep_start();
@@ -309,7 +442,7 @@ bool boNoisy()
     digitalWrite(MIC_ADC_EN_PORT, HIGH);
     for (int i=0; i<64; i++)
     {
-        realComponent[i] = analogReadMilliVolts(4);
+        realComponent[i] = analogReadMilliVolts(MIC_ADC_PORT);
         imagComponent[i] = 0;
         //Serial.printf("%g ",realComponent[i]);
     }
@@ -323,7 +456,7 @@ bool boNoisy()
     {
         sum += realComponent[i];
     }
-    if(sum > 12000.0)
+    if(sum > 20000.0)
     {
         Serial.printf("nosiy %g \n",sum);
         return true;
@@ -339,13 +472,15 @@ void setup() {
     pinMode(BAT_CHARGE_STS_PORT, INPUT);//battery charging status
     pinMode(MIC_ADC_EN_PORT, OUTPUT);//MIC EN
     digitalWrite(MIC_ADC_EN_PORT,HIGH);    
+    vCreateTimeSemp(); 
+    vCreateBattSemp(); 
     vCreateSleepSemp();    
     SD3078Time = new SD3078();
     //SD3078Time->SetTime(&ClockTime);
     vSoundInit();
     boInitAlarmClkList();
-    stCurTime = stUpdateTime();
-    stBattsts = stUpdateBattSts();
+    vSetCurTime(stUpdateTime());
+    vSetBattSts(stUpdateBattSts());
     vCheckAlarms(stCurTime);
     
     if(stCurTime.u8Min == 0x00 && stCurTime.u8Sec == 0x00)
@@ -354,17 +489,19 @@ void setup() {
         SetupWifi();
     }
     vTaskDelay(50);//delay for ADC stable
-    if(boNoisy() || boNeedWakeup() || ESP_SLEEP_WAKEUP_EXT0 == esp_sleep_get_wakeup_cause())
+    if(boNoisy() || boNeedWakeup(true) || ESP_SLEEP_WAKEUP_EXT0 == esp_sleep_get_wakeup_cause())
     {
-
+        //vWifiInit();
         vCreateKeyQueue();
         vCreateTimeSettingQ();
         keyHandler = new ClockKey();
         keyHandler->SetSendQueue(KeyQueue);
         keyHandler->Start();
+        pinMode(LED_POWER_PORT, OUTPUT);//MIC EN
+        digitalWrite(LED_POWER_PORT,HIGH);
         vMatrixInit(KeyQueue);
     }
-    else
+    if((false == boNeedWakeup(true)) && (false == boNeedWakeup(false)))
     {
         vGotoSleep();
     }
@@ -415,13 +552,13 @@ void loop() {
     //         ESP.getFreeHeap(),
     //         ESP.getFreeHeap()/(double)ESP.getHeapSize()*100);
     //boNoisy();
-    vTaskDelay(500);
-    stBattsts = stUpdateBattSts();
-    stCurTime = stUpdateTime();
+    vTaskDelay(1000);
+    vSetBattSts(stUpdateBattSts());
+    vSetCurTime(stUpdateTime());
     vCheckAlarms(stCurTime);
     vRcvTimeSettingReq();
     
-    if(false == boNeedWakeup())
+    if((false == boNeedWakeup(true)) && (false == boNeedWakeup(false)))
     {
         vGotoSleep();
     }

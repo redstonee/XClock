@@ -313,8 +313,12 @@ void parseWeatherJson(WiFiClient client) {
     Serial.println(temperature);
     SetCurWeatherCode(code_int);
     esp_wifi_deinit();
-    xTimerStop(ConnectTO,10);
-    ClearWakeupRequest();
+    if(pdPASS != xTimerStop(ConnectTO,10))
+    {
+      Serial.println("Stop timer failed");
+    }
+    Serial.println("Get weather,sleep");
+    ClearWakeupRequest(false);
 }
 
 void vGetNetTime()
@@ -332,14 +336,14 @@ void vGetNetTime()
 
 void vConnectTOCb(TimerHandle_t xTimer)
 {
-     Serial.println("Connect timeout");
+    Serial.println("Connect timeout");
     esp_wifi_deinit();
-    ClearWakeupRequest();
+    ClearWakeupRequest(false);
 }
 
 void SetupWifi(void)
 {
-    RequestWakeup();
+    RequestWakeup(false);
     ConnectTO = xTimerCreate
                    ( /* Just a text name, not used by the RTOS
                      kernel. */
@@ -358,11 +362,12 @@ void SetupWifi(void)
                      it expires. */
                      vConnectTOCb
                    );
+    xTimerStart(ConnectTO,10);
     WiFi.hostname(HOST_NAME);             //设置设备名        
     connectToWiFi(connectTimeOut_s);
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
     WeatherRequest();
-    xTimerStart(ConnectTO,10);
+    
 }
 
 void vWebLoop(void *param)
@@ -370,12 +375,12 @@ void vWebLoop(void *param)
     WiFi.hostname(HOST_NAME);             //设置设备名        
     connectToWiFi(connectTimeOut_s);
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-    WeatherRequest();
+    //WeatherRequest();
     for(;;)
     {
-        //dnsServer.processNextRequest();   //检查客户端DNS请求
-        //server.handleClient();            //检查客户端(浏览器)http请求
-        //checkConnect(true);               //检测网络连接状态，参数true表示如果断开重新连接
+        dnsServer.processNextRequest();   //检查客户端DNS请求
+        server.handleClient();            //检查客户端(浏览器)http请求
+        checkConnect(true);               //检测网络连接状态，参数true表示如果断开重新连接
         //vGetNetTime();
         delay(1000);
     }
