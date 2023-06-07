@@ -15,6 +15,8 @@
 #define LED_POWER_PORT      (27)
 #define MIC_ADC_PORT        (34)
 #define AlarmRecallTimeout  (portTICK_PERIOD_MS*1000*60*2)
+#define NosiyThrehold       (40000.0)
+#define SleepTime           (2000000)
 typedef struct 
 {
     bool boCharging;/* Charging status */

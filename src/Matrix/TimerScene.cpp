@@ -20,6 +20,16 @@ tstTimerType GlobalTimer = {0,0,0,false};
 TimerHandle_t TimerCounter = nullptr;
 /********************************Timer sence and layer****************************************/
 
+bool boIsTimerCounterActive()
+{
+    bool boRes = false;
+    if(nullptr != TimerCounter)
+    {
+        boRes = xTimerIsTimerActive(TimerCounter);
+    }
+    return boRes;
+}
+
 void TimerCounterCb(TimerHandle_t xTimer)
 {
     if(++GlobalTimer.u8MSec >= 100)

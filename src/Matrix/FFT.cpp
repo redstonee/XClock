@@ -80,7 +80,7 @@ void FFTLayer::update(float dt)
     canvas->canvasReset();
     for (int i=0; i<SAMPLES; i++)
     {
-        realComponent[i] = (analogReadMilliVolts(ADC_PIN))/4;
+        realComponent[i] = (analogReadMilliVolts(ADC_PIN))/6;
         imagComponent[i] = 0;
     }
     fft->DCRemoval();

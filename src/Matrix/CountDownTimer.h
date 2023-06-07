@@ -12,6 +12,8 @@ typedef enum
     Timer_SecSetting
 }tenTimerStatus;
 
+bool boIsCountDownTimerActive();
+
 class CountDownScene : public Scene
 {
 

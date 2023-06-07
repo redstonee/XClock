@@ -4,7 +4,8 @@
 #include "Dot2D/dot2d.h"
 
 NS_DT_BEGIN
-
+ 
+    bool boIsTimerCounterActive(void);          
 
 
 class TimerScene : public Scene

@@ -433,7 +433,7 @@ void vGotoSleep(void)
     digitalWrite(MIC_ADC_EN_PORT, LOW);
     digitalWrite(LED_POWER_PORT,LOW);
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_33,0);
-    esp_sleep_enable_timer_wakeup(1000000);
+    esp_sleep_enable_timer_wakeup(SleepTime);
     esp_deep_sleep_start();
 }
 
@@ -456,7 +456,7 @@ bool boNoisy()
     {
         sum += realComponent[i];
     }
-    if(sum > 20000.0)
+    if(sum > NosiyThrehold)
     {
         Serial.printf("nosiy %g \n",sum);
         return true;

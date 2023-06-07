@@ -17,6 +17,16 @@ typedef struct
 
 tstCountTimerType GlobaCountTimer = {0,0,false};
 TimerHandle_t CounterTimer = nullptr;
+
+bool boIsCountDownTimerActive()
+{
+    bool boRes = false;
+    if(nullptr != CounterTimer)
+    {
+        boRes = xTimerIsTimerActive(CounterTimer);
+    }
+    return boRes;
+}
 /********************************Timer sence and layer****************************************/
 
 void CounterTimerCb(TimerHandle_t xTimer)
