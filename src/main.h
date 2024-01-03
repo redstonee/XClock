@@ -15,7 +15,7 @@
 #define LED_POWER_PORT      (27)
 #define MIC_ADC_PORT        (34)
 #define AlarmRecallTimeout  (portTICK_PERIOD_MS*1000*60*2)
-#define NosiyThrehold       (40000.0)
+#define NosiyThrehold       (8000.0)
 #define SleepTime           (2000000)
 typedef struct 
 {
@@ -28,6 +28,8 @@ tst3078Time stGetCurTime(void);
 tstBattSts stGetBattSts(void);
 
 QueueHandle_t pGetTimeSettingQ(void);
+
+void vSetTimeDirect(tst3078Time *time);
 
 bool RequestWakeup(bool boHMIDis);
 

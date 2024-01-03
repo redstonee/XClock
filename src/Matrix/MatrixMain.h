@@ -28,7 +28,8 @@ typedef enum
     Feature_CalMonth,
     Feature_Battery,
     Feature_Music,
-    Feature_Last = Feature_Music,
+    Feature_Wifi,
+    Feature_Last = Feature_Wifi,
 }tenFeatureID;
 
 

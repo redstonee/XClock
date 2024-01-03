@@ -328,9 +328,14 @@ void vRcvTimeSettingReq(void)
     xQueueReceive( TimeSettingQ,&( RcvTime ),( TickType_t ) 0 );
     if(RcvTime.u8Sec != 0xff)/*new time*/
     {
-        //Serial.printf("Receive new setting time!\n");
+        Serial.printf("Receive new setting time!\n");
         SD3078Time->SetTime(&RcvTime);
     }
+}
+
+void vSetTimeDirect(tst3078Time* time)
+{
+    SD3078Time->SetTime(time);
 }
 
 void vSetBattSts(tstBattSts batt)
@@ -483,7 +488,7 @@ void setup() {
     vSetBattSts(stUpdateBattSts());
     vCheckAlarms(stCurTime);
     
-    if(stCurTime.u8Min == 0x00 && stCurTime.u8Sec == 0x00)
+    if((stCurTime.u8Min == 0x00 ||stCurTime.u8Min == 0x30 )&& stCurTime.u8Sec == 0x00)
     {
         Serial.printf("SetUp wifi\n");
         SetupWifi();
@@ -562,7 +567,7 @@ void loop() {
     {
         vGotoSleep();
     }
-    if(stCurTime.u8Min == 0x00 && stCurTime.u8Sec == 0x00)
+    if((stCurTime.u8Min == 0x00 ||stCurTime.u8Min == 0x30 ) && stCurTime.u8Sec == 0x00)
     {
         Serial.printf("SetUp wifi\n");
         SetupWifi();

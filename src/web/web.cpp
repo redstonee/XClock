@@ -8,6 +8,7 @@
 #include <Preferences.h>
 #include "web.h" 
 #include "../main.h"
+#include "../RTC/SD3078.h"
 
 const int baudRate = 115200;               //设置波特率
 const byte DNS_PORT = 53;                  //设置DNS端口号
@@ -39,7 +40,7 @@ String httprequest = String("GET ") + reqRes + " HTTP/1.1\r\n" +
                      "Connection: close\r\n\r\n";
 
 //定义根目录首页网页HTML源代码
-#define ROOT_HTML  "<!DOCTYPE html><html><head><title>WIFI Config by lwang</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><style type=\"text/css\">.input{display: block; margin-top: 10px;}.input span{width: 100px; float: left; float: left; height: 36px; line-height: 36px;}.input input{height: 30px;width: 200px;}.btn{width: 120px; height: 35px; background-color: #000000; border:0px; color:#ffffff; margin-top:15px; margin-left:100px;}</style><body><form method=\"POST\" action=\"configwifi\"><label class=\"input\"><span>WiFi SSID</span><input type=\"text\" name=\"ssid\" value=\"\"></label><label class=\"input\"><span>WiFi PASS</span><input type=\"text\"  name=\"pass\"></label><input class=\"btn\" type=\"submit\" name=\"submit\" value=\"Submie\"> <p><span> Nearby wifi:</P></form>"
+#define ROOT_HTML  "<!DOCTYPE html><html><head><title>XClock WIFI Config</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><style type=\"text/css\">.input{display: block; margin-top: 10px;}.input span{width: 100px; float: left; float: left; height: 36px; line-height: 36px;}.input input{height: 30px;width: 200px;}.btn{width: 120px; height: 35px; background-color: #000000; border:0px; color:#ffffff; margin-top:15px; margin-left:100px;}</style><body><form method=\"POST\" action=\"configwifi\"><label class=\"input\"><span>WiFi SSID</span><input type=\"text\" name=\"ssid\" value=\"\"></label><label class=\"input\"><span>WiFi PASS</span><input type=\"text\"  name=\"pass\"></label><input class=\"btn\" type=\"submit\" name=\"submit\" value=\"Submie\"> <p><span> Nearby wifi:</P></form>"
 //定义成功页面HTML源代码
 #define SUCCESS_HTML  "<html><body><font size=\"10\">successd,wifi connecting...<br />Please close this page manually.</font></body></html>"
  
@@ -165,6 +166,13 @@ void connectToWiFi(int timeOut_s)
           Serial.print("WIFI status is:");
           Serial.print(WiFi.status());     
           server.stop();
+          Preferences pref;
+          pref.begin(PrefKey_WifiConfiged);
+          pref.putBool(PrefKey_WifiConfiged,true);
+          Preferences pref_ssid;
+          pref_ssid.begin(PrefKey_WifiSSID);
+          pref_ssid.putString(PrefKey_WifiSSID,WiFi.SSID().c_str());
+          pref_ssid.end();
       }
 }
  
@@ -238,8 +246,13 @@ void handleNotFound()
 void restoreWiFi()
 {
     esp_wifi_restore();  //删除保存的wifi信息
-    Serial.println("连接信息已清空,准备重启设备..");
-    delay(10);           
+    Preferences pref;
+    pref.begin(PrefKey_WifiConfiged);
+    pref.putBool(PrefKey_WifiConfiged,false);
+    pref.begin(PrefKey_WifiSSID);
+    pref.putString(PrefKey_WifiSSID,"No Wifi");
+    pref.end();
+    Serial.println("连接信息已清空,准备重启设备..");         
 }
  
 void checkConnect(bool reConnect)
@@ -255,6 +268,27 @@ void checkConnect(bool reConnect)
             connectToWiFi(connectTimeOut_s);
         }  
     }
+}
+
+bool IsWifiConfig(void)
+{
+    Preferences pref;
+    bool res = false;
+    pref.begin(PrefKey_WifiConfiged);
+    res = pref.getBool(PrefKey_WifiConfiged,false);
+    pref.end();
+    return res;
+}
+
+String GetWifiSSID(void)
+{
+  String buf;
+  Preferences pref;
+  pref.begin(PrefKey_WifiSSID);
+  buf = pref.getString(PrefKey_WifiSSID, "None");
+  pref.end();
+  Serial.println(buf);
+  return buf;
 }
 
 void SetCurWeatherCode(int code)
@@ -323,6 +357,8 @@ void parseWeatherJson(WiFiClient client) {
 
 void vGetNetTime()
 {
+    tst3078Time CurTime = stGetCurTime();
+    tst3078Time NetTime = {0xff,};
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo))
     {
@@ -331,6 +367,25 @@ void vGetNetTime()
     else
     {
         Serial.println(&timeinfo, "%F %T %A");
+        NetTime.u8Year = (uint8_t)(timeinfo.tm_year - 100);
+        NetTime.u8Year = (NetTime.u8Year/10 << 4) | ((NetTime.u8Year%10) & 0x0f);
+        NetTime.u8Month = (uint8_t)(timeinfo.tm_mon + 1);
+        NetTime.u8Month = (NetTime.u8Month/10 << 4) | ((NetTime.u8Month%10) & 0x0f);
+        NetTime.u8Day = (uint8_t)(timeinfo.tm_mday);
+        NetTime.u8Day = (NetTime.u8Day/10 << 4) | ((NetTime.u8Day%10) & 0x0f);
+        NetTime.u8Week = (uint8_t)(timeinfo.tm_wday);
+        NetTime.u8Week = (NetTime.u8Week/10 << 4) | ((NetTime.u8Week%10) & 0x0f);
+        NetTime.u8Hour = (uint8_t)(timeinfo.tm_hour);
+        NetTime.u8Hour = (NetTime.u8Hour/10 << 4) | ((NetTime.u8Hour%10) & 0x0f)|0x80;
+        NetTime.u8Min = (uint8_t)(timeinfo.tm_min);
+        NetTime.u8Min = (NetTime.u8Min/10 << 4) | ((NetTime.u8Min%10) & 0x0f);
+        NetTime.u8Sec = (uint8_t)(timeinfo.tm_sec);
+        NetTime.u8Sec = (NetTime.u8Sec/10 << 4) | ((NetTime.u8Sec%10) & 0x0f);
+        if(CurTime.u8Hour != NetTime.u8Hour
+            ||CurTime.u8Min != NetTime.u8Min)
+        {
+            vSetTimeDirect(&NetTime);
+        }        
     }
 }
 
@@ -366,6 +421,7 @@ void SetupWifi(void)
     WiFi.hostname(HOST_NAME);             //设置设备名        
     connectToWiFi(connectTimeOut_s);
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+    vGetNetTime();
     WeatherRequest();
     
 }

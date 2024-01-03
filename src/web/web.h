@@ -4,6 +4,8 @@
 #define PrefKey_WeatherSpace                "WeatherInfo"
 #define PrefKey_WeatherCodeCur              "WeatherCodeCur"
 #define PrefKey_WeatherTemperateCur         "WeatherTemperateCur"
+#define PrefKey_WifiConfiged                "WifiConfiged"
+#define PrefKey_WifiSSID                    "WifiSSID"
 
 void vWifiInit(void);
 
@@ -16,6 +18,12 @@ void handleConfigWifi();
 void handleNotFound();
 
 void wifiConfig();
+
+void restoreWiFi();
+
+bool IsWifiConfig(void);
+
+String GetWifiSSID(void);
 
 int GetCurWeatherCode();
 

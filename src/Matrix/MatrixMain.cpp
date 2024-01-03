@@ -10,6 +10,7 @@
 #include "TimerScene.h"
 #include "CountDownTimer.h"
 #include "FFT.h"
+#include "WifiInfo.h"
 #include "../Sound/Sound.h"
 //#include "Dot2D/math/dtMath.h"
 
@@ -92,6 +93,9 @@ dot2d::Scene* GetSceneByIdx(uint8_t idx)
             break;
         case Feature_Music:
             TgtScene = dot2d::FFT::create();
+            break;
+        case Feature_Wifi:
+            TgtScene = dot2d::WifiInfo::create();
             break;
         default:
             TgtScene = dot2d::ClockScene::create();
@@ -213,7 +217,7 @@ void vMatrixMain(void *param)
                             if(nullptr != transition)
                             {
                                 director->replaceScene(transition);
-                                if(Feature_Clock != stMainSts.enMainSceneIdx && Feature_Music != stMainSts.enMainSceneIdx && false == dot2d::boIsTimerCounterActive() && false == dot2d::boIsCountDownTimerActive())
+                                if(Feature_Clock != stMainSts.enMainSceneIdx && Feature_Music != stMainSts.enMainSceneIdx && Feature_Wifi != stMainSts.enMainSceneIdx && false == dot2d::boIsTimerCounterActive() && false == dot2d::boIsCountDownTimerActive())
                                 {                                    
                                     if(nullptr != FeatureEnterTO)   /*Start a timeout timer to exit the feature*/
                                     {
@@ -291,7 +295,7 @@ void vMatrixMain(void *param)
 void vFeatureTOCb(TimerHandle_t xTimer)
 {
     
-    if(Feature_Timer != stMainSts.enEnteredFeature && Feature_CountDown != stMainSts.enEnteredFeature && Feature_Music != stMainSts.enEnteredFeature)
+    if(Feature_Timer != stMainSts.enEnteredFeature && Feature_CountDown != stMainSts.enEnteredFeature && Feature_Music != stMainSts.enEnteredFeature &&  Feature_Wifi!= stMainSts.enMainSceneIdx)
     {
         stMainSts.enEnteredFeature = Feature_None;
         stMainSts.enMainSceneIdx = Feature_Clock;
@@ -316,7 +320,7 @@ void vOffSeqFinishCb()
 void vSleepTOCb(TimerHandle_t xTimer)
 {
     Serial.printf("Sleep timeout\n");
-    if(stMainSts.enEnteredFeature == Feature_None && stMainSts.enMainSceneIdx != Feature_CountDown && stMainSts.enMainSceneIdx != Feature_Timer && stMainSts.enMainSceneIdx != Feature_Music)
+    if(stMainSts.enEnteredFeature == Feature_None && stMainSts.enMainSceneIdx != Feature_CountDown && stMainSts.enMainSceneIdx != Feature_Timer && stMainSts.enMainSceneIdx != Feature_Music && Feature_Wifi!= stMainSts.enMainSceneIdx)
     {
         dot2d::MoveTo* MoveOff = dot2d::MoveTo::create(0.5,dot2d::Vec2(0,8));
         dot2d::Sequence *OffSeq = dot2d::Sequence::createWithTwoActions(MoveOff, dot2d::CallFunc::create(vOffSeqFinishCb));
