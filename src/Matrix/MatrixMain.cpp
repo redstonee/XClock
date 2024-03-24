@@ -136,6 +136,46 @@ dot2d::TransitionSlideInL* MainSceneTrans(tstKeyEvent rcvkey)
     return transition;
 }
 
+uint32_t u32ADCDataFilter(uint32_t volt)
+{
+    static uint32_t buffer[ADC_FILTER_CNT] = {0,};
+    static uint8_t newdataindex = 0;
+    static uint8_t datacnt = 0;
+    uint32_t filteredvolt = 0;
+    buffer[newdataindex] = volt;
+    if(datacnt < ADC_FILTER_CNT)
+    {
+        datacnt++;
+    }
+    if(++newdataindex >= ADC_FILTER_CNT)
+    {
+        newdataindex = 0;
+    }
+    for(uint8_t i = 0; i < ADC_FILTER_CNT; i++)
+    {
+        filteredvolt += buffer[i];
+    }
+    filteredvolt = filteredvolt/datacnt;
+    //Serial.printf("in:%d out:%d\n",volt,filteredvolt);
+    return filteredvolt;
+}
+
+void vBrightessTask(void)
+{
+    uint32_t LDRADC;
+    static uint8_t u8OldBrightness = MATRIX_BRIGHTNESS_BASE;
+    uint8_t u8NewBrightness = MATRIX_BRIGHTNESS_BASE;
+    LDRADC = analogReadMilliVolts(MATRIX_LDR_ADC_CH);
+    LDRADC = u32ADCDataFilter(LDRADC);
+    u8NewBrightness = (MATRIX_LDR_ADC_MAX - LDRADC) / MATRIX_LDR2LIGHT_STEP + MATRIX_BRIGHTNESS_BASE;
+    if(u8OldBrightness !=u8NewBrightness)
+    {
+        FastLED.setBrightness(u8NewBrightness);
+        Serial.printf("new brightness:%d\n",u8NewBrightness);
+    }
+    u8OldBrightness = u8NewBrightness;
+}
+
 void vAlarmTask(void)
 {
     uint8_t AlarmNum = u8GetAlarmClkNum();
@@ -151,11 +191,14 @@ void vAlarmTask(void)
                 if(enSndID_None == enGetCurSndID())
                 {
                     boReqSound(enSndID_Alarm1,1);
-                    dot2d::TransitionSlideInL* transition = dot2d::TransitionSlideInR::create(SCENE_TRANSITION_DURATION,GetSceneByIdx(Feature_Clock));
-                    if(nullptr != transition)
+                    if(Feature_Clock != stMainSts.enMainSceneIdx)
                     {
-                        director->replaceScene(transition);
-                    } 
+                        dot2d::TransitionSlideInL* transition = dot2d::TransitionSlideInR::create(SCENE_TRANSITION_DURATION,GetSceneByIdx(Feature_Clock));
+                        if(nullptr != transition)
+                        {
+                            director->replaceScene(transition);
+                        } 
+                    }                    
                 }
             }         
         }
@@ -188,6 +231,7 @@ void vMatrixMain(void *param)
     {
         vTaskDelay(5);
         vAlarmTask();
+        vBrightessTask();
         if(pKeyRcvQueue != nullptr)
         {
             xQueueReceive( pKeyRcvQueue,&( RcvKey ),( TickType_t ) 0 );
@@ -217,7 +261,11 @@ void vMatrixMain(void *param)
                             if(nullptr != transition)
                             {
                                 director->replaceScene(transition);
-                                if(Feature_Clock != stMainSts.enMainSceneIdx && Feature_Music != stMainSts.enMainSceneIdx && Feature_Wifi != stMainSts.enMainSceneIdx && false == dot2d::boIsTimerCounterActive() && false == dot2d::boIsCountDownTimerActive())
+                                if(Feature_Clock != stMainSts.enMainSceneIdx \
+                                && Feature_Music != stMainSts.enMainSceneIdx \
+                                && Feature_Wifi != stMainSts.enMainSceneIdx \
+                                && false == dot2d::boIsTimerCounterActive() \
+                                && false == dot2d::boIsCountDownTimerActive())
                                 {                                    
                                     if(nullptr != FeatureEnterTO)   /*Start a timeout timer to exit the feature*/
                                     {
@@ -295,7 +343,10 @@ void vMatrixMain(void *param)
 void vFeatureTOCb(TimerHandle_t xTimer)
 {
     
-    if(Feature_Timer != stMainSts.enEnteredFeature && Feature_CountDown != stMainSts.enEnteredFeature && Feature_Music != stMainSts.enEnteredFeature &&  Feature_Wifi!= stMainSts.enMainSceneIdx)
+    if((Feature_Timer != stMainSts.enEnteredFeature || false == dot2d::boIsTimerCounterActive())\
+        && (Feature_CountDown != stMainSts.enEnteredFeature || false == dot2d::boIsCountDownTimerActive()) \
+        && Feature_Music != stMainSts.enEnteredFeature \
+        && Feature_Wifi!= stMainSts.enMainSceneIdx)
     {
         stMainSts.enEnteredFeature = Feature_None;
         stMainSts.enMainSceneIdx = Feature_Clock;
@@ -320,7 +371,11 @@ void vOffSeqFinishCb()
 void vSleepTOCb(TimerHandle_t xTimer)
 {
     Serial.printf("Sleep timeout\n");
-    if(stMainSts.enEnteredFeature == Feature_None && stMainSts.enMainSceneIdx != Feature_CountDown && stMainSts.enMainSceneIdx != Feature_Timer && stMainSts.enMainSceneIdx != Feature_Music && Feature_Wifi!= stMainSts.enMainSceneIdx)
+    if(stMainSts.enEnteredFeature == Feature_None \
+        && stMainSts.enMainSceneIdx != Feature_CountDown \
+        && stMainSts.enMainSceneIdx != Feature_Timer \
+        && stMainSts.enMainSceneIdx != Feature_Music \
+        && Feature_Wifi!= stMainSts.enMainSceneIdx)
     {
         dot2d::MoveTo* MoveOff = dot2d::MoveTo::create(0.5,dot2d::Vec2(0,8));
         dot2d::Sequence *OffSeq = dot2d::Sequence::createWithTwoActions(MoveOff, dot2d::CallFunc::create(vOffSeqFinishCb));
@@ -343,7 +398,7 @@ void vResetSleepTimer()
 void vMatrixInit(QueueHandle_t rcvQ)
 {
     //设置WS2812屏幕亮度
-  FastLED.setBrightness(MATRIX_MAX_BRIGHTNESS);
+  FastLED.setBrightness(MATRIX_BRIGHTNESS_BASE);
   pKeyRcvQueue = rcvQ;
   uint8_t sceneindex = Feature_Clock;
   stMainSts.enMainSceneIdx = Feature_Clock;

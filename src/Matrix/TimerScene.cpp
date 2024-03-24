@@ -40,9 +40,10 @@ void TimerCounterCb(TimerHandle_t xTimer)
             GlobalTimer.u8Sec = 0;
             if(++GlobalTimer.u8Min >= 100)
             {
-                GlobalTimer.u8Min = 0;
-                GlobalTimer.u8Sec = 0;
-                GlobalTimer.u8MSec = 0;
+                GlobalTimer.u8Min = 99;
+                GlobalTimer.u8Sec = 99;
+                GlobalTimer.u8MSec = 99;
+                xTimerStop(TimerCounter,10);
             }
         }
     }

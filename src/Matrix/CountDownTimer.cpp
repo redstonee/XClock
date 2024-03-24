@@ -17,15 +17,12 @@ typedef struct
 
 tstCountTimerType GlobaCountTimer = {0,0,false};
 TimerHandle_t CounterTimer = nullptr;
+TimerHandle_t ExitTimer = nullptr;
+bool boActive = false;
 
 bool boIsCountDownTimerActive()
 {
-    bool boRes = false;
-    if(nullptr != CounterTimer)
-    {
-        boRes = xTimerIsTimerActive(CounterTimer);
-    }
-    return boRes;
+    return boActive;
 }
 /********************************Timer sence and layer****************************************/
 
@@ -39,6 +36,7 @@ void CounterTimerCb(TimerHandle_t xTimer)
             GlobaCountTimer.u8Sec = 0;
             GlobaCountTimer.boTiming = false;
             xTimerStop(CounterTimer,10);
+            xTimerStart(ExitTimer,10);
             if(enSndID_None == enGetCurSndID())
             {
                 boReqSound(enSndID_Alarm2,1);
@@ -51,6 +49,11 @@ void CounterTimerCb(TimerHandle_t xTimer)
     }
 }
 
+void ExitTimerCb(TimerHandle_t xTimer)
+{
+    boActive = false;
+}
+
 bool CountDownScene::init()
 {
     CountDownLayer *Timerlayer = CountDownLayer::create();
@@ -59,7 +62,7 @@ bool CountDownScene::init()
     //ClockLayer->setOpacity
     this->addChild(Timerlayer);
     Timerlayer->initLayer();
-    
+    boActive = true;
     return true;
 }
 
@@ -120,6 +123,27 @@ bool CountDownLayer::initLayer()
                      /* Each timer calls the same callback when
                      it expires. */
                      CounterTimerCb
+                   );
+    }
+    if(nullptr == ExitTimer)
+    {
+        ExitTimer = xTimerCreate
+                   ( /* Just a text name, not used by the RTOS
+                     kernel. */
+                     "FeatureTimer",
+                     /* The timer period in ticks, must be
+                     greater than 0. */
+                     (portTICK_PERIOD_MS*CountDownTimerExit_TO),
+                     /* The timers will auto-reload themselves
+                     when they expire. */
+                     pdTRUE,
+                     /* The ID is used to store a count of the
+                     number of times the timer has expired, which
+                     is initialised to 0. */
+                     ( void * ) 0,
+                     /* Each timer calls the same callback when
+                     it expires. */
+                     ExitTimerCb
                    );
     }
     
@@ -206,14 +230,16 @@ void CountDownLayer::TimerMachine(int8_t keyCode, int8_t event)
         {
             if(enTimerSts == Timer_Dis)
             {
-            if(xTimerIsTimerActive(CounterTimer))
+                if(xTimerIsTimerActive(CounterTimer))
                 {
                     xTimerStop(CounterTimer,10);
+                    xTimerStart(ExitTimer,10);
                     GlobaCountTimer.boTiming = false;
                 }
                 else
                 {
                     xTimerStart(CounterTimer,10);
+                    xTimerStop(ExitTimer,10);
                     GlobaCountTimer.boTiming = true;
                 } 
             }
@@ -234,6 +260,7 @@ void CountDownLayer::TimerMachine(int8_t keyCode, int8_t event)
                 if(xTimerIsTimerActive(CounterTimer))
                 {
                     xTimerStop(CounterTimer,10);
+                    xTimerStart(ExitTimer,10);
                 }
                 GlobaCountTimer.boTiming = false;
             }

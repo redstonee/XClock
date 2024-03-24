@@ -558,7 +558,7 @@ void TimeLayer::StateTimeDisShow(void)
 {
     static uint8_t WeatherCodeOld = 0;
     uint8_t WeatherCode = 0;
-    //WeatherCode = (uint8_t)GetCurWeatherCode();
+    WeatherCode = (uint8_t)GetCurWeatherCode();
     tst3078Time time = stGetCurTime();
     bool boReEnterflag = false;
     static bool boPreAlarmActive = false;

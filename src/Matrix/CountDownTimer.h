@@ -12,6 +12,8 @@ typedef enum
     Timer_SecSetting
 }tenTimerStatus;
 
+#define CountDownTimerExit_TO    (1000*60*10)
+
 bool boIsCountDownTimerActive();
 
 class CountDownScene : public Scene

@@ -2,13 +2,21 @@
 #define __MATRIX_MAIN__
 #include "../Key/ClockKey.h"
 //LED矩阵宽
-#define MATRIX_WIDTH          32
+#define MATRIX_WIDTH          (32)
 //LED矩阵高
-#define MATRIX_HEIGHT         8
+#define MATRIX_HEIGHT         (8)
 //点阵屏驱动引脚
-#define MATRIX_LED_PIN        17
+#define MATRIX_LED_PIN        (17)
 //屏幕最大亮度
-#define MATRIX_MAX_BRIGHTNESS 5
+#define MATRIX_BRIGHTNESS_BASE (1)
+//光敏电阻最大ADC
+#define MATRIX_LDR_ADC_MAX    (3300)
+//光敏电阻ADC采样通道
+#define MATRIX_LDR_ADC_CH     (36)
+//光敏电阻转换亮度的步长
+#define MATRIX_LDR2LIGHT_STEP (150)
+//滤波缓冲大小
+#define ADC_FILTER_CNT        (200)
 //换场时间
 #define SCENE_TRANSITION_DURATION  (0.5f)
 

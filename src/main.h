@@ -10,13 +10,13 @@
 #define BAT_FULL_VOLT       (2150)
 #define BAT_EMPTY_VOLT      (1600)
 #define BAT_FULL_LVL        (100)
-#define BAT_FILTER_CNT      (20)
+#define BAT_FILTER_CNT      (200)
 #define MIC_ADC_EN_PORT     (16)
 #define LED_POWER_PORT      (27)
 #define MIC_ADC_PORT        (34)
 #define AlarmRecallTimeout  (portTICK_PERIOD_MS*1000*60*2)
-#define NosiyThrehold       (8000.0)
-#define SleepTime           (2000000)
+#define NosiyThrehold       (7000.0)
+#define SleepTime           (3000000)
 typedef struct 
 {
     bool boCharging;/* Charging status */
