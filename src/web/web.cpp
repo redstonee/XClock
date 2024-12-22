@@ -20,8 +20,10 @@ int connectTimeOut_s = 15;                 //WiFi连接超时时间，单位秒
 IPAddress apIP(192, 168, 4, 1);            //设置AP的IP地址
 String wifi_ssid = "";                     //暂时存储wifi账号密码
 String wifi_pass = "";                     //暂时存储wifi账号密码
-
-const char *ntpServer = "pool.ntp.org";
+bool WifiConfiging = false;
+const char *ntpServer1 = "ntp1.aliyun.com";
+const char *ntpServer2 = "ntp2.aliyun.com";
+const char *ntpServer3 = "ntp3.aliyun.com";
 const long gmtOffset_sec = 8 * 3600;
 const int daylightOffset_sec = 0;
 TimerHandle_t ConnectTO = nullptr;
@@ -150,12 +152,14 @@ void connectToWiFi(int timeOut_s)
         if (Connect_time > 2*timeOut_s) {  //长时间连接不上，重新进入配网页面
           Serial.println("");
           Serial.println("WIFI autoconnect fail, start AP for webconfig now...");
+          WifiConfiging = true;
           wifiConfig();   //转到网页端手动配置wifi
           return;         //跳出 防止无限初始化
           //break;        //跳出 防止无限初始化
         }
       }
       if(WiFi.status() == WL_CONNECTED){
+          WifiConfiging = false;
           Serial.println("WIFI connect Success");
           Serial.printf("SSID:%s", WiFi.SSID().c_str());
           Serial.printf(", PSW:%s\r\n", WiFi.psk().c_str());
@@ -231,6 +235,8 @@ void handleConfigWifi()
         connectToWiFi(connectTimeOut_s);
       }else{
         Serial.println("提交的配置信息自动连接成功..");
+        WifiConfiging = false;
+        ClearWakeupRequest(false);
       }    
 }
  
@@ -323,11 +329,12 @@ void WeatherRequest()
       Serial.println("响应报文体找到，开始解析");
     }
     parseWeatherJson(client);
+    client.stop();
   }
   else {
     Serial.println("连接服务器失败");
   }
-  client.stop();
+  
 }
 
 void parseWeatherJson(WiFiClient client) {
@@ -346,7 +353,6 @@ void parseWeatherJson(WiFiClient client) {
     //Serial.println(weather);
     Serial.println(temperature);
     SetCurWeatherCode(code_int);
-    esp_wifi_deinit();
     if(pdPASS != xTimerStop(ConnectTO,10))
     {
       Serial.println("Stop timer failed");
@@ -360,11 +366,15 @@ void vGetNetTime()
     tst3078Time CurTime = stGetCurTime();
     tst3078Time NetTime = {0xff,};
     struct tm timeinfo;
-    if (!getLocalTime(&timeinfo))
+    uint8_t retry_cnt = 0;
+    bool boTimeGetted = false;
+    delay(1000);
+    while ((!boTimeGetted) && (retry_cnt++ < 10))
     {
-        Serial.println("Failed to obtain time");
-    }
-    else
+        boTimeGetted = getLocalTime(&timeinfo);
+        delay(1000);
+    };
+    if(boTimeGetted)
     {
         Serial.println(&timeinfo, "%F %T %A");
         NetTime.u8Year = (uint8_t)(timeinfo.tm_year - 100);
@@ -381,64 +391,77 @@ void vGetNetTime()
         NetTime.u8Min = (NetTime.u8Min/10 << 4) | ((NetTime.u8Min%10) & 0x0f);
         NetTime.u8Sec = (uint8_t)(timeinfo.tm_sec);
         NetTime.u8Sec = (NetTime.u8Sec/10 << 4) | ((NetTime.u8Sec%10) & 0x0f);
+        Serial.printf("Net Time %x:%x:%x\n\r",NetTime.u8Hour,NetTime.u8Min,NetTime.u8Sec);
         if(CurTime.u8Hour != NetTime.u8Hour
             ||CurTime.u8Min != NetTime.u8Min)
         {
             vSetTimeDirect(&NetTime);
+            Serial.printf("Set new Time %x:%x:%x\n\r",NetTime.u8Hour,NetTime.u8Min,NetTime.u8Sec);
         }        
+    }
+    else
+    {
+        Serial.println("Failed to obtain time");
     }
 }
 
 void vConnectTOCb(TimerHandle_t xTimer)
 {
     Serial.println("Connect timeout");
-    esp_wifi_deinit();
+    WiFi.disconnect();
+    WiFi.mode(WIFI_OFF);
     ClearWakeupRequest(false);
 }
 
 void SetupWifi(void)
 {
-    RequestWakeup(false);
-    ConnectTO = xTimerCreate
-                   ( /* Just a text name, not used by the RTOS
-                     kernel. */
-                     "ConnectWifiTimer",
-                     /* The timer period in ticks, must be
-                     greater than 0. */
-                     (portTICK_PERIOD_MS*1000*20),
-                     /* The timers will auto-reload themselves
-                     when they expire. */
-                     pdFALSE,
-                     /* The ID is used to store a count of the
-                     number of times the timer has expired, which
-                     is initialised to 0. */
-                     ( void * ) 0,
-                     /* Each timer calls the same callback when
-                     it expires. */
-                     vConnectTOCb
-                   );
-    xTimerStart(ConnectTO,10);
-    WiFi.hostname(HOST_NAME);             //设置设备名        
-    connectToWiFi(connectTimeOut_s);
-    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-    vGetNetTime();
-    WeatherRequest();
+    if(WifiConfiging != true)
+    {
+        RequestWakeup(false);
+        ConnectTO = xTimerCreate
+                      ( /* Just a text name, not used by the RTOS
+                        kernel. */
+                        "ConnectWifiTimer",
+                        /* The timer period in ticks, must be
+                        greater than 0. */
+                        (portTICK_PERIOD_MS*1000*20),
+                        /* The timers will auto-reload themselves
+                        when they expire. */
+                        pdFALSE,
+                        /* The ID is used to store a count of the
+                        number of times the timer has expired, which
+                        is initialised to 0. */
+                        ( void * ) 0,
+                        /* Each timer calls the same callback when
+                        it expires. */
+                        vConnectTOCb
+                      );
+        xTimerStart(ConnectTO,10);
+        WiFi.hostname(HOST_NAME);             //设置设备名        
+        connectToWiFi(connectTimeOut_s);
+        configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1,ntpServer2,ntpServer3);
+        vGetNetTime();
+        WeatherRequest();
+        WiFi.disconnect();
+        WiFi.mode(WIFI_OFF);
+    }
     
 }
 
 void vWebLoop(void *param)
 {
-    WiFi.hostname(HOST_NAME);             //设置设备名        
-    connectToWiFi(connectTimeOut_s);
-    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-    //WeatherRequest();
-    for(;;)
-    {
-        dnsServer.processNextRequest();   //检查客户端DNS请求
-        server.handleClient();            //检查客户端(浏览器)http请求
-        checkConnect(true);               //检测网络连接状态，参数true表示如果断开重新连接
-        //vGetNetTime();
-        delay(1000);
+  RequestWakeup(false);
+  WiFi.hostname(HOST_NAME); // 设置设备名
+  connectToWiFi(connectTimeOut_s);
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1,ntpServer2,ntpServer3);
+  // WeatherRequest();
+  for (;;)
+  {
+    dnsServer.processNextRequest(); // 检查客户端DNS请求
+    server.handleClient();          // 检查客户端(浏览器)http请求
+    checkConnect(true);             // 检测网络连接状态，参数true表示如果断开重新连接
+    // vGetNetTime();
+    delay(1000);
     }
 }
 
@@ -447,7 +470,7 @@ void vWifiInit(void)
     xTaskCreatePinnedToCore(
         vWebLoop,    // Function that should be called
         "web main task",   // Name of the task (for debugging)
-        2000,            // Stack size (bytes)
+        4000,            // Stack size (bytes)
         NULL,            // Parameter to pass
         1,               // Task priority
         NULL,             // Task handle

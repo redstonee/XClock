@@ -18,7 +18,7 @@ void boInitAlarmClkList(void)
         pref.putUChar((PrefKey_AlarmWeek + std::to_string(0)).c_str(),0x1f);//bit6 Sunday, bit5 Saturday, bit4 Friday,bit3 Thursday,bit2 Wednesday, bit1 tuesday, bit0 Monday 
         pref.putBool((PrefKey_AlarmActive + std::to_string(0)).c_str(),false);
         pref.putUChar(PrefKey_AlarmNum,alarm_num);
-        Serial.printf("No alarm, add default\n");
+        Serial.printf("No alarm, add default\n\r");
     }
     for(uint8_t i = 0;i < alarm_num; i++)
     {
@@ -36,7 +36,7 @@ void boInitAlarmClkList(void)
     for(uint8_t i = 0; i < alarm_total; i++)
     {
         alarm_temp = AlarmClkList.at(i);
-        Serial.printf("Alarm%d %d:%d:%x Active:%x \n",i,alarm_temp.u8Hour,alarm_temp.u8Min,alarm_temp.u8Week,alarm_temp.boActive);
+        Serial.printf("Alarm%d %d:%d:%x Active:%x \n\r",i,alarm_temp.u8Hour,alarm_temp.u8Min,alarm_temp.u8Week,alarm_temp.boActive);
     }
 }
 

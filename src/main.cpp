@@ -53,7 +53,7 @@ void vCreateTimeSemp(void)
     xTimeSemp = xSemaphoreCreateMutex();
     if(xTimeSemp == nullptr)
     {
-        Serial.printf("create time sem failed\n");
+        Serial.printf("create time sem failed\n\r");
     }
 }
 
@@ -62,7 +62,7 @@ void vCreateBattSemp(void)
     xBattStatusSemp = xSemaphoreCreateMutex();
     if(xBattStatusSemp == nullptr)
     {
-        Serial.printf("create sem failed\n");
+        Serial.printf("create sem failed\n\r");
     }
 }
 
@@ -71,7 +71,7 @@ void vCreateSleepSemp(void)
     xWakeReqCntSemp = xSemaphoreCreateMutex();
     if(xWakeReqCntSemp == nullptr)
     {
-        Serial.printf("create sem failed\n");
+        Serial.printf("create sem failed\n\r");
     }
 }
 
@@ -104,7 +104,7 @@ bool RequestWakeup(bool boHMIDis)
         {
             /* We could not obtain the semaphore and can therefore not access
             the shared resource safely. */
-            Serial.printf("get sem failed\n");
+            Serial.printf("get sem failed\n\r");
             res = false;
         }
     }
@@ -156,7 +156,7 @@ bool boNeedWakeup(bool boHMIDis)
         }
         else
         {
-            Serial.printf("get sem failed\n");
+            Serial.printf("get sem failed\n\r");
         }
         
     }
@@ -200,7 +200,7 @@ bool ClearWakeupRequest(bool boHMIDis)
             /* We could not obtain the semaphore and can therefore not access
             the shared resource safely. */
             res = false;
-            Serial.printf("get sem failed\n");
+            Serial.printf("get sem failed\n\r");
         }
     }
     else
@@ -284,7 +284,7 @@ void vSetCurTime(tst3078Time CurTime)
         {
             /* We could not obtain the semaphore and can therefore not access
             the shared resource safely. */
-            Serial.printf("get time sem failed\n");
+            Serial.printf("get time sem failed\n\r");
         }
     }
 }
@@ -311,7 +311,7 @@ tst3078Time stGetCurTime(void)
         {
             /* We could not obtain the semaphore and can therefore not access
             the shared resource safely. */
-            Serial.printf("get time sem failed\n");
+            Serial.printf("get time sem failed\n\r");
         }
     }
     return time_tmp;
@@ -328,7 +328,7 @@ void vRcvTimeSettingReq(void)
     xQueueReceive( TimeSettingQ,&( RcvTime ),( TickType_t ) 0 );
     if(RcvTime.u8Sec != 0xff)/*new time*/
     {
-        Serial.printf("Receive new setting time!\n");
+        Serial.printf("Receive new setting time!\n\r");
         SD3078Time->SetTime(&RcvTime);
     }
 }
@@ -359,7 +359,7 @@ void vSetBattSts(tstBattSts batt)
         {
             /* We could not obtain the semaphore and can therefore not access
             the shared resource safely. */
-            Serial.printf("get batt sem failed\n");
+            Serial.printf("get batt sem failed\n\r");
         }
     }
 }
@@ -386,7 +386,7 @@ tstBattSts stGetBattSts(void)
         {
             /* We could not obtain the semaphore and can therefore not access
             the shared resource safely. */
-            Serial.printf("get batt sem failed\n");
+            Serial.printf("get batt sem failed\n\r");
         }
     }
     return batt_tmp;
@@ -409,7 +409,7 @@ void vCheckAlarms(tst3078Time time)
                     && (AlarmClkTmp.u8Min == (((time.u8Min&0xf0)>>4)*10 + (time.u8Min&0x0f)))\
                     && (AlarmClkTmp.u8Week & (1<<(time.u8Week==0?6:(time.u8Week-1)))))
                     {
-                        Serial.printf("Alarming!\n");
+                        Serial.printf("Alarming!\n\r");
                         vSetAlarmClkSts(i,enAlarmSts_Alarming);
                         RequestWakeup(true);
                     }
@@ -420,7 +420,7 @@ void vCheckAlarms(tst3078Time time)
                     || (AlarmClkTmp.u8Min != (((time.u8Min&0xf0)>>4)*10 + (time.u8Min&0x0f)))\
                     || ((AlarmClkTmp.u8Week & (1<<(time.u8Week==0?6:(time.u8Week-1)))) == 0))
                     {
-                        Serial.printf("Alarming disabled!\n");
+                        Serial.printf("Alarming disabled!\n\r");
                         vSetAlarmClkSts(i,enAlarmSts_AlarmIdle);
                         ClearWakeupRequest(true);
                     }
@@ -434,7 +434,7 @@ void vCheckAlarms(tst3078Time time)
 
 void vGotoSleep(void)
 {
-    Serial.printf("Go to sleep\n");
+    Serial.printf("Go to sleep\n\r");
     digitalWrite(MIC_ADC_EN_PORT, LOW);
     digitalWrite(LED_POWER_PORT,LOW);
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_33,0);
@@ -463,10 +463,10 @@ bool boNoisy()
     }
     if(sum > NosiyThrehold)
     {
-        Serial.printf("nosiy %g \n",sum);
+        Serial.printf("nosiy %g\n\r",sum);
         return true;
     }
-    Serial.printf("%g \n",sum);
+    Serial.printf("%g\n\r",sum);
     return false;
 }
 
@@ -488,9 +488,9 @@ void setup() {
     vSetBattSts(stUpdateBattSts());
     vCheckAlarms(stCurTime);
     
-    if((stCurTime.u8Min == 0x00 ||stCurTime.u8Min == 0x30 )&& stCurTime.u8Sec == 0x00)
+    if((stCurTime.u8Min == 0x00 ||stCurTime.u8Min == 0x30 )&& (stCurTime.u8Sec == 0x00 || stCurTime.u8Sec == 0x0A ||stCurTime.u8Sec == 0x17))
     {
-        Serial.printf("SetUp wifi\n");
+        Serial.printf("SetUp wifi1\n\r");
         SetupWifi();
     }
     vTaskDelay(50);//delay for ADC stable
@@ -539,7 +539,7 @@ void setup() {
 
 void loop() {
     // uint32_t BatADC;
-    // uint32_t LDRADC;
+    //uint32_t LDRADC;
     // uint32_t MicroPhoneADC;
     //vTaskDelay(10 / portTICK_PERIOD_MS);
     //BatADC = analogReadMilliVolts(39);
@@ -567,9 +567,9 @@ void loop() {
     {
         vGotoSleep();
     }
-    if((stCurTime.u8Min == 0x00 ||stCurTime.u8Min == 0x30 ) && stCurTime.u8Sec == 0x00)
+    if((stCurTime.u8Min == 0x00 ||stCurTime.u8Min == 0x30) && (stCurTime.u8Sec == 0x00 || stCurTime.u8Sec == 0x0A ||stCurTime.u8Sec == 0x17))
     {
-        Serial.printf("SetUp wifi\n");
+        Serial.printf("SetUp wifi2\n\r");
         SetupWifi();
     }
     if(boNoisy())

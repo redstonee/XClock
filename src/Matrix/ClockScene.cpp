@@ -181,7 +181,7 @@ void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
                     ColorIndex = 0; //reset the color index when change the palette
                     if(false == boSetGlobalPaltIdx(PaletteIndex))//over the maxium palette size return false,restart from 0;
                     {
-                        Serial.printf("Store Palette fail\n");
+                        Serial.printf("Store Palette fail\n\r");
                         PaletteIndex = 0;
                         boSetGlobalPaltIdx(PaletteIndex);
                     }
@@ -292,8 +292,8 @@ void TimeLayer::UpdateColor(int8_t key_type, int8_t key_event)
     {
         boSetGlobalColorIdx(ColorIndex);           //store the color index when long press stop or short press
     }
-    Serial.printf("PaletteIndex %d \n",PaletteIndex);
-    Serial.printf("ColorIndex %d \n",ColorIndex);
+    Serial.printf("PaletteIndex %d \n\r",PaletteIndex);
+    Serial.printf("ColorIndex %d \n\r",ColorIndex);
     CRGB ColorFromPat = ColorFromPalette( currentPalette, ColorIndex);
     timecolor.r = ColorFromPat.r;
     timecolor.g = ColorFromPat.g;
@@ -314,7 +314,7 @@ void TimeLayer::UpdateColor(int8_t key_type, int8_t key_event)
         weekcolor.g = 100;
         weekcolor.b = 100;
     }
-    Serial.printf("Color r:%d g:%d b%d \n",timecolor.r, timecolor.g , timecolor.b);
+    Serial.printf("Color r:%d g:%d b%d \n\r",timecolor.r, timecolor.g , timecolor.b);
     Hour1canvas->setTextColor(timecolor);
     Hour2canvas->setTextColor(timecolor);
     //MinPt->setColor(timecolor);
@@ -353,7 +353,7 @@ void TimeLayer::SendSettingTime(tst3078Time* settingtime)
 
 void TimeLayer::DrawWeek(uint8_t week)
 {
-    Serial.printf("week %d \n",week);
+    Serial.printf("week %d \n\r",week);
     DTRGB inactivecol = timecolor;
     inactivecol.fadeToBlackBy(200);
     if(Weekcanvas != nullptr)
@@ -392,7 +392,7 @@ bool TimeLayer::initLayer()
     TimeSettingQ = pGetTimeSettingQ();
     ColorIndex = u8GetGlobalColorIdx();
     PaletteIndex = u8GetGlobalPaltIdx();
-    Serial.printf("PaletteIndex %d \n",PaletteIndex);
+    Serial.printf("PaletteIndex %d \n\r",PaletteIndex);
     currentPalette = pGetPalette(PaletteIndex);
     CRGB ColorFromPat = ColorFromPalette( currentPalette, ColorIndex);
     auto listener = EventListenerButton::create();
@@ -407,10 +407,10 @@ bool TimeLayer::initLayer()
     std::string min2 = std::to_string((ClockTime.u8Min&0x0f));
     uint8_t WeatherCode = 0;
     WeatherCode = (uint8_t)GetCurWeatherCode();
-    Serial.printf("Weather code:%d", WeatherCode);
+    Serial.printf("Weather code:%d\n\r", WeatherCode);
     uint32_t gifsize = 0;
     const unsigned char *picon = pGetWeatherIcon(WeatherCode,&gifsize);
-    Serial.printf("Weather icon:%x", picon);
+    Serial.printf("Weather icon:%x\n\r", picon);
     Weather = FrameSprite::create(picon,gifsize,BMP_GIF);
     Weather->setPosition(0,0);
     Weather->setAutoSwitch(true);
@@ -607,13 +607,13 @@ void TimeLayer::StateTimeDisShow(void)
         {
             AlarmIcon->runAction(RepeatForever::create(Blink::create(1,1)));
             AlarmIcon->setVisible(true);   
-            Serial.printf("Alarming \n");        
+            Serial.printf("Alarming \n\r");        
         }
         else
         {
             AlarmIcon->stopAllActions();
             AlarmIcon->setVisible(false);   
-            Serial.printf("Alarming disable \n");
+            Serial.printf("Alarming disable \n\r");
         }
     }
 

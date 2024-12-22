@@ -171,7 +171,7 @@ void vBrightessTask(void)
     if(u8OldBrightness !=u8NewBrightness)
     {
         FastLED.setBrightness(u8NewBrightness);
-        Serial.printf("new brightness:%d\n",u8NewBrightness);
+        Serial.printf("new brightness:%d\n\r",u8NewBrightness);
     }
     u8OldBrightness = u8NewBrightness;
 }
@@ -200,6 +200,11 @@ void vAlarmTask(void)
                         } 
                     }                    
                 }
+                break;
+            }
+            else
+            {
+                boAlarming = false;
             }         
         }
     }    
@@ -370,7 +375,7 @@ void vOffSeqFinishCb()
 
 void vSleepTOCb(TimerHandle_t xTimer)
 {
-    Serial.printf("Sleep timeout\n");
+    Serial.printf("Sleep timeout\n\r");
     if(stMainSts.enEnteredFeature == Feature_None \
         && stMainSts.enMainSceneIdx != Feature_CountDown \
         && stMainSts.enMainSceneIdx != Feature_Timer \

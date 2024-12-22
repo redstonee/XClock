@@ -53,12 +53,12 @@ bool boReqSound(tenSoundID SndID, uint16_t times)
             }
             else
             {
-                Serial.printf("Can not get metux4!\n");
+                Serial.printf("Can not get metux4!\n\r");
             }
         }
         else
         {
-            Serial.printf("Request sound mutex not active!\n");
+            Serial.printf("Request sound mutex not active!\n\r");
         }    
     }
 
@@ -89,12 +89,12 @@ void vStopSound(void)
             }
             else
             {
-                Serial.printf("Can not get metux3!\n");
+                Serial.printf("Can not get metux3!\n\r");
             }
         }
         else
         {
-            Serial.printf("Request sound mutex not active!\n");
+            Serial.printf("Request sound mutex not active!\n\r");
         } 
     } 
 }
@@ -129,12 +129,12 @@ void vSoundLoop(void *param)
                     }
                     else
                     {
-                        Serial.printf("Can not get metux2!\n");
+                        Serial.printf("Can not get metux2!\n\r");
                     }
                 }
                 else
                 {
-                    Serial.printf("Request sound mutex not active!\n");
+                    Serial.printf("Request sound mutex not active!\n\r");
                 } 
             } 
         } 
@@ -158,12 +158,12 @@ void vSoundLoop(void *param)
                 }
                 else
                 {
-                    Serial.printf("Can not get metux1!\n");
+                    Serial.printf("Can not get metux1!\n\r");
                 }
             }
             else
             {
-                Serial.printf("Request sound mutex not active!\n");
+                Serial.printf("Request sound mutex not active!\n\r");
             } 
         }
         vTaskDelay(10);
@@ -179,23 +179,23 @@ void vSoundInit(void)
     file = new AudioFileSourcePROGMEM();
     if(file == NULL)
     {
-        Serial.printf("Create file failed!\n");
+        Serial.printf("Create file failed!\n\r");
     }
     out = new AudioOutputI2S();
     if(out == NULL)
     {
-        Serial.printf("Create out failed!\n");
+        Serial.printf("Create out failed!\n\r");
     }
     wav = new AudioGeneratorWAV();
     if(wav == NULL)
     {
-        Serial.printf("Create wav failed!\n");
+        Serial.printf("Create wav failed!\n\r");
     }
     out->SetPinout(18,5,19);
     xMutex_ReqSnd = xSemaphoreCreateMutex();
     if(NULL == xMutex_ReqSnd)
     {
-        Serial.printf("Create request sound mutex failed!\n");
+        Serial.printf("Create request sound mutex failed!\n\r");
     }
     xTaskCreate(
         vSoundLoop,    // Function that should be called

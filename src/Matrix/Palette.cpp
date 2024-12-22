@@ -407,11 +407,11 @@ bool boSetGlobalPaltIdx(uint8_t idx)
     if(idx < MaxPaletteNum)
     {
         pref.putUChar(PrefKey_PaletteIdx,idx);
-        Serial.printf("MaxPaletteNum1 %d \n",MaxPaletteNum);
+        Serial.printf("MaxPaletteNum1 %d \n\r",MaxPaletteNum);
     }
     else
     {
-        Serial.printf("MaxPaletteNum2 %d \n",MaxPaletteNum);
+        Serial.printf("MaxPaletteNum2 %d \n\r",MaxPaletteNum);
         res = false;
     }    
     pref.end();

@@ -36,7 +36,7 @@ bool BattLayer::initLayer()
             this->addChild(batticon);
     }   
     std::string BattLvlstr = std::to_string(BattSts.BattLvl)+"%";
-    Serial.printf("Battlvl %s \n",BattLvlstr.c_str());
+    Serial.printf("Battlvl %s \n\r",BattLvlstr.c_str());
     if(BattSts.BattLvl < 20)
     {
         strcolor = DTRGB(0xff,0x2b,0x00); //red
@@ -110,7 +110,7 @@ void BattLayer::update(float dt)
     {       
         DTRGB strcolor;
         std::string BattLvlstr = std::to_string(BattStsTmp.BattLvl)+"%";
-        Serial.printf("Battlvl %s \n",BattLvlstr.c_str());
+        Serial.printf("Battlvl %s \n\r",BattLvlstr.c_str());
         if(BattStsTmp.BattLvl < 20)
         {
             strcolor = DTRGB(0xff,0x2b,0x00); //red

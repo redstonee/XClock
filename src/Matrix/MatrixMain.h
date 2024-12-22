@@ -15,6 +15,7 @@
 #define MATRIX_LDR_ADC_CH     (36)
 //光敏电阻转换亮度的步长
 #define MATRIX_LDR2LIGHT_STEP (150)
+//#define MATRIX_LDR2LIGHT_STEP (250)
 //滤波缓冲大小
 #define ADC_FILTER_CNT        (200)
 //换场时间
