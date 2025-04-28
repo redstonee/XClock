@@ -33,8 +33,8 @@ protected:
     SpriteCanvas *YearHcanvas = nullptr;
     TextSprite *YearL = nullptr;
     SpriteCanvas *YearLcanvas = nullptr;
-    tst3078Time ClockTime;
-	tst3078Time ClockTimeSetting;
+    DateTime ClockTime;
+	DateTime ClockTimeSetting;
 	QueueHandle_t TimeSettingQ;
 	uint8_t ColorIndex = 0;
 	uint8_t PaletteIndex = 0;
@@ -53,7 +53,7 @@ public:
 
 	void BtnDuringLongPressHandler(int8_t, Event*);
 
-	void SendSettingYear(tst3078Time*);
+	void SendSettingYear(DateTime*);
 
 };
 
@@ -79,8 +79,8 @@ protected:
     SpriteCanvas *Daycanvas = nullptr;
 	TextSprite *Split = nullptr;
 	SpriteCanvas *Splitcanvas = nullptr;
-    tst3078Time ClockTime;
-	tst3078Time ClockTimeSetting;
+    DateTime ClockTime;
+	DateTime ClockTimeSetting;
 	QueueHandle_t TimeSettingQ;
 	uint8_t ColorIndex = 0;
 	uint8_t PaletteIndex = 0;
@@ -101,7 +101,7 @@ public:
 
 	void MonthStateMachine(int8_t,int8_t);
 
-	void SendSettingMonth(tst3078Time*);
+	void SendSettingMonth(DateTime*);
 
 };
 

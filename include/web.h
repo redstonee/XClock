@@ -25,7 +25,7 @@ bool IsWifiConfig(void);
 
 String GetWifiSSID(void);
 
-int GetCurWeatherCode();
+uint8_t GetCurWeatherCode();
 
 void SetupWifi(void);
 #endif

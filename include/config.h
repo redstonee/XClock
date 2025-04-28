@@ -25,9 +25,9 @@ constexpr auto RTC_SCL_PIN = 22;
 constexpr auto RTC_ADDR = 0x32;
 
 // Buttons
-constexpr auto BUTTON1_PIN = 32;
-constexpr auto BUTTON2_PIN = 33;
-constexpr auto BUTTON3_PIN = 25;
+constexpr auto BUTTON_LEFT_PIN = 32;
+constexpr auto BUTTON_OK_PIN = 33;
+constexpr auto BUTTON_RIGHT_PIN = 25;
 
 // Audio
 constexpr auto AUDIO_DATA_PIN = 19;

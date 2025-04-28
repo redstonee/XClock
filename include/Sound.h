@@ -10,7 +10,7 @@ typedef enum
     enSndID_Ding,
     enSndID_Boo,
     enSndID_TotalNum,
-}tenSoundID;
+} tenSoundID;
 
 bool boReqSound(tenSoundID SndID, uint16_t times);
 
@@ -18,6 +18,6 @@ tenSoundID enGetCurSndID(void);
 
 void vStopSound(void);
 
-void vSoundInit(void);
+bool vSoundInit(void);
 
 #endif //__SOUND_H__

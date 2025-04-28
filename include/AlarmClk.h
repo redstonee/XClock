@@ -19,9 +19,9 @@ typedef enum
 
 typedef struct
 {
-    uint8_t u8Min;
-    uint8_t u8Hour;
-    uint8_t u8Week;//every bit mean one day, bit6 Sunday, bit5 Saturday, bit4 Friday,bit3 Thursday,bit2 Wednesday, bit1 tuesday, bit0 Monday 
+    uint8_t minute;
+    uint8_t hour;
+    uint8_t week;//every bit mean one day, bit6 Sunday, bit5 Saturday, bit4 Friday,bit3 Thursday,bit2 Wednesday, bit1 tuesday, bit0 Monday 
     bool boActive;
     tenAlarmSts stAlarmSts;
 }tstAlarmClk;

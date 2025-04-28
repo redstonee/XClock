@@ -33,9 +33,9 @@ bool AlarmClkLayer::initLayer()
     }
     else
     {
-        AlarmTime.u8Hour = 0;
-        AlarmTime.u8Min = 0;
-        AlarmTime.u8Week = 0;
+        AlarmTime.hour = 0;
+        AlarmTime.minute = 0;
+        AlarmTime.week = 0;
         AlarmTime.boActive = false;
         boAddAlarmClk(&AlarmTime);
     }
@@ -69,17 +69,17 @@ bool AlarmClkLayer::initLayer()
         clkcolor.g = 255;
         clkcolor.b = 255;
     }    
-    std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);
+    std::string hour = std::to_string(AlarmTime.hour/10) + std::to_string(AlarmTime.hour%10);
     Hour = TextSprite::create(Size(8,5),Size(8,5),clkcolor,hour,TextSprite::TextAlign::TextAlignRight,&TomThumb);
     Hourcanvas = Hour->getSpriteCanvas();
     TimePt = TextSprite::create(Size(2,5),Size(2,5),clkcolor,":",TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     TimePtcanvas = TimePt->getSpriteCanvas();
-    std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
+    std::string min = std::to_string(AlarmTime.minute/10) + std::to_string(AlarmTime.minute%10);
     Min = TextSprite::create(Size(8,5),Size(8,5),clkcolor,min,TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     Mincanvas = Min->getSpriteCanvas();
     Week = CanvasSprite::create(21,2);
     Weekcanvas = Week->getSpriteCanvas();
-    DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
+    DrawWeek(AlarmTime.week,enAlarmState,Weekcanvas,SettingWeekIdx);
     // Switch = CanvasSprite::create(6,2);
     // Switchcanvas = Switch->getSpriteCanvas();
     // Switchcanvas->writeFillRect(0,0,2,2,DTRGB(255,0,0));
@@ -129,7 +129,7 @@ void AlarmClkLayer::AlarmUpdate(float dt)
             break;
         default:break;
     }
-    //Serial.printf("Alarm Clk sts:%d alarm idx:%d week idx:%d time: %d:%d:%x \n",enAlarmState,u8CurrentAlarm,SettingWeekIdx,AlarmTime.u8Hour,AlarmTime.u8Min,AlarmTime.u8Week);
+    //Serial.printf("Alarm Clk sts:%d alarm idx:%d week idx:%d time: %d:%d:%x \n",enAlarmState,u8CurrentAlarm,SettingWeekIdx,AlarmTime.hour,AlarmTime.minute,AlarmTime.week);
 }
 
 void AlarmClkLayer::BtnClickHandler(int8_t keyCode, Event* event)
@@ -269,26 +269,26 @@ void AlarmClkLayer::SwitchAlarmAnimation(tstAlarmClk OldAlarm,bool boUp)
         newclkcolor.g = 255;
         newclkcolor.b = 255;
     } 
-    TextSprite* HourTmp = TextSprite::create(Size(8,5),Size(8,5),clkcolor,(std::to_string(OldAlarm.u8Hour/10) + std::to_string(OldAlarm.u8Hour%10)),TextSprite::TextAlign::TextAlignRight,&TomThumb);
+    TextSprite* HourTmp = TextSprite::create(Size(8,5),Size(8,5),clkcolor,(std::to_string(OldAlarm.hour/10) + std::to_string(OldAlarm.hour%10)),TextSprite::TextAlign::TextAlignRight,&TomThumb);
     HourTmp->setPosition(10,1);
     HourTmp->setTransparent(false);   
     TextSprite* TimePtTmp = TextSprite::create(Size(2,5),Size(2,5),clkcolor,":",TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     TimePtTmp->setPosition(18,1);
     TimePtTmp->setTransparent(false);    
-    TextSprite* MinTmp = TextSprite::create(Size(8,5),Size(8,5),clkcolor,(std::to_string(OldAlarm.u8Min/10) + std::to_string(OldAlarm.u8Min%10)),TextSprite::TextAlign::TextAlignCenter,&TomThumb);
+    TextSprite* MinTmp = TextSprite::create(Size(8,5),Size(8,5),clkcolor,(std::to_string(OldAlarm.minute/10) + std::to_string(OldAlarm.minute%10)),TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     MinTmp->setPosition(20,1);
     MinTmp->setTransparent(false);    
     CanvasSprite* WeekTmp = CanvasSprite::create(21,2);
     WeekTmp->setPosition(10,6);
     WeekTmp->setTransparent(false);
-    DrawWeek(OldAlarm.u8Week,enAlarmState,WeekTmp->getSpriteCanvas(),SettingWeekIdx); 
+    DrawWeek(OldAlarm.week,enAlarmState,WeekTmp->getSpriteCanvas(),SettingWeekIdx); 
     
     this->addChild(HourTmp,0,AnimationHourTag);
     this->addChild(TimePtTmp,0,AnimationPtTag);
     this->addChild(MinTmp,0,AnimationMinTag);
     this->addChild(WeekTmp,0,AnimationWeekTag);
 
-    std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);        
+    std::string hour = std::to_string(AlarmTime.hour/10) + std::to_string(AlarmTime.hour%10);        
     Hourcanvas->setTextColor(newclkcolor);
     Hourcanvas->canvasReset();
     Hourcanvas->print(hour.c_str());
@@ -297,12 +297,12 @@ void AlarmClkLayer::SwitchAlarmAnimation(tstAlarmClk OldAlarm,bool boUp)
     TimePtcanvas->canvasReset();
     TimePtcanvas->print(":");    
     
-    std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
+    std::string min = std::to_string(AlarmTime.minute/10) + std::to_string(AlarmTime.minute%10);
     Mincanvas->setTextColor(newclkcolor);    
     Mincanvas->canvasReset();
     Mincanvas->print(min.c_str());    
     
-    DrawWeek(AlarmTime.u8Week,enAlarmState,Week->getSpriteCanvas(),SettingWeekIdx);
+    DrawWeek(AlarmTime.week,enAlarmState,Week->getSpriteCanvas(),SettingWeekIdx);
     
     if(boUp)
     {
@@ -376,9 +376,9 @@ void AlarmClkLayer::StateDisShow(void)
     }
     else
     {
-        if(AlarmTime.u8Hour != oldAlarmClk.u8Hour || AlarmTime.boActive != oldAlarmClk.boActive)
+        if(AlarmTime.hour != oldAlarmClk.hour || AlarmTime.boActive != oldAlarmClk.boActive)
         {
-            std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);        
+            std::string hour = std::to_string(AlarmTime.hour/10) + std::to_string(AlarmTime.hour%10);        
             Hourcanvas->setTextColor(textcolor);
             Hourcanvas->canvasReset();
             Hourcanvas->print(hour.c_str());
@@ -386,15 +386,15 @@ void AlarmClkLayer::StateDisShow(void)
             TimePtcanvas->canvasReset();
             TimePtcanvas->print(":");
         }
-        if(AlarmTime.u8Min != oldAlarmClk.u8Min || AlarmTime.boActive != oldAlarmClk.boActive)
+        if(AlarmTime.minute != oldAlarmClk.minute || AlarmTime.boActive != oldAlarmClk.boActive)
         {
             Mincanvas->setTextColor(textcolor);
-            std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
+            std::string min = std::to_string(AlarmTime.minute/10) + std::to_string(AlarmTime.minute%10);
             Mincanvas->canvasReset();
             Mincanvas->print(min.c_str());
         }
 
-        DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
+        DrawWeek(AlarmTime.week,enAlarmState,Weekcanvas,SettingWeekIdx);
     }
     
 
@@ -414,21 +414,21 @@ void AlarmClkLayer::StateSetMinShow(void)
     {
         Min->runAction(RepeatForever::create(Blink::create(1,2)));
     }
-    // if(AlarmTime.u8Hour != oldAlarmClk.u8Hour)
+    // if(AlarmTime.hour != oldAlarmClk.hour)
     // {
-    //     std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);        
+    //     std::string hour = std::to_string(AlarmTime.hour/10) + std::to_string(AlarmTime.hour%10);        
     //     Hourcanvas->canvasReset();
     //     Hourcanvas->print(hour.c_str());
     // }
-    if(AlarmTime.u8Min != oldAlarmClk.u8Min)
+    if(AlarmTime.minute != oldAlarmClk.minute)
     {
-        std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
+        std::string min = std::to_string(AlarmTime.minute/10) + std::to_string(AlarmTime.minute%10);
         Mincanvas->canvasReset();
         Mincanvas->print(min.c_str());
     }
-    if(AlarmTime.u8Week != oldAlarmClk.u8Week)
+    if(AlarmTime.week != oldAlarmClk.week)
     {
-        DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
+        DrawWeek(AlarmTime.week,enAlarmState,Weekcanvas,SettingWeekIdx);
     }
     oldAlarmClk = AlarmTime;
 }
@@ -445,21 +445,21 @@ void AlarmClkLayer::StateSetHourShow(void)
         Min->stopAllActions();
         Min->setVisible(true);
     }
-    if(AlarmTime.u8Hour != oldAlarmClk.u8Hour)
+    if(AlarmTime.hour != oldAlarmClk.hour)
     {
-        std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);        
+        std::string hour = std::to_string(AlarmTime.hour/10) + std::to_string(AlarmTime.hour%10);        
         Hourcanvas->canvasReset();
         Hourcanvas->print(hour.c_str());
     }
-    // if(AlarmTime.u8Min != oldAlarmClk.u8Min)
+    // if(AlarmTime.minute != oldAlarmClk.minute)
     // {
-    //     std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
+    //     std::string min = std::to_string(AlarmTime.minute/10) + std::to_string(AlarmTime.minute%10);
     //     Mincanvas->canvasReset();
     //     Mincanvas->print(min.c_str());
     // }
-    if(AlarmTime.u8Week != oldAlarmClk.u8Week)
+    if(AlarmTime.week != oldAlarmClk.week)
     {
-        DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
+        DrawWeek(AlarmTime.week,enAlarmState,Weekcanvas,SettingWeekIdx);
     }
     oldAlarmClk = AlarmTime;
 }
@@ -478,23 +478,23 @@ void AlarmClkLayer::StateSetWeekShow(void)
         Min->stopAllActions();
         Min->setVisible(true);
     }
-    // if(AlarmTime.u8Hour != oldAlarmClk.u8Hour)
+    // if(AlarmTime.hour != oldAlarmClk.hour)
     // {
-    //     std::string hour = std::to_string(AlarmTime.u8Hour/10) + std::to_string(AlarmTime.u8Hour%10);        
+    //     std::string hour = std::to_string(AlarmTime.hour/10) + std::to_string(AlarmTime.hour%10);        
     //     Hourcanvas->canvasReset();
     //     Hourcanvas->print(hour.c_str());
     // }
-    // if(AlarmTime.u8Min != oldAlarmClk.u8Min)
+    // if(AlarmTime.minute != oldAlarmClk.minute)
     // {
-    //     std::string min = std::to_string(AlarmTime.u8Min/10) + std::to_string(AlarmTime.u8Min%10);
+    //     std::string min = std::to_string(AlarmTime.minute/10) + std::to_string(AlarmTime.minute%10);
     //     Mincanvas->canvasReset();
     //     Mincanvas->print(min.c_str());
     // }
-    // if((AlarmTime.u8Week != oldAlarmClk.u8Week) || (oldSettingWeek != SettingWeekIdx))
+    // if((AlarmTime.week != oldAlarmClk.week) || (oldSettingWeek != SettingWeekIdx))
     // {
-    //     DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
+    //     DrawWeek(AlarmTime.week,enAlarmState,Weekcanvas,SettingWeekIdx);
     // }
-    DrawWeek(AlarmTime.u8Week,enAlarmState,Weekcanvas,SettingWeekIdx);
+    DrawWeek(AlarmTime.week,enAlarmState,Weekcanvas,SettingWeekIdx);
     oldAlarmClk = AlarmTime;
     oldSettingWeek = SettingWeekIdx;
 }
@@ -592,17 +592,17 @@ void AlarmClkLayer::StateSetMinHandle(int8_t key_type, int8_t key_event)
     else if(enKey_Left == key_type)
     {
         /*minutes - 1*/
-        if(--AlarmTime.u8Min >= 60)
+        if(--AlarmTime.minute >= 60)
         {
-            AlarmTime.u8Min = 59;
+            AlarmTime.minute = 59;
         }
     }
     else if(enKey_Right == key_type)
     {
         /*minutes + 1*/
-        if(++AlarmTime.u8Min >= 60)
+        if(++AlarmTime.minute >= 60)
         {
-            AlarmTime.u8Min = 0;
+            AlarmTime.minute = 0;
         }
     }
 }
@@ -620,17 +620,17 @@ void AlarmClkLayer::StateSetHourHandle(int8_t key_type, int8_t key_event)
     else if(enKey_Left == key_type)
     {
         /*hour - 1*/
-        if(--AlarmTime.u8Hour >= 24)
+        if(--AlarmTime.hour >= 24)
         {
-            AlarmTime.u8Hour = 23;
+            AlarmTime.hour = 23;
         }
     }
     else if(enKey_Right == key_type)
     {
         /*hour + 1*/
-        if(++AlarmTime.u8Hour >= 24)
+        if(++AlarmTime.hour >= 24)
         {
-            AlarmTime.u8Hour = 0;
+            AlarmTime.hour = 0;
         }
     }
 }
@@ -641,13 +641,13 @@ void AlarmClkLayer::StateSetWeekHandle(int8_t key_type, int8_t key_event)
     {
         if(enKey_ShortPress == key_event)//current day need enable
         {
-            if(AlarmTime.u8Week & (1<<SettingWeekIdx))
+            if(AlarmTime.week & (1<<SettingWeekIdx))
             {
-                AlarmTime.u8Week &= ~(1<<SettingWeekIdx);
+                AlarmTime.week &= ~(1<<SettingWeekIdx);
             }
             else
             {
-                AlarmTime.u8Week |= (1<<SettingWeekIdx);
+                AlarmTime.week |= (1<<SettingWeekIdx);
             }
             
         }

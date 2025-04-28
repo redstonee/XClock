@@ -11,8 +11,8 @@ NS_DT_BEGIN
 typedef struct
 {
     uint8_t u8MSec;
-    uint8_t u8Min;
-    uint8_t u8Sec;
+    uint8_t minute;
+    uint8_t second;
     bool boTiming;
 }tstTimerType;
 
@@ -35,13 +35,13 @@ void TimerCounterCb(TimerHandle_t xTimer)
     if(++GlobalTimer.u8MSec >= 100)
     {
         GlobalTimer.u8MSec = 0;
-        if(++GlobalTimer.u8Sec >= 60)
+        if(++GlobalTimer.second >= 60)
         {
-            GlobalTimer.u8Sec = 0;
-            if(++GlobalTimer.u8Min >= 100)
+            GlobalTimer.second = 0;
+            if(++GlobalTimer.minute >= 100)
             {
-                GlobalTimer.u8Min = 99;
-                GlobalTimer.u8Sec = 99;
+                GlobalTimer.minute = 99;
+                GlobalTimer.second = 99;
                 GlobalTimer.u8MSec = 99;
                 xTimerStop(TimerCounter,10);
             }
@@ -72,19 +72,19 @@ bool TimerLayer::initLayer()
     if(false == GlobalTimer.boTiming)
     {
         GlobalTimer.u8MSec = 0;
-        GlobalTimer.u8Min = 0;
-        GlobalTimer.u8Sec = 0;
+        GlobalTimer.minute = 0;
+        GlobalTimer.second = 0;
     }
     DTRGB TextColor = {255,255,255};
     MSec = TextSprite::create(Size(8,5),Size(8,5),TextColor,(std::to_string(GlobalTimer.u8MSec/10)+std::to_string(GlobalTimer.u8MSec%10)),TextSprite::TextAlign::TextAlignRight,&TomThumb);
     MSeccanvas = MSec->getSpriteCanvas();
     TimePt1 = TextSprite::create(Size(2,5),Size(2,5),TextColor,":",TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     TimePt1canvas = TimePt1->getSpriteCanvas();
-    Min = TextSprite::create(Size(8,5),Size(8,5),TextColor,(std::to_string(GlobalTimer.u8Min/10) + std::to_string(GlobalTimer.u8Min%10)),TextSprite::TextAlign::TextAlignRight,&TomThumb);
+    Min = TextSprite::create(Size(8,5),Size(8,5),TextColor,(std::to_string(GlobalTimer.minute/10) + std::to_string(GlobalTimer.minute%10)),TextSprite::TextAlign::TextAlignRight,&TomThumb);
     Mincanvas = Min->getSpriteCanvas();
     TimePt2 = TextSprite::create(Size(2,5),Size(2,5),TextColor,".",TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     TimePt2canvas = TimePt2->getSpriteCanvas();
-    Sec = TextSprite::create(Size(8,5),Size(8,5),TextColor,(std::to_string(GlobalTimer.u8Sec/10) + std::to_string(GlobalTimer.u8Sec%10)),TextSprite::TextAlign::TextAlignRight,&TomThumb);
+    Sec = TextSprite::create(Size(8,5),Size(8,5),TextColor,(std::to_string(GlobalTimer.second/10) + std::to_string(GlobalTimer.second%10)),TextSprite::TextAlign::TextAlignRight,&TomThumb);
     Seccanvas = Sec->getSpriteCanvas();
     MSec->setPosition(23,1);
     TimePt1->setPosition(11,1);
@@ -148,15 +148,15 @@ void TimerLayer::TimerUpdate(float dt)
         MSeccanvas->canvasReset();
         MSeccanvas->print((std::to_string(GlobalTimer.u8MSec/10)+std::to_string(GlobalTimer.u8MSec%10)).c_str());
     }
-    if(TimerPre.u8Min != GlobalTimer.u8Min)
+    if(TimerPre.minute != GlobalTimer.minute)
     {
         Mincanvas->canvasReset();
-        Mincanvas->print((std::to_string(GlobalTimer.u8Min/10) + std::to_string(GlobalTimer.u8Min%10)).c_str());
+        Mincanvas->print((std::to_string(GlobalTimer.minute/10) + std::to_string(GlobalTimer.minute%10)).c_str());
     }
-    if(TimerPre.u8Sec != GlobalTimer.u8Sec)
+    if(TimerPre.second != GlobalTimer.second)
     {
         Seccanvas->canvasReset();
-        Seccanvas->print((std::to_string(GlobalTimer.u8Sec/10) + std::to_string(GlobalTimer.u8Sec%10)).c_str());
+        Seccanvas->print((std::to_string(GlobalTimer.second/10) + std::to_string(GlobalTimer.second%10)).c_str());
     }
     TimerPre = GlobalTimer;
 }
@@ -193,8 +193,8 @@ void TimerLayer::BtnLongPressStartHandler(int8_t keyCode, Event* event)
         }
         GlobalTimer.boTiming = false;
         GlobalTimer.u8MSec = 0;
-        GlobalTimer.u8Min = 0;
-        GlobalTimer.u8Sec = 0;
+        GlobalTimer.minute = 0;
+        GlobalTimer.second = 0;
     }
 }
 

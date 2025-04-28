@@ -10,8 +10,6 @@
 
 QueueHandle_t pGetTimeSettingQ(void);
 
-void vSetTimeDirect(tst3078Time *time);
-
 bool RequestWakeup(bool boHMIDis);
 
 bool boNeedWakeup(bool boHMIDis);
@@ -20,6 +18,6 @@ bool ClearWakeupRequest(bool boHMIDis);
 
 void vSetWeatherFlag(bool flag);
 
-tst3078Time stGetCurTime(void);
+DateTime stGetCurTime(void);
 
 #endif

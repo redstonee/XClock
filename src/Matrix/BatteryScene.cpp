@@ -9,6 +9,8 @@
 
 NS_DT_BEGIN
 
+static const char *TAG = "BattScene";
+
 bool BattScene::init()
 {
     BattLayer *BatteryLayer = BattLayer::create();
@@ -53,7 +55,7 @@ SpriteFrame *BattLayer::pGetBattIconSprt(bool charging, uint8_t batteryLevel)
 std::pair<String, DTRGB> genBattLevelStr(uint8_t batteryLevel)
 {
     auto BattLvlstr = String(batteryLevel) + " %";
-    Serial.printf("Battlvl %s \n\r", BattLvlstr.c_str());
+    ESP_LOGI(TAG, "Battlvl %s", BattLvlstr.c_str());
 
     DTRGB color;
     if (batteryLevel < 20)

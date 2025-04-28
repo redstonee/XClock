@@ -15,11 +15,12 @@
 ClockKey *keyHandler = nullptr;
 QueueHandle_t KeyQueue = nullptr;
 QueueHandle_t TimeSettingQ = nullptr;
-SemaphoreHandle_t xTimeSemp = nullptr;
 SemaphoreHandle_t xWakeReqCntSemp = nullptr;
 static SD3078 RTC(RTC_SDA_PIN, RTC_SCL_PIN, RTC_ADDR);
 
-tst3078Time ClockTime = {
+static const char *TAG = "Main";
+
+DateTime ClockTime = {
     0x00,
     0x17,
     0x93,
@@ -28,9 +29,7 @@ tst3078Time ClockTime = {
     0x02,
     0x23,
 };
-tst3078Time stCurTime = {
-    0x00,
-};
+
 int8_t Tempture = 0;
 int8_t i8SleepReqCnt = 0;
 int8_t i8SleepReqHMICnt = 0;
@@ -55,7 +54,7 @@ void vCreateTimeSettingQ(void)
         3,
         /* Size of each item is big enough to hold the
         whole structure. */
-        sizeof(tst3078Time));
+        sizeof(DateTime));
 }
 
 void vCreateTimeSemp(void)
@@ -63,7 +62,7 @@ void vCreateTimeSemp(void)
     xTimeSemp = xSemaphoreCreateMutex();
     if (xTimeSemp == nullptr)
     {
-        Serial.printf("create time sem failed\n\r");
+        ESP_LOGE(TAG, "create time sem failed\n\r");
     }
 }
 
@@ -72,7 +71,7 @@ void vCreateSleepSemp(void)
     xWakeReqCntSemp = xSemaphoreCreateMutex();
     if (xWakeReqCntSemp == nullptr)
     {
-        Serial.printf("create sem failed\n\r");
+        ESP_LOGE(TAG, "create sem failed\n\r");
     }
 }
 
@@ -105,7 +104,7 @@ bool RequestWakeup(bool boHMIDis)
         {
             /* We could not obtain the semaphore and can therefore not access
             the shared resource safely. */
-            Serial.printf("get sem failed\n\r");
+            ESP_LOGE(TAG, "get sem failed\n\r");
             res = false;
         }
     }
@@ -157,7 +156,7 @@ bool boNeedWakeup(bool boHMIDis)
         }
         else
         {
-            Serial.printf("get sem failed\n\r");
+            ESP_LOGE(TAG, "get sem failed\n\r");
         }
     }
     // Serial.printf("sleep cnt %d res %d\n",i8SleepReqCnt,res);
@@ -200,7 +199,7 @@ bool ClearWakeupRequest(bool boHMIDis)
             /* We could not obtain the semaphore and can therefore not access
             the shared resource safely. */
             res = false;
-            Serial.printf("get sem failed\n\r");
+            ESP_LOGE(TAG, "get sem failed\n\r");
         }
     }
     else
@@ -210,17 +209,15 @@ bool ClearWakeupRequest(bool boHMIDis)
     return res;
 }
 
-tst3078Time stUpdateTime(void)
+tm stUpdateTime(void)
 {
-    tst3078Time curtime = {
-        0,
-    };
+    tm curtime;
     RTC.ReadTime(&curtime);
-    // Serial.printf("%x:%x:%x Week %d\n",curtime.u8Hour,curtime.u8Min,curtime.u8Sec,curtime.u8Week);
+    // Serial.printf("%x:%x:%x Week %d\n",curtime.hour,curtime.minute,curtime.second,curtime.week);
     return curtime;
 }
 
-void vSetCurTime(tst3078Time CurTime)
+void vSetCurTime(DateTime CurTime)
 {
     if (xTimeSemp != NULL)
     {
@@ -241,14 +238,14 @@ void vSetCurTime(tst3078Time CurTime)
         {
             /* We could not obtain the semaphore and can therefore not access
             the shared resource safely. */
-            Serial.printf("get time sem failed\n\r");
+            ESP_LOGE(TAG, "get time sem failed\n\r");
         }
     }
 }
 
-tst3078Time stGetCurTime(void)
+DateTime stGetCurTime(void)
 {
-    tst3078Time time_tmp;
+    DateTime time_tmp;
     if (xTimeSemp != NULL)
     {
         /* See if we can obtain the semaphore.  If the semaphore is not
@@ -268,7 +265,7 @@ tst3078Time stGetCurTime(void)
         {
             /* We could not obtain the semaphore and can therefore not access
             the shared resource safely. */
-            Serial.printf("get time sem failed\n\r");
+            ESP_LOGE(TAG, "get time sem failed\n\r");
         }
     }
     return time_tmp;
@@ -281,23 +278,19 @@ QueueHandle_t pGetTimeSettingQ(void)
 
 void vRcvTimeSettingReq(void)
 {
-    tst3078Time RcvTime = {
-        0xff,
+    tm RcvTime = {
+        .tm_sec = 0xff,
     };
+
     xQueueReceive(TimeSettingQ, &(RcvTime), (TickType_t)0);
-    if (RcvTime.u8Sec != 0xff) /*new time*/
+    if (RcvTime.tm_sec != 0xff) /*new time*/
     {
-        Serial.printf("Receive new setting time!\n\r");
+        ESP_LOGE(TAG, "Receive new setting time!\n\r");
         RTC.SetTime(&RcvTime);
     }
 }
 
-void vSetTimeDirect(tst3078Time *time)
-{
-    RTC.SetTime(time);
-}
-
-void vCheckAlarms(tst3078Time time)
+void vCheckAlarms(tm time)
 {
     uint8_t AlarmNum = u8GetAlarmClkNum();
     tstAlarmClk AlarmClkTmp = {
@@ -312,18 +305,18 @@ void vCheckAlarms(tst3078Time time)
             {
                 if ((AlarmClkTmp.stAlarmSts == enAlarmSts_AlarmIdle))
                 {
-                    if ((AlarmClkTmp.u8Hour == (((time.u8Hour & 0x70) >> 4) * 10 + (time.u8Hour & 0x0f))) && (AlarmClkTmp.u8Min == (((time.u8Min & 0xf0) >> 4) * 10 + (time.u8Min & 0x0f))) && (AlarmClkTmp.u8Week & (1 << (time.u8Week == 0 ? 6 : (time.u8Week - 1)))))
+                    if ((AlarmClkTmp.hour == (((time.hour & 0x70) >> 4) * 10 + (time.hour & 0x0f))) && (AlarmClkTmp.minute == (((time.minute & 0xf0) >> 4) * 10 + (time.minute & 0x0f))) && (AlarmClkTmp.week & (1 << (time.week == 0 ? 6 : (time.week - 1)))))
                     {
-                        Serial.printf("Alarming!\n\r");
+                        ESP_LOGI(TAG, "Alarming!\n\r");
                         vSetAlarmClkSts(i, enAlarmSts_Alarming);
                         RequestWakeup(true);
                     }
                 }
                 else if (AlarmClkTmp.stAlarmSts == enAlarmSts_AlarmClicked || AlarmClkTmp.stAlarmSts == enAlarmSts_Alarming)
                 {
-                    if ((AlarmClkTmp.u8Hour != (((time.u8Hour & 0x70) >> 4) * 10 + (time.u8Hour & 0x0f))) || (AlarmClkTmp.u8Min != (((time.u8Min & 0xf0) >> 4) * 10 + (time.u8Min & 0x0f))) || ((AlarmClkTmp.u8Week & (1 << (time.u8Week == 0 ? 6 : (time.u8Week - 1)))) == 0))
+                    if ((AlarmClkTmp.hour != (((time.hour & 0x70) >> 4) * 10 + (time.hour & 0x0f))) || (AlarmClkTmp.minute != (((time.minute & 0xf0) >> 4) * 10 + (time.minute & 0x0f))) || ((AlarmClkTmp.week & (1 << (time.week == 0 ? 6 : (time.week - 1)))) == 0))
                     {
-                        Serial.printf("Alarming disabled!\n\r");
+                        ESP_LOGI(TAG, "Alarming disabled!\n\r");
                         vSetAlarmClkSts(i, enAlarmSts_AlarmIdle);
                         ClearWakeupRequest(true);
                     }
@@ -335,10 +328,10 @@ void vCheckAlarms(tst3078Time time)
 
 void vGotoSleep(void)
 {
-    Serial.printf("Go to sleep\n\r");
+    ESP_LOGI(TAG, "Go to sleep\n\r");
     digitalWrite(MIC_EN_PIN, LOW);
     digitalWrite(LED_EN_PIN, LOW);
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_33, 0);
+    esp_sleep_enable_ext0_wakeup(static_cast<gpio_num_t>(BUTTON_OK_PIN), 0);
     esp_sleep_enable_timer_wakeup(SLEEP_TIME);
     esp_deep_sleep_start();
 }
@@ -364,31 +357,51 @@ bool boNoisy()
     }
     if (sum > NOISE_THRESH)
     {
-        Serial.printf("nosiy %g\n\r", sum);
+        ESP_LOGI(TAG, "nosiy %g\n\r", sum);
         return true;
     }
-    Serial.printf("%g\n\r", sum);
+    ESP_LOGI(TAG, "%g\n\r", sum);
     return false;
 }
 
 void setup()
 {
-    //----------------开启串口通信----------------
-    Serial.begin(115200);
-    BattMon::begin();
-    pinMode(MIC_EN_PIN, OUTPUT); // MIC EN
+    pinMode(MIC_EN_PIN, OUTPUT);
     digitalWrite(MIC_EN_PIN, HIGH);
+
+    BattMon::begin();
+    if (!RTC.begin())
+    {
+        ESP_LOGE(TAG, "Failed to initialize RTC\n\r");
+        while (1)
+        {
+            delay(1000);
+        }
+    }
+    ESP_LOGI(TAG, "RTC initialized\n\r");
+
     vCreateTimeSemp();
     vCreateSleepSemp();
     // RTC->SetTime(&ClockTime);
-    vSoundInit();
+    if (!vSoundInit())
+    {
+        ESP_LOGE(TAG, "Sound Init failed\n\r");
+        while (1)
+        {
+            delay(1000);
+        }
+    }
+    ESP_LOGI(TAG, "Sound Init success\n\r");
+
     boInitAlarmClkList();
     vSetCurTime(stUpdateTime());
     vCheckAlarms(stCurTime);
 
-    if ((stCurTime.u8Min == 0x00 || stCurTime.u8Min == 0x30) && (stCurTime.u8Sec == 0x00 || stCurTime.u8Sec == 0x0A || stCurTime.u8Sec == 0x17))
+    ESP_LOGI(TAG, "Fuck Me");
+
+    if ((stCurTime.minute == 0x00 || stCurTime.minute == 0x30) && (stCurTime.second == 0x00 || stCurTime.second == 0x0A || stCurTime.second == 0x17))
     {
-        Serial.printf("SetUp wifi1\n\r");
+        ESP_LOGI(TAG, "SetUp wifi1\n\r");
         SetupWifi();
     }
     vTaskDelay(50); // delay for ADC stable
@@ -449,7 +462,7 @@ void loop()
     // Serial.printf("%d\n",MicroPhoneADC);
     // vPrintTaskInfo();
     // RTC->ReadTime(&ClockTime);
-    // Serial.printf("Time: %x:%x:%x:%x:%x:%x:%x\n",ClockTime.u8Year,ClockTime.u8Month,ClockTime.u8Day,ClockTime.u8Week,ClockTime.u8Hour,ClockTime.u8Min,ClockTime.u8Sec);
+    // Serial.printf("Time: %x:%x:%x:%x:%x:%x:%x\n",ClockTime.year,ClockTime.month,ClockTime.day,ClockTime.week,ClockTime.hour,ClockTime.minute,ClockTime.u8Sec);
     // RTC->ReadTemp(&Tempture);
     // Serial.printf("Temp:%d\n",Tempture);
     // Serial.printf("-----Free Heap Mem : %d [%.2f%%]-----\n",
@@ -465,9 +478,9 @@ void loop()
     {
         vGotoSleep();
     }
-    if ((stCurTime.u8Min == 0x00 || stCurTime.u8Min == 0x30) && (stCurTime.u8Sec == 0x00 || stCurTime.u8Sec == 0x0A || stCurTime.u8Sec == 0x17))
+    if ((stCurTime.minute == 0x00 || stCurTime.minute == 0x30) && (stCurTime.second == 0x00 || stCurTime.second == 0x0A || stCurTime.second == 0x17))
     {
-        Serial.printf("SetUp wifi2\n\r");
+        ESP_LOGI(TAG, "SetUp wifi2\n\r");
         SetupWifi();
     }
     if (boNoisy())

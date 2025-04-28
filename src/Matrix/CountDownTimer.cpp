@@ -10,8 +10,8 @@ NS_DT_BEGIN
 
 typedef struct
 {
-    uint8_t u8Min;
-    uint8_t u8Sec;
+    uint8_t minute;
+    uint8_t second;
     bool boTiming;
 }tstCountTimerType;
 
@@ -28,12 +28,12 @@ bool boIsCountDownTimerActive()
 
 void CounterTimerCb(TimerHandle_t xTimer)
 {
-    if(GlobaCountTimer.u8Sec-- <= 00)
+    if(GlobaCountTimer.second-- <= 00)
     {        
-        if(GlobaCountTimer.u8Min-- <= 0)
+        if(GlobaCountTimer.minute-- <= 0)
         {
-            GlobaCountTimer.u8Min = 0;
-            GlobaCountTimer.u8Sec = 0;
+            GlobaCountTimer.minute = 0;
+            GlobaCountTimer.second = 0;
             GlobaCountTimer.boTiming = false;
             xTimerStop(CounterTimer,10);
             xTimerStart(ExitTimer,10);
@@ -44,7 +44,7 @@ void CounterTimerCb(TimerHandle_t xTimer)
         }
         else
         {
-            GlobaCountTimer.u8Sec = 59;
+            GlobaCountTimer.second = 59;
         }
     }
 }
@@ -83,17 +83,17 @@ bool CountDownLayer::initLayer()
     else
     {
         TimerIcon = FrameSprite::create(icon_TimerInactive,sizeof(icon_TimerInactive),BMP_BMP);
-        GlobaCountTimer.u8Min = 25;
-        GlobaCountTimer.u8Sec = 0;
+        GlobaCountTimer.minute = 25;
+        GlobaCountTimer.second = 0;
     }
     
     TimerIcon->setPosition(-1,-1);
     TimerIcon->setAutoSwitch(true);
     TimePt = TextSprite::create(Size(2,5),Size(2,5),TextColor,":",TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     TimePtcanvas = TimePt->getSpriteCanvas();
-    Min = TextSprite::create(Size(8,5),Size(8,5),TextColor,(std::to_string(GlobaCountTimer.u8Min/10) + std::to_string(GlobaCountTimer.u8Min%10)),TextSprite::TextAlign::TextAlignRight,&TomThumb);
+    Min = TextSprite::create(Size(8,5),Size(8,5),TextColor,(std::to_string(GlobaCountTimer.minute/10) + std::to_string(GlobaCountTimer.minute%10)),TextSprite::TextAlign::TextAlignRight,&TomThumb);
     Mincanvas = Min->getSpriteCanvas();
-    Sec = TextSprite::create(Size(8,5),Size(8,5),TextColor,(std::to_string(GlobaCountTimer.u8Sec/10) + std::to_string(GlobaCountTimer.u8Sec%10)),TextSprite::TextAlign::TextAlignRight,&TomThumb);
+    Sec = TextSprite::create(Size(8,5),Size(8,5),TextColor,(std::to_string(GlobaCountTimer.second/10) + std::to_string(GlobaCountTimer.second%10)),TextSprite::TextAlign::TextAlignRight,&TomThumb);
     Seccanvas = Sec->getSpriteCanvas();    
     Min->setPosition(10,1); 
     TimePt->setPosition(18,1);
@@ -172,15 +172,15 @@ void CountDownLayer::TimerUpdate(float dt)
             TimerIcon->setSpriteFrame(SpriteFrame::create(icon_TimerInactive,sizeof(icon_TimerInactive),BMP_BMP));
         }        
     }
-    if(TimerPre.u8Min != GlobaCountTimer.u8Min)
+    if(TimerPre.minute != GlobaCountTimer.minute)
     {
         Mincanvas->canvasReset();
-        Mincanvas->print((std::to_string(GlobaCountTimer.u8Min/10) + std::to_string(GlobaCountTimer.u8Min%10)).c_str());
+        Mincanvas->print((std::to_string(GlobaCountTimer.minute/10) + std::to_string(GlobaCountTimer.minute%10)).c_str());
     }
-    if(TimerPre.u8Sec != GlobaCountTimer.u8Sec)
+    if(TimerPre.second != GlobaCountTimer.second)
     {
         Seccanvas->canvasReset();
-        Seccanvas->print((std::to_string(GlobaCountTimer.u8Sec/10) + std::to_string(GlobaCountTimer.u8Sec%10)).c_str());
+        Seccanvas->print((std::to_string(GlobaCountTimer.second/10) + std::to_string(GlobaCountTimer.second%10)).c_str());
     }
     if(enTimerSts == Timer_Dis)
     {
@@ -271,16 +271,16 @@ void CountDownLayer::TimerMachine(int8_t keyCode, int8_t event)
     {
         if(enTimerSts == Timer_MinSetting)
         {
-            if(++GlobaCountTimer.u8Min > 99)
+            if(++GlobaCountTimer.minute > 99)
             {
-                GlobaCountTimer.u8Min = 0;
+                GlobaCountTimer.minute = 0;
             }
         }    
         else if(enTimerSts == Timer_SecSetting)
         {
-            if(++GlobaCountTimer.u8Sec >= 60)
+            if(++GlobaCountTimer.second >= 60)
             {
-                GlobaCountTimer.u8Sec = 0;
+                GlobaCountTimer.second = 0;
             }
         }
     }
@@ -288,16 +288,16 @@ void CountDownLayer::TimerMachine(int8_t keyCode, int8_t event)
     {
         if(enTimerSts == Timer_MinSetting)
         {
-            if(GlobaCountTimer.u8Min-- <= 0)
+            if(GlobaCountTimer.minute-- <= 0)
             {
-                GlobaCountTimer.u8Min = 99;
+                GlobaCountTimer.minute = 99;
             }
         }    
         else if(enTimerSts == Timer_SecSetting)
         {
-            if(GlobaCountTimer.u8Sec-- <= 0)
+            if(GlobaCountTimer.second-- <= 0)
             {
-                GlobaCountTimer.u8Sec = 59;
+                GlobaCountTimer.second = 59;
             }
         }
     }

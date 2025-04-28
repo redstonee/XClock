@@ -57,8 +57,8 @@ protected:
 	FrameSprite *Weather = nullptr;
 	CanvasSprite *AlarmIcon = nullptr;
 	SpriteCanvas *AlarmIconCanvas = nullptr;
-    tst3078Time ClockTime;
-	tst3078Time ClockTimeSetting;
+    DateTime ClockTime;
+	DateTime ClockTimeSetting;
 	QueueHandle_t TimeSettingQ;
     float interval;
     bool ScrollUp = false;
@@ -88,7 +88,7 @@ public:
 
 	void UpdateColor(int8_t,int8_t);
 
-	void SendSettingTime(tst3078Time*);
+	void SendSettingTime(DateTime*);
 
 	void DrawWeek(uint8_t);
 

@@ -43,7 +43,7 @@ bool YearLayer::initLayer()
     FrameSprite* CalendarIcon = FrameSprite::create(icon_calendar,sizeof(icon_calendar),BMP_GIF);
     CalendarIcon->setPosition(0,0);
     CalendarIcon->setAutoSwitch(true);
-    std::string year = std::to_string(ClockTime.u8Year>>4) + std::to_string((ClockTime.u8Year&0x0f));
+    std::string year = std::to_string(ClockTime.year>>4) + std::to_string((ClockTime.year&0x0f));
     YearH = TextSprite::create(Size(8,5),Size(8,5),Color,"20",TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     YearHcanvas = YearH->getSpriteCanvas();
     YearL = TextSprite::create(Size(8,5),Size(8,5),Color,year,TextSprite::TextAlign::TextAlignCenter,&TomThumb);
@@ -64,7 +64,7 @@ void YearLayer::BtnClickHandler(int8_t keyCode, Event* event)
 {
     if(true == boYearSetting)
     {
-        uint8_t year_temp = (ClockTimeSetting.u8Year>>4)*10 + (ClockTimeSetting.u8Year&0x0f);
+        uint8_t year_temp = (ClockTimeSetting.year>>4)*10 + (ClockTimeSetting.year&0x0f);
         if(enKey_OK == keyCode)
         {
             boYearSetting = false;
@@ -84,7 +84,7 @@ void YearLayer::BtnClickHandler(int8_t keyCode, Event* event)
                 year_temp = 0;
             }
         }
-        ClockTimeSetting.u8Year = ((year_temp/10)<<4) + (year_temp%10);
+        ClockTimeSetting.year = ((year_temp/10)<<4) + (year_temp%10);
     }
     else
     {
@@ -105,7 +105,7 @@ void YearLayer::BtnDuringLongPressHandler(int8_t keyCode, Event* event)
 {
     if(true == boYearSetting)
     {
-        uint8_t year_temp = (ClockTimeSetting.u8Year>>4)*10 + (ClockTimeSetting.u8Year&0x0f);
+        uint8_t year_temp = (ClockTimeSetting.year>>4)*10 + (ClockTimeSetting.year&0x0f);
         if(enKey_Left == keyCode)
         {
             if(--year_temp > 99)
@@ -120,7 +120,7 @@ void YearLayer::BtnDuringLongPressHandler(int8_t keyCode, Event* event)
                 year_temp = 0;
             }
         }
-        ClockTimeSetting.u8Year = ((year_temp/10)<<4) + (year_temp%10);
+        ClockTimeSetting.year = ((year_temp/10)<<4) + (year_temp%10);
     }
     else
     {
@@ -128,7 +128,7 @@ void YearLayer::BtnDuringLongPressHandler(int8_t keyCode, Event* event)
     }
 }
 
-void YearLayer::SendSettingYear(tst3078Time* settingtime)
+void YearLayer::SendSettingYear(DateTime* settingtime)
 {
     if(TimeSettingQ != nullptr)
     {
@@ -143,18 +143,18 @@ void YearLayer::SendSettingYear(tst3078Time* settingtime)
 
 void YearLayer::YearUpdate(float dt)
 {
-    tst3078Time time;
+    DateTime time;
     time = stGetCurTime();
-    static tst3078Time OldSettingTime = {0,};
+    static DateTime OldSettingTime = {0,};
     if(true == boYearSetting)
     {
         if(0 == YearL->getNumberOfRunningActions())
         {
             YearL->runAction(RepeatForever::create(Blink::create(1,2)));
         }
-        if(ClockTimeSetting.u8Year != OldSettingTime.u8Year)
+        if(ClockTimeSetting.year != OldSettingTime.year)
         {
-            std::string year = std::to_string(ClockTimeSetting.u8Year>>4) + std::to_string((ClockTimeSetting.u8Year&0x0f));
+            std::string year = std::to_string(ClockTimeSetting.year>>4) + std::to_string((ClockTimeSetting.year&0x0f));
             YearLcanvas->canvasReset();
             YearLcanvas->print(year.c_str());         
         }
@@ -165,7 +165,7 @@ void YearLayer::YearUpdate(float dt)
         {
             ClockTime = time;
             YearL->stopAllActions();            
-            std::string year = std::to_string(ClockTime.u8Year>>4) + std::to_string((ClockTime.u8Year&0x0f));
+            std::string year = std::to_string(ClockTime.year>>4) + std::to_string((ClockTime.year&0x0f));
             YearLcanvas->canvasReset();
             YearLcanvas->print(year.c_str());  
             YearL->setVisible(true);
@@ -206,12 +206,12 @@ bool MonthLayer::initLayer()
     FrameSprite* CalendarIcon = FrameSprite::create(icon_calendar,sizeof(icon_calendar),BMP_GIF);
     CalendarIcon->setPosition(0,0);
     CalendarIcon->setAutoSwitch(true);
-    std::string month = std::to_string(ClockTime.u8Month>>4) + std::to_string((ClockTime.u8Month&0x0f));
+    std::string month = std::to_string(ClockTime.month>>4) + std::to_string((ClockTime.month&0x0f));
     Month = TextSprite::create(Size(8,5),Size(8,5),Color,month,TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     Monthcanvas = Month->getSpriteCanvas();
     Split = TextSprite::create(Size(2,5),Size(2,5),Color,".",TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     Splitcanvas = Split->getSpriteCanvas();
-    std::string day = std::to_string(ClockTime.u8Day>>4) + std::to_string((ClockTime.u8Day&0x0f));
+    std::string day = std::to_string(ClockTime.day>>4) + std::to_string((ClockTime.day&0x0f));
     Day = TextSprite::create(Size(8,5),Size(8,5),Color,day,TextSprite::TextAlign::TextAlignCenter,&TomThumb);
     Daycanvas = Day->getSpriteCanvas();
     Month->setTransparent(true);
@@ -231,9 +231,9 @@ bool MonthLayer::initLayer()
 
 void MonthLayer::MonthUpdate(float dt)
 {
-    tst3078Time time;
+    DateTime time;
     time = stGetCurTime();
-    static tst3078Time OldSettingTime = {0,};
+    static DateTime OldSettingTime = {0,};
     static tenMonthState OldState = State_MonthDis;
     if(State_MonthDis == enMonthState)
     {
@@ -247,15 +247,15 @@ void MonthLayer::MonthUpdate(float dt)
             Day->stopAllActions();
             Day->setVisible(true);
         }
-        if(time.u8Day != ClockTime.u8Day)
+        if(time.day != ClockTime.day)
         {
-            std::string day = std::to_string(time.u8Day>>4) + std::to_string((time.u8Day&0x0f));
+            std::string day = std::to_string(time.day>>4) + std::to_string((time.day&0x0f));
             Daycanvas->canvasReset();
             Daycanvas->print(day.c_str());
         }
-        if(time.u8Month != ClockTime.u8Month)
+        if(time.month != ClockTime.month)
         {
-            std::string month = std::to_string(time.u8Month>>4) + std::to_string((time.u8Month&0x0f));
+            std::string month = std::to_string(time.month>>4) + std::to_string((time.month&0x0f));
             Monthcanvas->canvasReset();
             Monthcanvas->print(month.c_str());
         }
@@ -272,7 +272,7 @@ void MonthLayer::MonthUpdate(float dt)
         {
             Day->runAction(RepeatForever::create(Blink::create(1,2)));
         }
-        std::string day = std::to_string(ClockTimeSetting.u8Day>>4) + std::to_string((ClockTimeSetting.u8Day&0x0f));
+        std::string day = std::to_string(ClockTimeSetting.day>>4) + std::to_string((ClockTimeSetting.day&0x0f));
         Daycanvas->canvasReset();
         Daycanvas->print(day.c_str());
     }
@@ -281,7 +281,7 @@ void MonthLayer::MonthUpdate(float dt)
         if(0 != Day->getNumberOfRunningActions())
         {
             Day->stopAllActions();
-            std::string day = std::to_string(ClockTimeSetting.u8Day>>4) + std::to_string((ClockTimeSetting.u8Day&0x0f));
+            std::string day = std::to_string(ClockTimeSetting.day>>4) + std::to_string((ClockTimeSetting.day&0x0f));
             Daycanvas->canvasReset();
             Daycanvas->print(day.c_str());
             Day->setVisible(true);
@@ -290,7 +290,7 @@ void MonthLayer::MonthUpdate(float dt)
         {
             Month->runAction(RepeatForever::create(Blink::create(1,2)));
         }
-        std::string month = std::to_string(ClockTimeSetting.u8Month>>4) + std::to_string((ClockTimeSetting.u8Month&0x0f));
+        std::string month = std::to_string(ClockTimeSetting.month>>4) + std::to_string((ClockTimeSetting.month&0x0f));
         Monthcanvas->canvasReset();
         Monthcanvas->print(month.c_str());
     }
@@ -313,8 +313,8 @@ void MonthLayer::BtnDuringLongPressHandler(int8_t keyCode, Event* event)
 
 void MonthLayer::MonthStateMachine(int8_t key_type, int8_t key_event)
 {
-    uint8_t month_temp = (ClockTimeSetting.u8Month>>4)*10 + (ClockTimeSetting.u8Month&0x0f);
-    uint8_t day_temp = (ClockTimeSetting.u8Day>>4)*10 + (ClockTimeSetting.u8Day&0x0f);
+    uint8_t month_temp = (ClockTimeSetting.month>>4)*10 + (ClockTimeSetting.month&0x0f);
+    uint8_t day_temp = (ClockTimeSetting.day>>4)*10 + (ClockTimeSetting.day&0x0f);
     switch(enMonthState)
     {
         case State_MonthDis:
@@ -350,7 +350,7 @@ void MonthLayer::MonthStateMachine(int8_t key_type, int8_t key_event)
                     day_temp = 0;
                 }
             }
-            ClockTimeSetting.u8Day = ((day_temp/10)<<4) + (day_temp%10);
+            ClockTimeSetting.day = ((day_temp/10)<<4) + (day_temp%10);
             break;
         case State_MonthSet:
             if(key_type == enKey_OK)
@@ -376,13 +376,13 @@ void MonthLayer::MonthStateMachine(int8_t key_type, int8_t key_event)
                     month_temp = 0;
                 }
             }
-            ClockTimeSetting.u8Month = ((month_temp/10)<<4) + (month_temp%10);
+            ClockTimeSetting.month = ((month_temp/10)<<4) + (month_temp%10);
             break;
         default:break;
     }    
 }
 
-void MonthLayer::SendSettingMonth(tst3078Time* settingtime)
+void MonthLayer::SendSettingMonth(DateTime* settingtime)
 {
     if(TimeSettingQ != nullptr)
     {

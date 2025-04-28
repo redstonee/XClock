@@ -3,11 +3,7 @@
 
 #include "OneButton.h"
 
-#define CLOCKKEY_LEFT_PIN       32
-#define CLOCKKEY_RIGHT_PIN      25
-#define CLOCKKEY_OK_PIN         33
-
-#define DurLongPressDelay          (10)
+#define DurLongPressDelay (10)
 
 typedef enum
 {
@@ -15,23 +11,23 @@ typedef enum
     enKey_Left,
     enKey_Right,
     enKey_OK,
-}tenKeyID;
+} tenKeyID;
 
 typedef enum
 {
     enKey_NoAct,
     enKey_ShortPress,
     enKey_DoubleClick,
-    enKey_LongPressStart,    
+    enKey_LongPressStart,
     enKey_LongPressStop,
     enKey_LongPress,
-}tenKeyEventType;
+} tenKeyEventType;
 
 typedef struct
 {
     tenKeyID Key;
     tenKeyEventType Type;
-}tstKeyEvent;
+} tstKeyEvent;
 
 class ClockKey
 {
@@ -53,18 +49,18 @@ private:
     static void vDoubleClickOk(void);
     static void vLongPressStartOk(void);
     static void vLongPressOk(void);
-    static void vLongPressStopOk(void);  
-    static void KeyLoop(void *param);  
-    static bool SendKeyToQ(tstKeyEvent*);
+    static void vLongPressStopOk(void);
+    static void KeyLoop(void *param);
+    static bool SendKeyToQ(tstKeyEvent *);
+
 public:
     static OneButton *ButtonLeft;
     static OneButton *ButtonRight;
     static OneButton *ButtonOk;
     void SetSendQueue(QueueHandle_t &Queue);
     ClockKey();
-    ~ClockKey();    
+    ~ClockKey();
     void Start(void);
 };
-
 
 #endif

@@ -1,7 +1,9 @@
 #include "GifClass.h"
 #include <Arduino.h>
 
-bool GifClass::decode(const uint8_t *fd,uint32_t size)
+static const char *TAG = "GifClass";
+
+bool GifClass::decode(const uint8_t *fd, uint32_t size)
 {
     uint8_t sigver[3];
     uint16_t width, height, depth;
@@ -17,14 +19,14 @@ bool GifClass::decode(const uint8_t *fd,uint32_t size)
     gif_buf_read(fd, sigver, 3);
     if (memcmp(sigver, "GIF", 3) != 0)
     {
-        Serial.println(F("invalid signature"));
+        ESP_LOGE(TAG, "invalid signature");
         return false;
     }
     /* Version */
     gif_buf_read(fd, sigver, 3);
     if (memcmp(sigver, "89a", 3) != 0)
     {
-        Serial.println(F("invalid version"));
+        ESP_LOGE(TAG, "invalid version");
         return false;
     }
     /* Width x Height */
@@ -35,7 +37,7 @@ bool GifClass::decode(const uint8_t *fd,uint32_t size)
     /* Presence of GCT */
     if (!(fdsz & 0x80))
     {
-        Serial.println(F("no global color table"));
+        ESP_LOGE(TAG, "no global color table");
         return false;
     }
     /* Color Space's Depth */
@@ -48,7 +50,7 @@ bool GifClass::decode(const uint8_t *fd,uint32_t size)
     /* Aspect Ratio */
     gif_buf_read(fd, &aspect, 1);
     /* Create gd_GIF Structure. */
-    if((_gif = (gd_GIF *)calloc(1, sizeof(*_gif)))== nullptr)
+    if ((_gif = (gd_GIF *)calloc(1, sizeof(*_gif))) == nullptr)
     {
         return false;
     }
@@ -63,11 +65,11 @@ bool GifClass::decode(const uint8_t *fd,uint32_t size)
     _gif->bgindex = bgidx;
     _gif->anim_start = gif_buf_idx; // fd->position();
     _gif->table = new_table();
-    if((_screenBuffer = (uint8_t *)malloc(width*height)) == nullptr)
+    if ((_screenBuffer = (uint8_t *)malloc(width * height)) == nullptr)
     {
         return false;
     }
-    gd_get_frame(_gif,_screenBuffer);
+    gd_get_frame(_gif, _screenBuffer);
     return true;
 }
 
@@ -105,9 +107,7 @@ int32_t GifClass::gd_get_frame(gd_GIF *gif, uint8_t *frame)
         }
         else
         {
-            Serial.print(F("Read sep: ["));
-            Serial.print(sep);
-            Serial.println(F("].\n"));
+            ESP_LOGI(TAG, "Read sep: [%c].\n", sep);
             return -1;
         }
     }
@@ -124,23 +124,21 @@ void GifClass::gd_rewind(gd_GIF *gif)
 
 void GifClass::gd_close_gif(gd_GIF *gif)
 {
-    
-    if(gif != nullptr)
+
+    if (gif != nullptr)
     {
-        if(gif->table != nullptr)
+        if (gif->table != nullptr)
         {
             free(gif->table);
         }
         free(gif);
     }
-    
 }
 
-
-uint32_t GifClass::getColor(uint8_t x,uint8_t y) const
+uint32_t GifClass::getColor(uint8_t x, uint8_t y) const
 {
-    GifRGB& color = _gif->palette->colors[_screenBuffer[y * _gif->width + x]];
-    //Serial.printf("color:%x ",color.getColor());
+    GifRGB &color = _gif->palette->colors[_screenBuffer[y * _gif->width + x]];
+    // Serial.printf("color:%x ",color.getColor());
     return color.getColor();
 }
 
@@ -151,10 +149,10 @@ uint16_t GifClass::getDuration() const
 
 bool GifClass::renderFrame(bool loop)
 {
-    if(0 == gd_get_frame(_gif,_screenBuffer) && loop)
+    if (0 == gd_get_frame(_gif, _screenBuffer) && loop)
     {
         gd_rewind(_gif);
-        gd_get_frame(_gif,_screenBuffer);
+        gd_get_frame(_gif, _screenBuffer);
     }
     return true;
 }
@@ -170,20 +168,18 @@ uint8_t GifClass::gifheight()
 }
 
 void GifClass::gif_freeDecoder()
-{   
-    if(_screenBuffer != nullptr)
+{
+    if (_screenBuffer != nullptr)
     {
         free(_screenBuffer);
-        _screenBuffer = nullptr;        
+        _screenBuffer = nullptr;
     }
-    
-    
-    if(_gif != nullptr)
+
+    if (_gif != nullptr)
     {
         free(_gif->table);
-        _gif->table = nullptr;        
-    }    
-    
+        _gif->table = nullptr;
+    }
 }
 
 bool GifClass::gif_buf_seek(const uint8_t *fd, int16_t len)
@@ -194,10 +190,11 @@ bool GifClass::gif_buf_seek(const uint8_t *fd, int16_t len)
 
 int16_t GifClass::gif_buf_read(const uint8_t *fd, uint8_t *dest, int16_t len)
 {
-    //Serial.printf("Buf idx:0x %x \n",gif_buf_idx);
+    // Serial.printf("Buf idx:0x %x \n",gif_buf_idx);
     while (len--)
     {
-        if(gif_buf_idx == gif_buf_last_idx)gif_buf_idx = 0;
+        if (gif_buf_idx == gif_buf_last_idx)
+            gif_buf_idx = 0;
         *(dest++) = fd[gif_buf_idx++];
     }
     return len;
@@ -205,8 +202,9 @@ int16_t GifClass::gif_buf_read(const uint8_t *fd, uint8_t *dest, int16_t len)
 
 uint8_t GifClass::gif_buf_read(const uint8_t *fd)
 {
-    //Serial.printf("Buf idx:0x %x \n",gif_buf_idx);
-    if(gif_buf_idx == gif_buf_last_idx)gif_buf_idx = 0;
+    // Serial.printf("Buf idx:0x %x \n",gif_buf_idx);
+    if (gif_buf_idx == gif_buf_last_idx)
+        gif_buf_idx = 0;
     return fd[gif_buf_idx++];
 }
 
@@ -340,12 +338,11 @@ void GifClass::read_ext(gd_GIF *gif)
         read_application_ext(gif);
         break;
     default:
-        Serial.print("unknown extension: ");
-        Serial.println(label, HEX);
+        ESP_LOGE(TAG, "unknown extension: %02x", label);
     }
 }
 
-gd_Table * GifClass::new_table()
+gd_Table *GifClass::new_table()
 {
     // uint16_t key;
     // int16_t init_bulk = MAX(1 << (key_size + 1), 0x100);
@@ -362,12 +359,10 @@ gd_Table * GifClass::new_table()
     gd_Table *table = (gd_Table *)malloc(s);
     if (table)
     {
-
     }
     else
     {
-        Serial.print(F("new_table() malloc failed: "));
-        Serial.println(s);
+        ESP_LOGE(TAG,"new_table() malloc failed: %d", s);
     }
     table->entries = (gd_Entry *)&table[1];
     return table;
@@ -383,9 +378,9 @@ void GifClass::reset_table(gd_Table *table, uint16_t key_size)
 }
 
 /* Add table entry. Return value:
-*  0 on success
-*  +1 if key size must be incremented after this addition
-*  -1 if could not realloc table */
+ *  0 on success
+ *  +1 if key size must be incremented after this addition
+ *  -1 if could not realloc table */
 int32_t GifClass::add_entry(gd_Table *table, int32_t length, uint16_t prefix, uint8_t suffix)
 {
     // Table *table = *tablep;
@@ -453,7 +448,7 @@ int16_t GifClass::interlaced_line_index(int16_t h, int16_t y)
 }
 
 /* Decompress image pixels.
-* Return 0 on success or -1 on out-of-memory (w.r.t. LZW code table). */
+ * Return 0 on success or -1 on out-of-memory (w.r.t. LZW code table). */
 int8_t GifClass::read_image_data(gd_GIF *gif, int16_t interlace, uint8_t *frame)
 {
     uint8_t sub_len, shift, byte, table_is_full = 0;
@@ -483,7 +478,7 @@ int8_t GifClass::read_image_data(gd_GIF *gif, int16_t interlace, uint8_t *frame)
     key = get_key(gif, key_size, &sub_len, &shift, &byte); /* clear code */
     frm_off = 0;
     ret = 0;
-    for(uint16_t i = 0; i < gif->width*gif->height;i++)
+    for (uint16_t i = 0; i < gif->width * gif->height; i++)
     {
         frame[i] = gif->gce.tindex;
     }
@@ -524,7 +519,7 @@ int8_t GifClass::read_image_data(gd_GIF *gif, int16_t interlace, uint8_t *frame)
         str_len = entry.length;
         uint8_t tindex = gif->gce.tindex;
         // Serial.println("Interpret key");
-        
+
         while (1)
         {
             p = frm_off + entry.length - 1;
@@ -535,21 +530,20 @@ int8_t GifClass::read_image_data(gd_GIF *gif, int16_t interlace, uint8_t *frame)
                 y = interlaced_line_index((int16_t)gif->fh, y);
             }
             if (tindex != entry.suffix)
-            {           
-                   
-                frame[(gif->fy + y) * gif->width + gif->fx + x] = entry.suffix;           
+            {
+
+                frame[(gif->fy + y) * gif->width + gif->fx + x] = entry.suffix;
             }
             if (entry.prefix == 0xFF)
             {
-                break; 
-            }                
+                break;
+            }
             else
             {
                 entry = gif->table->entries[entry.prefix];
             }
-            
         }
-        
+
         frm_off += str_len;
         if (key < gif->table->nentries - 1 && !table_is_full)
             gif->table->entries[gif->table->nentries - 1].suffix = entry.suffix;
@@ -562,7 +556,7 @@ int8_t GifClass::read_image_data(gd_GIF *gif, int16_t interlace, uint8_t *frame)
 }
 
 /* Read image.
-* Return 0 on success or -1 on out-of-memory (w.r.t. LZW code table). */
+ * Return 0 on success or -1 on out-of-memory (w.r.t. LZW code table). */
 int8_t GifClass::read_image(gd_GIF *gif, uint8_t *frame)
 {
     uint8_t fisrz;

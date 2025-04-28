@@ -33,7 +33,7 @@ const int WeatherhttpPort = 80;                // 端口号
 String reqUserKey = "S7KrrqZRFf8fC52mJ";       // 知心天气API私钥
 String reqLocation = "南京";                   // 地址
 String reqUnit = "c";                          // 摄氏度
-                      //-------------------http请求-----------------------------//
+                                               //-------------------http请求-----------------------------//
 String reqRes = "/v3/weather/now.json?key=" + reqUserKey +
                 +"&location=" + reqLocation +
                 "&language=en&unit=" + reqUnit;
@@ -45,6 +45,8 @@ String httprequest = String("GET ") + reqRes + " HTTP/1.1\r\n" +
 #define ROOT_HTML "<!DOCTYPE html><html><head><title>XClock WIFI Config</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><style type=\"text/css\">.input{display: block; margin-top: 10px;}.input span{width: 100px; float: left; float: left; height: 36px; line-height: 36px;}.input input{height: 30px;width: 200px;}.btn{width: 120px; height: 35px; background-color: #000000; border:0px; color:#ffffff; margin-top:15px; margin-left:100px;}</style><body><form method=\"POST\" action=\"configwifi\"><label class=\"input\"><span>WiFi SSID</span><input type=\"text\" name=\"ssid\" value=\"\"></label><label class=\"input\"><span>WiFi PASS</span><input type=\"text\"  name=\"pass\"></label><input class=\"btn\" type=\"submit\" name=\"submit\" value=\"Submie\"> <p><span> Nearby wifi:</P></form>"
 // 定义成功页面HTML源代码
 #define SUCCESS_HTML "<html><body><font size=\"10\">successd,wifi connecting...<br />Please close this page manually.</font></body></html>"
+
+static const char *TAG = "web";
 
 DNSServer dnsServer;       // 创建dnsServer实例
 WebServer server(webPort); // 开启web服务, 创建TCP SERVER,参数: 端口号,最大连接数
@@ -60,14 +62,12 @@ void initSoftAP()
   if (WiFi.softAP(AP_SSID))
   { // 开启AP热点,如需要密码则添加第二个参数
     // 打印相关信息
-    Serial.println("ESP-32S SoftAP is right.");
-    Serial.print("Soft-AP IP address = ");
-    Serial.println(WiFi.softAPIP());
-    Serial.println(String("MAC address = ") + WiFi.softAPmacAddress().c_str());
+    ESP_LOGI(TAG, "ESP-32S SoftAP is right.");
+    ESP_LOGI(TAG, "Soft-AP IP address = %s", WiFi.softAPIP().toString().c_str());
   }
   else
   { // 开启热点失败
-    Serial.println("WiFiAP Failed");
+    ESP_LOGE(TAG, "WiFiAP Failed");
   }
 }
 
@@ -77,11 +77,11 @@ void initDNS()
   // 判断将所有地址映射到esp32的ip上是否成功
   if (dnsServer.start(DNS_PORT, "*", apIP))
   {
-    Serial.println("start dnsserver success.");
+    ESP_LOGI(TAG, "start dnsserver success.");
   }
   else
   {
-    Serial.println("start dnsserver failed.");
+    ESP_LOGE(TAG, "start dnsserver failed.");
   }
 }
 
@@ -91,7 +91,7 @@ void initWebServer()
   // 给设备设定域名esp32,完整的域名是esp32.local ??
   if (MDNS.begin("esp32"))
   {
-    Serial.println("MDNS responder started");
+    ESP_LOGI(TAG, "MDNS responder started");
   }
   // 必须添加第二个参数HTTP_GET，以下面这种格式去写，否则无法强制门户
   server.on("/", HTTP_GET, handleRoot);                  //  当浏览器请求服务器根目录(网站首页)时调用自定义函数handleRoot处理，设置主页回调函数，必须添加第二个参数HTTP_GET，否则无法强制门户
@@ -100,19 +100,19 @@ void initWebServer()
   // Tells the server to begin listening for incoming connections.Returns None
   server.begin(); // 启动TCP SERVER
   // server.setNoDelay(true);                                  //关闭延时发送
-  Serial.println("WebServer started!");
+  ESP_LOGI(TAG, "WebServer started!");
 }
 
 // 扫描WiFi
 bool scanWiFi()
 {
-  Serial.println("scan start");
+  ESP_LOGI(TAG, "scan start");
   // 扫描附近WiFi
   int n = WiFi.scanNetworks();
-  Serial.println("scan done");
+  ESP_LOGI(TAG, "scan done");
   if (n == 0)
   {
-    Serial.println("no networks found");
+    ESP_LOGW(TAG, "no networks found");
     scanNetworksID = "no networks found";
     return false;
   }
@@ -327,20 +327,20 @@ String GetWifiSSID(void)
   return buf;
 }
 
-void SetCurWeatherCode(int code)
+void SetCurWeatherCode(uint8_t code)
 {
   Preferences pref;
   pref.begin(PrefKey_WeatherSpace);
-  pref.putInt(PrefKey_WeatherCodeCur, code);
+  pref.putUChar(PrefKey_WeatherCodeCur, code);
   pref.end();
 }
 
-int GetCurWeatherCode()
+uint8_t GetCurWeatherCode()
 {
   int code = 0;
   Preferences pref;
   pref.begin(PrefKey_WeatherSpace);
-  code = pref.getInt(PrefKey_WeatherCodeCur, 0);
+  code = pref.getUChar(PrefKey_WeatherCodeCur, 0);
   pref.end();
   return code;
 }
@@ -394,49 +394,21 @@ void parseWeatherJson(WiFiClient client)
   ClearWakeupRequest(false);
 }
 
-void vGetNetTime()
+bool vGetNetTime(tm &dateTime)
 {
-  tst3078Time CurTime = stGetCurTime();
-  tst3078Time NetTime = {
-      0xff,
-  };
-  struct tm timeinfo;
+
   uint8_t retry_cnt = 0;
   bool boTimeGetted = false;
   delay(1000);
   while ((!boTimeGetted) && (retry_cnt++ < 10))
   {
-    boTimeGetted = getLocalTime(&timeinfo);
+    boTimeGetted = getLocalTime(&dateTime);
     delay(1000);
   };
-  if (boTimeGetted)
-  {
-    Serial.println(&timeinfo, "%F %T %A");
-    NetTime.u8Year = (uint8_t)(timeinfo.tm_year - 100);
-    NetTime.u8Year = (NetTime.u8Year / 10 << 4) | ((NetTime.u8Year % 10) & 0x0f);
-    NetTime.u8Month = (uint8_t)(timeinfo.tm_mon + 1);
-    NetTime.u8Month = (NetTime.u8Month / 10 << 4) | ((NetTime.u8Month % 10) & 0x0f);
-    NetTime.u8Day = (uint8_t)(timeinfo.tm_mday);
-    NetTime.u8Day = (NetTime.u8Day / 10 << 4) | ((NetTime.u8Day % 10) & 0x0f);
-    NetTime.u8Week = (uint8_t)(timeinfo.tm_wday);
-    NetTime.u8Week = (NetTime.u8Week / 10 << 4) | ((NetTime.u8Week % 10) & 0x0f);
-    NetTime.u8Hour = (uint8_t)(timeinfo.tm_hour);
-    NetTime.u8Hour = (NetTime.u8Hour / 10 << 4) | ((NetTime.u8Hour % 10) & 0x0f) | 0x80;
-    NetTime.u8Min = (uint8_t)(timeinfo.tm_min);
-    NetTime.u8Min = (NetTime.u8Min / 10 << 4) | ((NetTime.u8Min % 10) & 0x0f);
-    NetTime.u8Sec = (uint8_t)(timeinfo.tm_sec);
-    NetTime.u8Sec = (NetTime.u8Sec / 10 << 4) | ((NetTime.u8Sec % 10) & 0x0f);
-    Serial.printf("Net Time %x:%x:%x\n\r", NetTime.u8Hour, NetTime.u8Min, NetTime.u8Sec);
-    if (CurTime.u8Hour != NetTime.u8Hour || CurTime.u8Min != NetTime.u8Min)
-    {
-      vSetTimeDirect(&NetTime);
-      Serial.printf("Set new Time %x:%x:%x\n\r", NetTime.u8Hour, NetTime.u8Min, NetTime.u8Sec);
-    }
-  }
-  else
-  {
-    Serial.println("Failed to obtain time");
-  }
+  if (!boTimeGetted)
+    return false;
+
+  Serial.println(&dateTime, "%F %T %A");
 }
 
 void vConnectTOCb(TimerHandle_t xTimer)

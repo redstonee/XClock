@@ -34,7 +34,7 @@ namespace BattMon
     {
         analogReadResolution(ADC_RES);     // Set ADC resolution
         pinMode(CHARGE_STATUS_PIN, INPUT); // battery charging status
-        auto readBattTimer = xTimerCreate("ReadBattTimer", pdMS_TO_TICKS(1000), pdTRUE, nullptr, readVoltage);
+        auto readBattTimer = xTimerCreate("ReadBatteryTimer", pdMS_TO_TICKS(1000), pdTRUE, nullptr, readVoltage);
         xTimerStart(readBattTimer, 0);
     }
 
