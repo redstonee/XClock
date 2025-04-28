@@ -1,6 +1,6 @@
 #ifndef __MATRIX_MAIN__
 #define __MATRIX_MAIN__
-#include "../Key/ClockKey.h"
+#include "ClockKey.h"
 //LED矩阵宽
 #define MATRIX_WIDTH          (32)
 //LED矩阵高

@@ -2,9 +2,9 @@
 #define __ALARM_CLOCK_H__
 
 #include "Dot2D/dot2d.h"
-#include "../RTC/SD3078.h"
-#include "../RTC/AlarmClk.h"
-#include "../main.h"
+#include "SD3078.hpp"
+#include "AlarmClk.h"
+#include "main.h"
 
 NS_DT_BEGIN
 #define AnimationHourTag      (1)

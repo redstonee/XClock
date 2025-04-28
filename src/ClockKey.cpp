@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "ClockKey.h"
-#include "Sound/Sound.h"
+#include "Sound.h"
 
 OneButton *ClockKey::ButtonLeft = new OneButton(CLOCKKEY_LEFT_PIN);
 OneButton *ClockKey::ButtonRight = new OneButton(CLOCKKEY_RIGHT_PIN);

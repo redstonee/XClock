@@ -2,131 +2,117 @@
 #include "Dot2D/third/gfxfont.h"
 #include "Dot2D/third/Picopixel.h"
 #include "Dot2D/third/TomThumb.h"
-#include "../main.h"
 #include "Icon.h"
+
 #include <Arduino.h>
+#include "BattMon.h"
+
 NS_DT_BEGIN
 
 bool BattScene::init()
 {
     BattLayer *BatteryLayer = BattLayer::create();
-    BatteryLayer->setContentSize(Size(32,8));
-    BatteryLayer->setPosition(0,0);
-    //ClockLayer->setOpacity
+    BatteryLayer->setContentSize(Size(32, 8));
+    BatteryLayer->setPosition(0, 0);
+    // ClockLayer->setOpacity
     this->addChild(BatteryLayer);
     BatteryLayer->initLayer();
     return true;
 }
 
-bool BattLayer::initLayer()
+SpriteFrame *BattLayer::pGetBattIconSprt(bool charging, uint8_t batteryLevel)
 {
-    DTRGB strcolor;
-    BattSts = stGetBattSts();
-    //auto listener = EventListenerButton::create();
-    // listener ->onBtnClick = [&](int8_t keyCode , Event * event )
-    // {
-    //     Serial.printf("clicked %d \n",keyCode);
-    // };
-    // _eventDispatcher->addEventListenerWithSceneGraphPriority ( listener, this );
-    batticon = FrameSprite::create(pGetBattIconSprt(BattSts));
-    if(batticon != nullptr)
+    if (BattMon::isCharging())
     {
-            batticon->setPosition(1,0);
-            batticon->setAutoSwitch(true);
-            this->addChild(batticon);
-    }   
-    std::string BattLvlstr = std::to_string(BattSts.BattLvl)+"%";
-    Serial.printf("Battlvl %s \n\r",BattLvlstr.c_str());
-    if(BattSts.BattLvl < 20)
-    {
-        strcolor = DTRGB(0xff,0x2b,0x00); //red
+        return SpriteFrame::create(icon_charging, sizeof(icon_charging), BMP_GIF);
     }
-    else if(BattSts.BattLvl < 60)
+
+    switch (batteryLevel / 20)
     {
-        strcolor = DTRGB(0xff,0xff,0x00); //yellow
+    case 0:
+        return SpriteFrame::create(icon_battlvl_0, sizeof(icon_battlvl_0), BMP_BMP);
+
+    case 1:
+        return SpriteFrame::create(icon_battlvl_1, sizeof(icon_battlvl_1), BMP_BMP);
+
+    case 2:
+        return SpriteFrame::create(icon_battlvl_2, sizeof(icon_battlvl_2), BMP_BMP);
+
+    case 3:
+        return SpriteFrame::create(icon_battlvl_3, sizeof(icon_battlvl_3), BMP_BMP);
+
+    case 4:
+        return SpriteFrame::create(icon_battlvl_4, sizeof(icon_battlvl_4), BMP_BMP);
+
+    case 5:
+    default:
+        return SpriteFrame::create(icon_battlvl_5, sizeof(icon_battlvl_5), BMP_BMP);
+    }
+}
+
+std::pair<String, DTRGB> genBattLevelStr(uint8_t batteryLevel)
+{
+    auto BattLvlstr = String(batteryLevel) + " %";
+    Serial.printf("Battlvl %s \n\r", BattLvlstr.c_str());
+
+    DTRGB color;
+    if (batteryLevel < 20)
+    {
+        color = DTRGB(0xff, 0x2b, 0x00); // red
+    }
+    else if (batteryLevel < 60)
+    {
+        color = DTRGB(0xff, 0xff, 0x00); // yellow
     }
     else
     {
-        strcolor = DTRGB(0x0d,0xff,0x00); //green
-    }  
+        color = DTRGB(0x0d, 0xff, 0x00); // green
+    }
+    return {BattLvlstr, color};
+}
 
-    BattLvltxt = TextSprite::create(Size(18,5),Size(18,5),strcolor,BattLvlstr,TextSprite::TextAlign::TextAlignCenter,&TomThumb);
+bool BattLayer::initLayer()
+{
+    batteryLevel = BattMon::getBatteryLevel();
+    isCharging = BattMon::isCharging();
+    batticon = FrameSprite::create(pGetBattIconSprt(isCharging, batteryLevel));
+
+    if (batticon != nullptr)
+    {
+        batticon->setPosition(1, 0);
+        batticon->setAutoSwitch(true);
+        this->addChild(batticon);
+    }
+
+    auto [batteryLevelStr, strcolor] = genBattLevelStr(batteryLevel);
+    BattLvltxt = TextSprite::create(Size(18, 5), Size(18, 5), strcolor, batteryLevelStr.c_str(), TextSprite::TextAlign::TextAlignCenter, &TomThumb);
     BattLvltxtcanvas = BattLvltxt->getSpriteCanvas();
     BattLvltxt->setTransparent(true);
-    BattLvltxt->setPosition(13,1);
+    BattLvltxt->setPosition(13, 1);
     this->addChild(BattLvltxt);
     this->scheduleUpdate();
     return true;
 }
 
-
-SpriteFrame* BattLayer::pGetBattIconSprt(tstBattSts battsts)
-{
-    SpriteFrame* batticon = nullptr;
-    if(battsts.boCharging)
-    {
-        batticon = SpriteFrame::create(icon_charging,sizeof(icon_charging),BMP_GIF);
-    }
-    else
-    {
-        uint8_t battlvl = battsts.BattLvl/(BAT_FULL_LVL/5);
-        switch(battlvl)
-        {
-            case 0:
-                batticon = SpriteFrame::create(icon_battlvl_0,sizeof(icon_battlvl_0),BMP_BMP);
-                break;
-            case 1:
-                batticon = SpriteFrame::create(icon_battlvl_1,sizeof(icon_battlvl_1),BMP_BMP);
-                break;
-            case 2:
-                batticon = SpriteFrame::create(icon_battlvl_2,sizeof(icon_battlvl_2),BMP_BMP);
-                break;
-            case 3:
-                batticon = SpriteFrame::create(icon_battlvl_3,sizeof(icon_battlvl_3),BMP_BMP);
-                break;
-            case 4:
-                batticon = SpriteFrame::create(icon_battlvl_4,sizeof(icon_battlvl_4),BMP_BMP);
-                break;
-            case 5:
-            default:
-                batticon = SpriteFrame::create(icon_battlvl_5,sizeof(icon_battlvl_5),BMP_BMP);
-                break;
-        } 
-    }
-    return batticon;
-}
-
-
 void BattLayer::update(float dt)
 {
-    tstBattSts BattStsTmp = stGetBattSts();
+    auto batteryLevelNew = BattMon::getBatteryLevel();
+    auto isChargingNew = BattMon::isCharging();
 
-    if(BattStsTmp.boCharging != BattSts.boCharging)
+    if (isChargingNew != isCharging)
     {
-        batticon->setSpriteFrame(pGetBattIconSprt(BattSts));   
+        batticon->setSpriteFrame(pGetBattIconSprt(isChargingNew, batteryLevelNew));
+        isCharging = isChargingNew;
     }
 
-    if(BattStsTmp.BattLvl != BattSts.BattLvl)
-    {       
-        DTRGB strcolor;
-        std::string BattLvlstr = std::to_string(BattStsTmp.BattLvl)+"%";
-        Serial.printf("Battlvl %s \n\r",BattLvlstr.c_str());
-        if(BattStsTmp.BattLvl < 20)
-        {
-            strcolor = DTRGB(0xff,0x2b,0x00); //red
-        }
-        else if(BattSts.BattLvl < 60)
-        {
-            strcolor = DTRGB(0xff,0xff,0x00); //yellow
-        }
-        else
-        {
-            strcolor = DTRGB(0x0d,0xff,0x00); //green
-        }  
+    if (batteryLevelNew != batteryLevel)
+    {
+        auto [batteryLevelStr, strcolor] = genBattLevelStr(batteryLevelNew);
         BattLvltxtcanvas->canvasReset();
         BattLvltxtcanvas->setTextColor(strcolor);
-        BattLvltxtcanvas->print(BattLvlstr.c_str());
+        BattLvltxtcanvas->print(batteryLevelStr.c_str());
+
+        batteryLevel = batteryLevelNew;
     }
-    BattSts = BattStsTmp;
 }
 NS_DT_END

@@ -4,7 +4,7 @@
 #include "Dot2D/third/TomThumb.h"
 #include "FastLED.h"
 #include "Icon.h"
-#include "../Key/ClockKey.h"
+#include "ClockKey.h"
 
 NS_DT_BEGIN
 

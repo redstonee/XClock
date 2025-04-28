@@ -2,13 +2,12 @@
 #include "Dot2D/third/gfxfont.h"
 #include "Dot2D/third/Picopixel.h"
 #include "Dot2D/third/TomThumb.h"
-#include "../RTC/SD3078.h"
-#include "../web/web.h"
-#include "../main.h"
+#include "web.h"
+#include "main.h"
 #include "Palette.h"
 #include "Icon.h"
-#include "../Key/ClockKey.h"
-#include "../RTC/AlarmClk.h"
+#include "ClockKey.h"
+#include "AlarmClk.h"
 
 NS_DT_BEGIN
 

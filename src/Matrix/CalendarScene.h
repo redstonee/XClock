@@ -2,7 +2,7 @@
 #define __CALENDAR_H__
 
 #include "Dot2D/dot2d.h"
-#include "../RTC/SD3078.h"
+#include "SD3078.hpp"
 
 NS_DT_BEGIN
 

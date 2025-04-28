@@ -2,7 +2,7 @@
 #define __CLOCKSCENE_H__
 
 #include "Dot2D/dot2d.h"
-#include "../RTC/SD3078.h"
+#include "SD3078.hpp"
 #include "FastLED.h"
 NS_DT_BEGIN
 

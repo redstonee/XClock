@@ -27,8 +27,8 @@ THE SOFTWARE.
 #include "Dot2D/third/gfxfont.h"
 #include "Dot2D/third/Picopixel.h"
 #include "Dot2D/third/TomThumb.h"
-#include "../web/web.h"
-#include "../Key/ClockKey.h"
+#include "web.h"
+#include "ClockKey.h"
 NS_DT_BEGIN
 
 bool WifiInfo::init()
