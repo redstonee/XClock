@@ -12,6 +12,8 @@
 #include "FFT.h"
 #include "WifiInfo.h"
 #include "Sound.h"
+
+#include "config.h"
 // #include "Dot2D/math/dtMath.h"
 
 dot2d::Director *director = nullptr;
@@ -166,7 +168,7 @@ void vBrightessTask(void)
     uint32_t LDRADC;
     static uint8_t u8OldBrightness = MATRIX_BRIGHTNESS_BASE;
     uint8_t u8NewBrightness = MATRIX_BRIGHTNESS_BASE;
-    LDRADC = analogReadMilliVolts(MATRIX_LDR_ADC_CH);
+    LDRADC = analogReadMilliVolts(LIGHT_SENSOR_PIN);
     LDRADC = u32ADCDataFilter(LDRADC);
     u8NewBrightness = (MATRIX_LDR_ADC_MAX - LDRADC) / MATRIX_LDR2LIGHT_STEP + MATRIX_BRIGHTNESS_BASE;
     if (u8OldBrightness != u8NewBrightness)
@@ -180,7 +182,7 @@ void vBrightessTask(void)
 void vAlarmTask(void)
 {
     uint8_t AlarmNum = u8GetAlarmClkNum();
-    tstAlarmClk AlarmClkTmp = {
+    AlarmConfig AlarmClkTmp = {
         0,
     };
     if (AlarmNum)
@@ -188,7 +190,7 @@ void vAlarmTask(void)
         for (uint8_t i = 0; i < AlarmNum; i++)
         {
             AlarmClkTmp = stGetAlarmClk(i);
-            if (AlarmClkTmp.stAlarmSts == enAlarmSts_Alarming)
+            if (AlarmClkTmp.alarmStatus == Alarm_GoOff)
             {
                 boAlarming = true;
                 if (enSndID_None == enGetCurSndID())
@@ -216,7 +218,7 @@ void vAlarmTask(void)
 void vAlarmClick(void)
 {
     uint8_t AlarmNum = u8GetAlarmClkNum();
-    tstAlarmClk AlarmClkTmp = {
+    AlarmConfig AlarmClkTmp = {
         0,
     };
     if (AlarmNum)
@@ -224,11 +226,11 @@ void vAlarmClick(void)
         for (uint8_t i = 0; i < AlarmNum; i++)
         {
             AlarmClkTmp = stGetAlarmClk(i);
-            if (AlarmClkTmp.stAlarmSts == enAlarmSts_Alarming)
+            if (AlarmClkTmp.alarmStatus == Alarm_GoOff)
             {
                 boAlarming = false;
                 vStopSound();
-                vSetAlarmClkSts(i, enAlarmSts_AlarmClicked);
+                vSetAlarmClkSts(i, Alarm_Clicked);
             }
         }
     }

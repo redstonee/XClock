@@ -36,7 +36,7 @@ bool AlarmClkLayer::initLayer()
         AlarmTime.hour = 0;
         AlarmTime.minute = 0;
         AlarmTime.week = 0;
-        AlarmTime.boActive = false;
+        AlarmTime.isActive = false;
         boAddAlarmClk(&AlarmTime);
     }
     auto listener = EventListenerButton::create();
@@ -45,7 +45,7 @@ bool AlarmClkLayer::initLayer()
     listener ->onBtnClick = DT_CALLBACK_2(AlarmClkLayer::BtnClickHandler,this);   
     listener ->onBtnDoubleClick = DT_CALLBACK_2(AlarmClkLayer::BtnDoubleClickHandler,this);  
     _eventDispatcher->addEventListenerWithSceneGraphPriority ( listener, this );
-    if(AlarmTime.boActive)
+    if(AlarmTime.isActive)
     {
         ClkIcon = FrameSprite::create(icon_ClockActive,sizeof(icon_ClockActive),BMP_GIF);
     }
@@ -57,7 +57,7 @@ bool AlarmClkLayer::initLayer()
     ClkIcon->setPosition(0,0);
     ClkIcon->setAutoSwitch(true);
     DTRGB clkcolor(255,255,255);
-    if(AlarmTime.boActive)
+    if(AlarmTime.isActive)
     {
         clkcolor.r = 0;
         clkcolor.g = 255;
@@ -92,7 +92,7 @@ bool AlarmClkLayer::initLayer()
     TimePt->setPosition(18,1);
     Min->setTransparent(false);    
     Min->setPosition(20,1);
-    // if(AlarmTime.boActive)
+    // if(AlarmTime.isActive)
     // {
     //     Switch->setPosition(26,3);
     // }
@@ -241,11 +241,11 @@ void AlarmClkLayer::ClearAnimationTmp(void)
 }
 
 
-void AlarmClkLayer::SwitchAlarmAnimation(tstAlarmClk OldAlarm,bool boUp)
+void AlarmClkLayer::SwitchAlarmAnimation(AlarmConfig OldAlarm,bool boUp)
 {
     DTRGB clkcolor;
     DTRGB newclkcolor;
-    if(OldAlarm.boActive)
+    if(OldAlarm.isActive)
     {
         clkcolor.r = 0;
         clkcolor.g = 255;
@@ -257,7 +257,7 @@ void AlarmClkLayer::SwitchAlarmAnimation(tstAlarmClk OldAlarm,bool boUp)
         clkcolor.g = 255;
         clkcolor.b = 255;
     } 
-    if(AlarmTime.boActive)
+    if(AlarmTime.isActive)
     {
         newclkcolor.r = 0;
         newclkcolor.g = 255;
@@ -341,12 +341,12 @@ void AlarmClkLayer::SwitchAlarmAnimation(tstAlarmClk OldAlarm,bool boUp)
 
 void AlarmClkLayer::StateDisShow(void)
 {
-    static tstAlarmClk oldAlarmClk= AlarmTime;
+    static AlarmConfig oldAlarmClk= AlarmTime;
     static uint8_t oldAlarmidx = 0;
     DTRGB textcolor = {255,255,255};
-    if(oldAlarmClk.boActive != AlarmTime.boActive)
+    if(oldAlarmClk.isActive != AlarmTime.isActive)
     {
-        if(AlarmTime.boActive)
+        if(AlarmTime.isActive)
         {
             textcolor.r = 0;
             textcolor.g = 255;
@@ -376,7 +376,7 @@ void AlarmClkLayer::StateDisShow(void)
     }
     else
     {
-        if(AlarmTime.hour != oldAlarmClk.hour || AlarmTime.boActive != oldAlarmClk.boActive)
+        if(AlarmTime.hour != oldAlarmClk.hour || AlarmTime.isActive != oldAlarmClk.isActive)
         {
             std::string hour = std::to_string(AlarmTime.hour/10) + std::to_string(AlarmTime.hour%10);        
             Hourcanvas->setTextColor(textcolor);
@@ -386,7 +386,7 @@ void AlarmClkLayer::StateDisShow(void)
             TimePtcanvas->canvasReset();
             TimePtcanvas->print(":");
         }
-        if(AlarmTime.minute != oldAlarmClk.minute || AlarmTime.boActive != oldAlarmClk.boActive)
+        if(AlarmTime.minute != oldAlarmClk.minute || AlarmTime.isActive != oldAlarmClk.isActive)
         {
             Mincanvas->setTextColor(textcolor);
             std::string min = std::to_string(AlarmTime.minute/10) + std::to_string(AlarmTime.minute%10);
@@ -404,7 +404,7 @@ void AlarmClkLayer::StateDisShow(void)
 
 void AlarmClkLayer::StateSetMinShow(void)
 {
-    static tstAlarmClk oldAlarmClk= {0,0,0,false};
+    static AlarmConfig oldAlarmClk= {0,0,0,false};
     if(0 != Hour->getNumberOfRunningActions())
     {
         Hour->stopAllActions();
@@ -435,7 +435,7 @@ void AlarmClkLayer::StateSetMinShow(void)
 
 void AlarmClkLayer::StateSetHourShow(void)
 {
-    static tstAlarmClk oldAlarmClk= {0,0,0,false};
+    static AlarmConfig oldAlarmClk= {0,0,0,false};
     if(0 == Hour->getNumberOfRunningActions())
     {
         Hour->runAction(RepeatForever::create(Blink::create(1,2)));
@@ -466,7 +466,7 @@ void AlarmClkLayer::StateSetHourShow(void)
 
 void AlarmClkLayer::StateSetWeekShow(void)
 {
-    static tstAlarmClk oldAlarmClk= {0,0,0,false};
+    static AlarmConfig oldAlarmClk= {0,0,0,false};
     static uint8_t oldSettingWeek = 0;
     if(0 != Hour->getNumberOfRunningActions())
     {
@@ -528,16 +528,16 @@ void AlarmClkLayer::StateDisHandle(int8_t key_type, int8_t key_event)
         }
         else if(enKey_DoubleClick == key_event)//enable the alarm clock
         {
-            if(false == AlarmTime.boActive)
+            if(false == AlarmTime.isActive)
             {
-                AlarmTime.boActive = true;
+                AlarmTime.isActive = true;
             }
             
             boSetAlarmClk(u8CurrentAlarm,&AlarmTime);
         }
         else if(enKey_LongPressStart == key_event)//add new alarm clock
         {
-            tstAlarmClk newAlarmClk = {0,0,0,false};
+            AlarmConfig newAlarmClk = {0,0,0,false};
             if(boAddAlarmClk(&newAlarmClk))
             {
                 u8CurrentAlarm++;
@@ -558,9 +558,9 @@ void AlarmClkLayer::StateDisHandle(int8_t key_type, int8_t key_event)
         }
         else if(enKey_DoubleClick == key_event)//disable the alarm clock
         {
-                if(true == AlarmTime.boActive)
+                if(true == AlarmTime.isActive)
                 {
-                    AlarmTime.boActive = false;
+                    AlarmTime.isActive = false;
                 }
                 boSetAlarmClk(u8CurrentAlarm,&AlarmTime);
         }

@@ -20,21 +20,11 @@ static SD3078 RTC(RTC_SDA_PIN, RTC_SCL_PIN, RTC_ADDR);
 
 static const char *TAG = "Main";
 
-DateTime ClockTime = {
-    0x00,
-    0x17,
-    0x93,
-    0x07,
-    0x12,
-    0x02,
-    0x23,
-};
-
 int8_t Tempture = 0;
 int8_t i8SleepReqCnt = 0;
 int8_t i8SleepReqHMICnt = 0;
 double realComponent[64];
-double imagComponent[64];
+double imagComponent[64]{0};
 arduinoFFT *fft = new arduinoFFT(realComponent, imagComponent, 64, 8000);
 
 void vCreateKeyQueue(void)
@@ -54,16 +44,7 @@ void vCreateTimeSettingQ(void)
         3,
         /* Size of each item is big enough to hold the
         whole structure. */
-        sizeof(DateTime));
-}
-
-void vCreateTimeSemp(void)
-{
-    xTimeSemp = xSemaphoreCreateMutex();
-    if (xTimeSemp == nullptr)
-    {
-        ESP_LOGE(TAG, "create time sem failed\n\r");
-    }
+        sizeof(tm));
 }
 
 void vCreateSleepSemp(void)
@@ -122,7 +103,7 @@ bool boNeedWakeup(bool boHMIDis)
     {
         /* See if we can obtain the semaphore.  If the semaphore is not
         available wait 10 ticks to see if it becomes free. */
-        if (xSemaphoreTake(xWakeReqCntSemp, (TickType_t)10) == pdTRUE)
+        if (xSemaphoreTake(xWakeReqCntSemp, 10))
         {
             /* We were able to obtain the semaphore and can now access the
             shared resource. */
@@ -212,63 +193,9 @@ bool ClearWakeupRequest(bool boHMIDis)
 tm stUpdateTime(void)
 {
     tm curtime;
-    RTC.ReadTime(&curtime);
+    RTC.getTime(&curtime);
     // Serial.printf("%x:%x:%x Week %d\n",curtime.hour,curtime.minute,curtime.second,curtime.week);
     return curtime;
-}
-
-void vSetCurTime(DateTime CurTime)
-{
-    if (xTimeSemp != NULL)
-    {
-        /* See if we can obtain the semaphore.  If the semaphore is not
-        available wait 10 ticks to see if it becomes free. */
-        if (xSemaphoreTake(xTimeSemp, (TickType_t)10) == pdTRUE)
-        {
-            /* We were able to obtain the semaphore and can now access the
-            shared resource. */
-
-            /* ... */
-            stCurTime = CurTime;
-            /* We have finished accessing the shared resource.  Release the
-            semaphore. */
-            xSemaphoreGive(xTimeSemp);
-        }
-        else
-        {
-            /* We could not obtain the semaphore and can therefore not access
-            the shared resource safely. */
-            ESP_LOGE(TAG, "get time sem failed\n\r");
-        }
-    }
-}
-
-DateTime stGetCurTime(void)
-{
-    DateTime time_tmp;
-    if (xTimeSemp != NULL)
-    {
-        /* See if we can obtain the semaphore.  If the semaphore is not
-        available wait 10 ticks to see if it becomes free. */
-        if (xSemaphoreTake(xTimeSemp, (TickType_t)10) == pdTRUE)
-        {
-            /* We were able to obtain the semaphore and can now access the
-            shared resource. */
-
-            /* ... */
-            time_tmp = stCurTime;
-            /* We have finished accessing the shared resource.  Release the
-            semaphore. */
-            xSemaphoreGive(xTimeSemp);
-        }
-        else
-        {
-            /* We could not obtain the semaphore and can therefore not access
-            the shared resource safely. */
-            ESP_LOGE(TAG, "get time sem failed\n\r");
-        }
-    }
-    return time_tmp;
 }
 
 QueueHandle_t pGetTimeSettingQ(void)
@@ -282,18 +209,18 @@ void vRcvTimeSettingReq(void)
         .tm_sec = 0xff,
     };
 
-    xQueueReceive(TimeSettingQ, &(RcvTime), (TickType_t)0);
+    xQueueReceive(TimeSettingQ, &(RcvTime), 0);
     if (RcvTime.tm_sec != 0xff) /*new time*/
     {
         ESP_LOGE(TAG, "Receive new setting time!\n\r");
-        RTC.SetTime(&RcvTime);
+        RTC.setTime(RcvTime);
     }
 }
 
-void vCheckAlarms(tm time)
+void vCheckAlarms(tm currentTime)
 {
     uint8_t AlarmNum = u8GetAlarmClkNum();
-    tstAlarmClk AlarmClkTmp = {
+    AlarmConfig AlarmClkTmp = {
         0,
     };
     if (AlarmNum)
@@ -301,23 +228,25 @@ void vCheckAlarms(tm time)
         for (uint8_t i = 0; i < AlarmNum; i++)
         {
             AlarmClkTmp = stGetAlarmClk(i);
-            if (AlarmClkTmp.boActive)
+            if (AlarmClkTmp.isActive)
             {
-                if ((AlarmClkTmp.stAlarmSts == enAlarmSts_AlarmIdle))
+                if ((AlarmClkTmp.alarmStatus == Alarm_Idle))
                 {
-                    if ((AlarmClkTmp.hour == (((time.hour & 0x70) >> 4) * 10 + (time.hour & 0x0f))) && (AlarmClkTmp.minute == (((time.minute & 0xf0) >> 4) * 10 + (time.minute & 0x0f))) && (AlarmClkTmp.week & (1 << (time.week == 0 ? 6 : (time.week - 1)))))
+                    if ((AlarmClkTmp.hour == currentTime.tm_hour) && (AlarmClkTmp.minute == currentTime.tm_min) &&
+                        (AlarmClkTmp.week & (1 << (currentTime.tm_wday == 0 ? 6 : (currentTime.tm_wday - 1)))))
                     {
                         ESP_LOGI(TAG, "Alarming!\n\r");
-                        vSetAlarmClkSts(i, enAlarmSts_Alarming);
+                        vSetAlarmClkSts(i, Alarm_GoOff);
                         RequestWakeup(true);
                     }
                 }
-                else if (AlarmClkTmp.stAlarmSts == enAlarmSts_AlarmClicked || AlarmClkTmp.stAlarmSts == enAlarmSts_Alarming)
+                else if (AlarmClkTmp.alarmStatus == Alarm_Clicked || AlarmClkTmp.alarmStatus == Alarm_GoOff)
                 {
-                    if ((AlarmClkTmp.hour != (((time.hour & 0x70) >> 4) * 10 + (time.hour & 0x0f))) || (AlarmClkTmp.minute != (((time.minute & 0xf0) >> 4) * 10 + (time.minute & 0x0f))) || ((AlarmClkTmp.week & (1 << (time.week == 0 ? 6 : (time.week - 1)))) == 0))
+                    if ((AlarmClkTmp.hour != currentTime.tm_hour) || (AlarmClkTmp.minute != currentTime.tm_min) ||
+                        ((AlarmClkTmp.week & (1 << (currentTime.tm_wday == 0 ? 6 : (currentTime.tm_wday - 1)))) == 0))
                     {
                         ESP_LOGI(TAG, "Alarming disabled!\n\r");
-                        vSetAlarmClkSts(i, enAlarmSts_AlarmIdle);
+                        vSetAlarmClkSts(i, Alarm_Idle);
                         ClearWakeupRequest(true);
                     }
                 }
@@ -366,6 +295,7 @@ bool boNoisy()
 
 void setup()
 {
+    analogSetPinAttenuation(MIC_SIG_PIN, ADC_2_5db);
     pinMode(MIC_EN_PIN, OUTPUT);
     digitalWrite(MIC_EN_PIN, HIGH);
 
@@ -380,9 +310,7 @@ void setup()
     }
     ESP_LOGI(TAG, "RTC initialized\n\r");
 
-    vCreateTimeSemp();
     vCreateSleepSemp();
-    // RTC->SetTime(&ClockTime);
     if (!vSoundInit())
     {
         ESP_LOGE(TAG, "Sound Init failed\n\r");
@@ -394,17 +322,24 @@ void setup()
     ESP_LOGI(TAG, "Sound Init success\n\r");
 
     boInitAlarmClkList();
-    vSetCurTime(stUpdateTime());
-    vCheckAlarms(stCurTime);
+
+    setenv("TZ", "CST-8", 1);
+    tzset();
+
+    tm currentTime;
+    if (!RTC.getTime(&currentTime))
+    {
+        ESP_LOGE(TAG, "Failed to read RTC time\n\r");
+        while (1)
+        {
+            delay(1000);
+        }
+    }
+    vCheckAlarms(currentTime);
 
     ESP_LOGI(TAG, "Fuck Me");
 
-    if ((stCurTime.minute == 0x00 || stCurTime.minute == 0x30) && (stCurTime.second == 0x00 || stCurTime.second == 0x0A || stCurTime.second == 0x17))
-    {
-        ESP_LOGI(TAG, "SetUp wifi1\n\r");
-        SetupWifi();
-    }
-    vTaskDelay(50); // delay for ADC stable
+    delay(50); // delay for ADC stable
     if (boNoisy() || boNeedWakeup(true) || ESP_SLEEP_WAKEUP_EXT0 == esp_sleep_get_wakeup_cause())
     {
         // vWifiInit();
@@ -423,71 +358,22 @@ void setup()
     }
 }
 
-// void vPrintTaskInfo(void)
-// {
-//     TaskHandle_t xHandle;
-//     TaskStatus_t xTaskDetails;
-//     xHandle = xTaskGetCurrentTaskHandle();
-
-//     if(xHandle)
-//     {
-//         /* Use the handle to obtain further information about the task. */
-//         vTaskGetInfo( /* The handle of the task being queried. */
-//                       xHandle,
-//                       /* The TaskStatus_t structure to complete with information
-//                       on xTask. */
-//                       &xTaskDetails,
-//                       /* Include the stack high water mark value in the
-//                       TaskStatus_t structure. */
-//                       pdTRUE,
-//                       /* Include the task state in the TaskStatus_t structure. */
-//                       eInvalid );
-//         Serial.printf(xTaskDetails.pcTaskName);Serial.printf("\n\r");
-//         Serial.printf("BasePriority:%d\n\r",xTaskDetails.uxBasePriority);
-//         Serial.printf("StackHighWater:%d\n\r",xTaskDetails.usStackHighWaterMark);
-//     }
-// }
-
 void loop()
 {
-    // uint32_t BatADC;
-    // uint32_t LDRADC;
-    // uint32_t MicroPhoneADC;
-    // vTaskDelay(10 / portTICK_PERIOD_MS);
-    // BatADC = analogReadMilliVolts(39);
-    // LDRADC = analogReadMilliVolts(36);
-    // MicroPhoneADC = analogReadMilliVolts(4);
-    // Serial.printf("Battary ADC:%d\n",BatADC);
-    // Serial.printf("LDR ADC:%d\n",LDRADC);
-    // Serial.printf("%d\n",MicroPhoneADC);
-    // vPrintTaskInfo();
-    // RTC->ReadTime(&ClockTime);
-    // Serial.printf("Time: %x:%x:%x:%x:%x:%x:%x\n",ClockTime.year,ClockTime.month,ClockTime.day,ClockTime.week,ClockTime.hour,ClockTime.minute,ClockTime.u8Sec);
-    // RTC->ReadTemp(&Tempture);
-    // Serial.printf("Temp:%d\n",Tempture);
-    // Serial.printf("-----Free Heap Mem : %d [%.2f%%]-----\n",
-    //         ESP.getFreeHeap(),
-    //         ESP.getFreeHeap()/(double)ESP.getHeapSize()*100);
-    // boNoisy();
-    vTaskDelay(1000);
-    vSetCurTime(stUpdateTime());
-    vCheckAlarms(stCurTime);
+    delay(1000);
+
+    tm currentTime;
+    RTC.getTime(&currentTime);
+    vCheckAlarms(currentTime);
     vRcvTimeSettingReq();
 
     if ((false == boNeedWakeup(true)) && (false == boNeedWakeup(false)))
     {
         vGotoSleep();
     }
-    if ((stCurTime.minute == 0x00 || stCurTime.minute == 0x30) && (stCurTime.second == 0x00 || stCurTime.second == 0x0A || stCurTime.second == 0x17))
-    {
-        ESP_LOGI(TAG, "SetUp wifi2\n\r");
-        SetupWifi();
-    }
+
     if (boNoisy())
     {
         vResetSleepTimer();
     }
-    // uint32_t ADC1 = analogReadMilliVolts(MIC_ADC_PORT);
-    //  uint32_t ADC2 = analogReadMilliVolts(MIC_ADC_PORT);
-    // Serial.printf("ADC %d \n", ADC1);
 }

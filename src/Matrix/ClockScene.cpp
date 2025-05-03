@@ -164,8 +164,8 @@ void TimeLayer::BtnDuringLongPressStopHandler(int8_t keyCode, Event *event)
 
 void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
 {
-    uint8_t min_temp = (ClockTimeSetting.minute >> 4) * 10 + (ClockTimeSetting.minute & 0x0f);
-    uint8_t hour_temp = ((ClockTimeSetting.hour & 0x30) >> 4) * 10 + (ClockTimeSetting.hour & 0x0f); /*bit7 means 12h/24h, need ignore*/
+    auto min_temp = ClockTimeSetting.tm_min;
+    auto hour_temp = ClockTimeSetting.tm_hour;
     switch (enTimests)
     {
     case State_TimeDis:
@@ -223,7 +223,7 @@ void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
                 min_temp = 0;
             }
         }
-        ClockTimeSetting.minute = ((min_temp / 10) << 4) + (min_temp % 10);
+        ClockTimeSetting.tm_min = min_temp;
         break;
     case State_TimeSetHour:
         if (key_type == enKey_OK)
@@ -247,7 +247,7 @@ void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
                 hour_temp = 0;
             }
         }
-        ClockTimeSetting.hour = (((hour_temp / 10) << 4) + (hour_temp % 10)) | 0x80; // 24h format
+        ClockTimeSetting.tm_hour = hour_temp; // 24h format
         break;
     case State_TimeSetWeek:
         if (key_type == enKey_OK)
@@ -255,21 +255,21 @@ void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
             if (key_event == enKey_ShortPress)
             {
                 enTimests = State_TimeDis;
-                SendSettingTime(&ClockTimeSetting);
+                SendSettingTime(ClockTimeSetting);
             }
         }
         else if (key_type == enKey_Left)
         {
-            if (--ClockTimeSetting.week > 6)
+            if (--ClockTimeSetting.tm_wday > 6)
             {
-                ClockTimeSetting.week = 6;
+                ClockTimeSetting.tm_wday = 6;
             }
         }
         else if (key_type == enKey_Right)
         {
-            if (++ClockTimeSetting.week > 6)
+            if (++ClockTimeSetting.tm_wday > 6)
             {
-                ClockTimeSetting.week = 0;
+                ClockTimeSetting.tm_wday = 0;
             }
         }
         break;
@@ -318,45 +318,63 @@ void TimeLayer::UpdateColor(int8_t key_type, int8_t key_event)
         weekcolor.b = 100;
     }
     ESP_LOGI(TAG, "timecolor r: %d, g: %d, b: %d", timecolor.r, timecolor.g, timecolor.b);
-    Hour1canvas->setTextColor(timecolor);
-    Hour2canvas->setTextColor(timecolor);
-    // MinPt->setColor(timecolor);
-    Min1canvas->setTextColor(timecolor);
-    Min2canvas->setTextColor(timecolor);
-    std::string hour1 = std::to_string((ClockTime.hour & 0x70) >> 4);
-    std::string hour2 = std::to_string((ClockTime.hour & 0x0f));
-    Hour1canvas->canvasReset();
-    Hour1canvas->print(hour1.c_str());
-    Hour2canvas->canvasReset();
-    Hour2canvas->print(hour2.c_str());
-    std::string min1 = std::to_string((ClockTime.minute & 0xf0) >> 4);
-    std::string min2 = std::to_string((ClockTime.minute & 0x0f));
-    Min1canvas->canvasReset();
-    Min1canvas->print(min1.c_str());
-    Min2canvas->canvasReset();
-    Min2canvas->print(min2.c_str());
-    MinPtcanvas->setTextColor(timecolor);
-    MinPtcanvas->canvasReset();
-    MinPtcanvas->print(":");
-    DrawWeek(ClockTime.week);
+    hourCanvas->setTextColor(timecolor);
+    minuteCanvas->setTextColor(timecolor);
+
+    updateHour(ClockTime.tm_hour);
+    updateMinute(ClockTime.tm_min);
+    minutePointCanvas->setTextColor(timecolor);
+    minutePointCanvas->canvasReset();
+    minutePointCanvas->print(":");
+    DrawWeek(ClockTime.tm_wday);
 }
 
-void TimeLayer::SendSettingTime(DateTime *settingtime)
+void TimeLayer::SendSettingTime(tm &settingtime)
 {
     if (TimeSettingQ != nullptr)
     {
-        if (xQueueSend(TimeSettingQ,
-                       (void *)settingtime,
-                       (TickType_t)10) != pdPASS)
+        if (!xQueueSend(TimeSettingQ, &settingtime, 10))
         {
             /* Failed to post the message, even after 10 ticks. */
         }
     }
 }
 
+void TimeLayer::updateHour(uint8_t hour)
+{
+    if (hourText == nullptr)
+    {
+        ESP_LOGW(TAG, "hourText is null");
+        return;
+    }
+
+    char hourStr[5];
+    sprintf(hourStr, "%02d", hour);
+
+    hourCanvas->canvasReset();
+    hourCanvas->print(hourStr);
+    hourText->setVisible(true);
+}
+
+void TimeLayer::updateMinute(uint8_t minute)
+{
+    if (minuteText == nullptr)
+    {
+        ESP_LOGW(TAG, "minuteText is null");
+        return;
+    }
+    char minuteStr[5];
+    sprintf(minuteStr, "%02d", minute);
+
+    minuteCanvas->canvasReset();
+    minuteCanvas->print(minuteStr);
+    minuteText->setVisible(true);
+}
+
 void TimeLayer::DrawWeek(uint8_t week)
 {
-    ESP_LOGI(TAG, "week %d", week);
+    ESP_LOGI(TAG, "Week %d", week);
+    Weekcanvas->canvasReset();
 
     DTRGB inactivecol = timecolor;
     inactivecol.fadeToBlackBy(200);
@@ -392,7 +410,9 @@ void TimeLayer::DrawWeek(uint8_t week)
 
 bool TimeLayer::initLayer()
 {
-    ClockTime = stGetCurTime();
+    auto currentTimeTime = time(nullptr);
+    ClockTime = *localtime(&currentTimeTime);
+
     TimeSettingQ = pGetTimeSettingQ();
     ColorIndex = u8GetGlobalColorIdx();
     PaletteIndex = u8GetGlobalPaltIdx();
@@ -407,10 +427,12 @@ bool TimeLayer::initLayer()
     listener->onBtnLongPressStart = DT_CALLBACK_2(TimeLayer::BtnLongPressStartHandler, this);
     listener->onBtnClick = DT_CALLBACK_2(TimeLayer::BtnClickHandler, this);
     _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
-    std::string hour1 = std::to_string((ClockTime.hour & 0x70) >> 4);
-    std::string hour2 = std::to_string((ClockTime.hour & 0x0f));
-    std::string min1 = std::to_string((ClockTime.minute & 0xf0) >> 4);
-    std::string min2 = std::to_string((ClockTime.minute & 0x0f));
+
+    char hour[5];
+    char minute[5];
+    sprintf(hour, "%02d", ClockTime.tm_hour);
+    sprintf(minute, "%02d", ClockTime.tm_min);
+
     auto WeatherCode = GetCurWeatherCode();
     ESP_LOGI(TAG, "Weather code:%d", WeatherCode);
 
@@ -438,16 +460,12 @@ bool TimeLayer::initLayer()
         weekcolor.b = 255;
     }
 
-    Hour_1 = TextSprite::create(Size(4, 5), Size(4, 5), timecolor, hour1, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
-    Hour1canvas = Hour_1->getSpriteCanvas();
-    Hour_2 = TextSprite::create(Size(4, 5), Size(4, 5), timecolor, hour2, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
-    Hour2canvas = Hour_2->getSpriteCanvas();
-    MinPt = TextSprite::create(Size(2, 5), Size(2, 5), timecolor, ":", TextSprite::TextAlign::TextAlignCenter, &TomThumb);
-    MinPtcanvas = MinPt->getSpriteCanvas();
-    Min_1 = TextSprite::create(Size(4, 5), Size(4, 5), timecolor, min1, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
-    Min1canvas = Min_1->getSpriteCanvas();
-    Min_2 = TextSprite::create(Size(4, 5), Size(4, 5), timecolor, min2, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
-    Min2canvas = Min_2->getSpriteCanvas();
+    hourText = TextSprite::create(Size(4, 5), Size(4, 5), timecolor, hour, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
+    hourCanvas = hourText->getSpriteCanvas();
+    minutePointText = TextSprite::create(Size(2, 5), Size(2, 5), timecolor, ":", TextSprite::TextAlign::TextAlignCenter, &TomThumb);
+    minutePointCanvas = minutePointText->getSpriteCanvas();
+    minuteText = TextSprite::create(Size(4, 5), Size(4, 5), timecolor, minute, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
+    minuteCanvas = minuteText->getSpriteCanvas();
     Week = CanvasSprite::create(21, 1);
     Weekcanvas = Week->getSpriteCanvas();
     AlarmIcon = CanvasSprite::create(1, 8);
@@ -455,25 +473,19 @@ bool TimeLayer::initLayer()
     AlarmIcon->setPosition(31, 0);
     AlarmIconCanvas->drawLine(0, 0, 0, 7, DTRGB(0, 255, 0));
     AlarmIcon->setVisible(false);
-    Hour_1->setTransparent(true);
-    Hour_1->setPosition(11, 1);
-    Hour_2->setTransparent(true);
-    Hour_2->setPosition(15, 1);
-    MinPt->setTransparent(true);
-    MinPt->setPosition(19, 1);
-    MinPt->runAction(RepeatForever::create(Blink::create(1, 1)));
-    Min_1->setTransparent(true);
-    Min_1->setPosition(21, 1);
-    Min_2->setTransparent(true);
-    Min_2->setPosition(25, 1);
+    hourText->setTransparent(true);
+    hourText->setPosition(11, 1);
+    minutePointText->setTransparent(true);
+    minutePointText->setPosition(19, 1);
+    minutePointText->runAction(RepeatForever::create(Blink::create(1, 1)));
+    minuteText->setTransparent(true);
+    minuteText->setPosition(21, 1);
     Week->setPosition(10, 7);
-    DrawWeek(ClockTime.week);
+    DrawWeek(ClockTime.tm_wday);
     this->addChild(Weather);
-    this->addChild(Hour_1);
-    this->addChild(Hour_2);
-    this->addChild(MinPt);
-    this->addChild(Min_1);
-    this->addChild(Min_2);
+    this->addChild(hourText);
+    this->addChild(minutePointText);
+    this->addChild(minuteText);
     this->addChild(Week, 3);
     this->addChild(AlarmIcon);
     this->scheduleUpdate();
@@ -522,7 +534,7 @@ void TimeLayer::CleanUpAnimationTmp(void)
     }
 }
 
-void TimeLayer::DigitalSwitchAnimation(TextSprite *OldDigitalSprt, uint8_t OldDigital, uint8_t NewDigital, int tmpTag)
+void TimeLayer::digitSwitchAnimation(TextSprite *OldDigitalSprt, uint8_t OldDigital, uint8_t NewDigital, int tmpTag)
 {
     TextSprite *SprtTmp = TextSprite::create(Size(4, 5), Size(4, 5), timecolor, std::to_string(OldDigital), TextSprite::TextAlign::TextAlignCenter, &TomThumb);
     SprtTmp->setPosition(OldDigitalSprt->getPositionX(), OldDigitalSprt->getPositionY());
@@ -545,7 +557,7 @@ bool boActiveAlarm(void)
 {
     bool res = false;
     uint8_t AlarmNum = u8GetAlarmClkNum();
-    tstAlarmClk AlarmClkTmp = {
+    AlarmConfig AlarmClkTmp = {
         0,
     };
     if (AlarmNum)
@@ -553,7 +565,7 @@ bool boActiveAlarm(void)
         for (uint8_t i = 0; i < AlarmNum; i++)
         {
             AlarmClkTmp = stGetAlarmClk(i);
-            if (AlarmClkTmp.stAlarmSts == enAlarmSts_Alarming)
+            if (AlarmClkTmp.alarmStatus == Alarm_GoOff)
             {
                 res = true;
                 break;
@@ -568,7 +580,14 @@ void TimeLayer::StateTimeDisShow(void)
     static uint8_t WeatherCodeOld = 0;
     uint8_t WeatherCode = 0;
     WeatherCode = (uint8_t)GetCurWeatherCode();
-    DateTime time = stGetCurTime();
+
+    auto currentTimeTime = time(nullptr);
+    auto currentTime = *localtime(&currentTimeTime);
+    char hourStr[5];
+    char minuteStr[5];
+    sprintf(hourStr, "%02d", currentTime.tm_hour);
+    sprintf(minuteStr, "%02d", currentTime.tm_min);
+
     bool boReEnterflag = false;
     static bool boPreAlarmActive = false;
     bool boAlarmActive = boActiveAlarm();
@@ -583,32 +602,19 @@ void TimeLayer::StateTimeDisShow(void)
         Week->stopAllActions();
         boReEnterflag = true;
     }
-    if (0 == MinPt->getNumberOfRunningActions())
+    if (0 == minutePointText->getNumberOfRunningActions())
     {
-        MinPt->runAction(RepeatForever::create(Blink::create(1, 1)));
+        minutePointText->runAction(RepeatForever::create(Blink::create(1, 1)));
     }
     if (boReEnterflag == true)
     {
-        std::string hour1 = std::to_string((time.hour & 0x70) >> 4);
-        std::string hour2 = std::to_string((time.hour & 0x0f));
-        Hour1canvas->canvasReset();
-        Hour1canvas->print(hour1.c_str());
-        Hour2canvas->canvasReset();
-        Hour2canvas->print(hour2.c_str());
-        std::string min1 = std::to_string((time.minute & 0xf0) >> 4);
-        std::string min2 = std::to_string((time.minute & 0x0f));
-        Min1canvas->canvasReset();
-        Min1canvas->print(min1.c_str());
-        Min2canvas->canvasReset();
-        Min2canvas->print(min2.c_str());
-        Weekcanvas->canvasReset();
-        DrawWeek(time.week);
-        Hour_1->setVisible(true);
-        Hour_2->setVisible(true);
-        Min_1->setVisible(true);
-        Min_2->setVisible(true);
+        updateHour(currentTime.tm_hour);
+        updateMinute(currentTime.tm_min);
+        DrawWeek(currentTime.tm_wday);
+        hourText->setVisible(true);
+        minuteText->setVisible(true);
         Week->setVisible(true);
-        MinPt->setVisible(true);
+        minutePointText->setVisible(true);
     }
     if (boPreAlarmActive != boAlarmActive)
     {
@@ -626,46 +632,19 @@ void TimeLayer::StateTimeDisShow(void)
         }
     }
 
-    if (time.hour != ClockTime.hour)
+    if (currentTime.tm_hour != ClockTime.tm_hour)
     {
-        // std::string hour1 = std::to_string((time.hour&0x70)>>4);
-        // std::string hour2 = std::to_string((time.hour&0x0f));
-        // Hour1canvas->canvasReset();
-        // Hour1canvas->print(hour1.c_str());
-        // Hour2canvas->canvasReset();
-        // Hour2canvas->print(hour2.c_str());
-        if (((time.hour & 0x70) >> 4) != ((ClockTime.hour & 0x70) >> 4))
-        {
-            DigitalSwitchAnimation(Hour_1, ((ClockTime.hour & 0x70) >> 4), ((time.hour & 0x70) >> 4), Hour1AniTmpTag);
-        }
-        if ((time.hour & 0x0f) != (ClockTime.hour & 0x0f))
-        {
-            DigitalSwitchAnimation(Hour_2, (ClockTime.hour & 0x0f), (time.hour & 0x0f), Hour2AniTmpTag);
-        }
+        digitSwitchAnimation(hourText, ClockTime.tm_hour, currentTime.tm_hour, Hour1AniTmpTag);
     }
-    if (time.minute != ClockTime.minute)
+    if (currentTime.tm_min != ClockTime.tm_min)
     {
-        // std::string min1 = std::to_string((time.minute&0xf0)>>4);
-        // std::string min2 = std::to_string((time.minute&0x0f));
-        // Min1canvas->canvasReset();
-        // Min1canvas->print(min1.c_str());
-        // Min2canvas->canvasReset();
-        // Min2canvas->print(min2.c_str());
-        if (((time.minute & 0xf0) >> 4) != ((ClockTime.minute & 0xf0) >> 4))
-        {
-            DigitalSwitchAnimation(Min_1, ((ClockTime.minute & 0xf0) >> 4), ((time.minute & 0xf0) >> 4), Min1AniTmpTag);
-        }
-        if ((time.minute & 0x0f) != (ClockTime.minute & 0x0f))
-        {
-            DigitalSwitchAnimation(Min_2, (ClockTime.minute & 0x0f), (time.minute & 0x0f), Min2AniTmpTag);
-        }
+        digitSwitchAnimation(minuteText, ClockTime.tm_min, currentTime.tm_min, Min1AniTmpTag);
     }
-    if (time.week != ClockTime.week)
+    if (currentTime.tm_wday != ClockTime.tm_wday)
     {
-        Weekcanvas->canvasReset();
-        DrawWeek(time.week);
+        DrawWeek(currentTime.tm_wday);
     }
-    ClockTime = time;
+    ClockTime = currentTime;
     boPreAlarmActive = boAlarmActive;
     WeatherCodeOld = WeatherCode;
 }
@@ -673,55 +652,30 @@ void TimeLayer::StateTimeDisShow(void)
 void TimeLayer::StateSetMinShow(void)
 {
     bool boFirstEnterflag = false;
-    static DateTime OldSettingTime = {
+    static tm OldSettingTime = {
         0,
     };
-    if (0 != MinPt->getNumberOfRunningActions())
+    if (0 != minutePointText->getNumberOfRunningActions())
     {
-        MinPt->stopAllActions();
+        minutePointText->stopAllActions();
         boFirstEnterflag = true;
     }
-    if (0 == Min_1->getNumberOfRunningActions())
+    if (0 == minuteText->getNumberOfRunningActions())
     {
-        Min_1->runAction(RepeatForever::create(Blink::create(1, 2)));
-    }
-    if (0 == Min_2->getNumberOfRunningActions())
-    {
-        Min_2->runAction(RepeatForever::create(Blink::create(1, 2)));
+        minuteText->runAction(RepeatForever::create(Blink::create(1, 2)));
     }
     if (true == boFirstEnterflag)
     {
-        std::string hour1 = std::to_string((ClockTimeSetting.hour & 0x70) >> 4);
-        std::string hour2 = std::to_string((ClockTimeSetting.hour & 0x0f));
-        Hour1canvas->canvasReset();
-        Hour1canvas->print(hour1.c_str());
-        Hour2canvas->canvasReset();
-        Hour2canvas->print(hour2.c_str());
-        std::string min1 = std::to_string((ClockTimeSetting.minute & 0xf0) >> 4);
-        std::string min2 = std::to_string((ClockTimeSetting.minute & 0x0f));
-        Min1canvas->canvasReset();
-        Min1canvas->print(min1.c_str());
-        Min2canvas->canvasReset();
-        Min2canvas->print(min2.c_str());
-        Weekcanvas->canvasReset();
-        DrawWeek(ClockTimeSetting.week);
-        Hour_1->setVisible(true);
-        Hour_2->setVisible(true);
-        Min_1->setVisible(true);
-        Min_2->setVisible(true);
+        updateHour(ClockTimeSetting.tm_hour);
+        updateMinute(ClockTimeSetting.tm_min);
+        DrawWeek(ClockTimeSetting.tm_wday);
         Week->setVisible(true);
-        MinPt->setVisible(true);
+        minutePointText->setVisible(true);
     }
-    if (ClockTimeSetting.minute != OldSettingTime.minute)
+    if (ClockTimeSetting.tm_min != OldSettingTime.tm_min)
     {
-        std::string min1 = std::to_string((ClockTimeSetting.minute & 0xf0) >> 4);
-        std::string min2 = std::to_string((ClockTimeSetting.minute & 0x0f));
-        Min1canvas->canvasReset();
-        Min1canvas->print(min1.c_str());
-        Min2canvas->canvasReset();
-        Min2canvas->print(min2.c_str());
-        Weekcanvas->canvasReset();
-        DrawWeek(ClockTimeSetting.week);
+        updateMinute(ClockTimeSetting.tm_min);
+        DrawWeek(ClockTimeSetting.tm_wday);
     }
     OldSettingTime = ClockTimeSetting;
 }
@@ -729,57 +683,29 @@ void TimeLayer::StateSetMinShow(void)
 void TimeLayer::StateSetHourShow(void)
 {
     bool boFirstEnterflag = false;
-    static DateTime OldSettingTime = {
+    static tm OldSettingTime = {
         0,
     };
-    if (0 != Min_1->getNumberOfRunningActions())
+    if (0 != minuteText->getNumberOfRunningActions())
     {
-        Min_1->stopAllActions();
+        minuteText->stopAllActions();
         boFirstEnterflag = true;
     }
-    if (0 != Min_2->getNumberOfRunningActions())
+    if (0 == hourText->getNumberOfRunningActions())
     {
-        Min_2->stopAllActions();
-    }
-    if (0 == Hour_1->getNumberOfRunningActions())
-    {
-        Hour_1->runAction(RepeatForever::create(Blink::create(1, 2)));
-    }
-    if (0 == Hour_2->getNumberOfRunningActions())
-    {
-        Hour_2->runAction(RepeatForever::create(Blink::create(1, 2)));
+        hourText->runAction(RepeatForever::create(Blink::create(1, 2)));
     }
     if (true == boFirstEnterflag)
     {
-        std::string hour1 = std::to_string((ClockTimeSetting.hour & 0x70) >> 4);
-        std::string hour2 = std::to_string((ClockTimeSetting.hour & 0x0f));
-        Hour1canvas->canvasReset();
-        Hour1canvas->print(hour1.c_str());
-        Hour2canvas->canvasReset();
-        Hour2canvas->print(hour2.c_str());
-        std::string min1 = std::to_string((ClockTimeSetting.minute & 0xf0) >> 4);
-        std::string min2 = std::to_string((ClockTimeSetting.minute & 0x0f));
-        Min1canvas->canvasReset();
-        Min1canvas->print(min1.c_str());
-        Min2canvas->canvasReset();
-        Min2canvas->print(min2.c_str());
-        Weekcanvas->canvasReset();
-        DrawWeek(ClockTimeSetting.week);
-        Hour_1->setVisible(true);
-        Hour_2->setVisible(true);
-        Min_1->setVisible(true);
-        Min_2->setVisible(true);
+        updateHour(ClockTimeSetting.tm_hour);
+        updateMinute(ClockTimeSetting.tm_min);
+        DrawWeek(ClockTimeSetting.tm_wday);
         Week->setVisible(true);
-        MinPt->setVisible(true);
+        minutePointText->setVisible(true);
     }
-    if (ClockTimeSetting.hour != OldSettingTime.hour)
+    if (ClockTimeSetting.tm_hour != OldSettingTime.tm_hour)
     {
-        std::string hour1 = std::to_string((ClockTimeSetting.hour & 0x70) >> 4);
-        std::string hour2 = std::to_string((ClockTimeSetting.hour & 0x0f));
-        Hour1canvas->canvasReset();
-        Hour1canvas->print(hour1.c_str());
-        Hour2canvas->canvasReset();
-        Hour2canvas->print(hour2.c_str());
+        updateHour(ClockTimeSetting.tm_hour);
     }
     OldSettingTime = ClockTimeSetting;
 }
@@ -787,50 +713,30 @@ void TimeLayer::StateSetHourShow(void)
 void TimeLayer::StateSetWeekShow(void)
 {
     bool boFirstEnterflag = false;
-    static DateTime OldSettingTime = {
+    static tm OldSettingTime = {
         0,
     };
-    if (0 != Hour_1->getNumberOfRunningActions())
+    if (hourText->getNumberOfRunningActions())
     {
-        Hour_1->stopAllActions();
+        hourText->stopAllActions();
         boFirstEnterflag = true;
     }
-    if (0 != Hour_2->getNumberOfRunningActions())
-    {
-        Hour_2->stopAllActions();
-        boFirstEnterflag = true;
-    }
-    if (0 == Week->getNumberOfRunningActions())
+    if (!Week->getNumberOfRunningActions())
     {
         Week->runAction(RepeatForever::create(Blink::create(1, 2)));
     }
-    if (true == boFirstEnterflag)
+    if (boFirstEnterflag)
     {
-        std::string hour1 = std::to_string((ClockTimeSetting.hour & 0x70) >> 4);
-        std::string hour2 = std::to_string((ClockTimeSetting.hour & 0x0f));
-        Hour1canvas->canvasReset();
-        Hour1canvas->print(hour1.c_str());
-        Hour2canvas->canvasReset();
-        Hour2canvas->print(hour2.c_str());
-        std::string min1 = std::to_string((ClockTimeSetting.minute & 0xf0) >> 4);
-        std::string min2 = std::to_string((ClockTimeSetting.minute & 0x0f));
-        Min1canvas->canvasReset();
-        Min1canvas->print(min1.c_str());
-        Min2canvas->canvasReset();
-        Min2canvas->print(min2.c_str());
-        Weekcanvas->canvasReset();
-        DrawWeek(ClockTimeSetting.week);
-        Hour_1->setVisible(true);
-        Hour_2->setVisible(true);
-        Min_1->setVisible(true);
-        Min_2->setVisible(true);
+        updateHour(ClockTimeSetting.tm_hour);
+        updateMinute(ClockTimeSetting.tm_min);
+        DrawWeek(ClockTimeSetting.tm_wday);
+
         Week->setVisible(true);
-        MinPt->setVisible(true);
+        minutePointText->setVisible(true);
     }
-    if (ClockTimeSetting.week != OldSettingTime.week)
+    if (ClockTimeSetting.tm_wday != OldSettingTime.tm_wday)
     {
-        Weekcanvas->canvasReset();
-        DrawWeek(ClockTimeSetting.week);
+        DrawWeek(ClockTimeSetting.tm_wday);
     }
     OldSettingTime = ClockTimeSetting;
 }

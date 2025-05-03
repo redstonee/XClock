@@ -18,11 +18,11 @@ typedef struct
 tstCountTimerType GlobaCountTimer = {0,0,false};
 TimerHandle_t CounterTimer = nullptr;
 TimerHandle_t ExitTimer = nullptr;
-bool boActive = false;
+bool isActive = false;
 
 bool boIsCountDownTimerActive()
 {
-    return boActive;
+    return isActive;
 }
 /********************************Timer sence and layer****************************************/
 
@@ -51,7 +51,7 @@ void CounterTimerCb(TimerHandle_t xTimer)
 
 void ExitTimerCb(TimerHandle_t xTimer)
 {
-    boActive = false;
+    isActive = false;
 }
 
 bool CountDownScene::init()
@@ -62,7 +62,7 @@ bool CountDownScene::init()
     //ClockLayer->setOpacity
     this->addChild(Timerlayer);
     Timerlayer->initLayer();
-    boActive = true;
+    isActive = true;
     return true;
 }
 

@@ -18,6 +18,5 @@ bool ClearWakeupRequest(bool boHMIDis);
 
 void vSetWeatherFlag(bool flag);
 
-DateTime stGetCurTime(void);
 
 #endif

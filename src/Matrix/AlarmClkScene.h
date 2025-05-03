@@ -52,8 +52,8 @@ protected:
 	// CanvasSprite *Switch = nullptr;
 	// SpriteCanvas *Switchcanvas = nullptr;
 	uint8_t SettingWeekIdx = 0;
-    tstAlarmClk AlarmTime;
-	tstAlarmClk AlarmTimeSetting;
+    AlarmConfig AlarmTime;
+	AlarmConfig AlarmTimeSetting;
 	tenAlarmState enAlarmState = State_AlarmDis;
 public:
 	
@@ -79,7 +79,7 @@ public:
 
 	void StateSetWeekHandle(int8_t,int8_t);
 
-	void SwitchAlarmAnimation(tstAlarmClk OldAlarm,bool boUp);
+	void SwitchAlarmAnimation(AlarmConfig OldAlarm,bool boUp);
 
 	void ClearAnimationTmp(void);
 

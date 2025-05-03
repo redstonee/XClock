@@ -408,7 +408,7 @@ bool vGetNetTime(tm &dateTime)
   if (!boTimeGetted)
     return false;
 
-  Serial.println(&dateTime, "%F %T %A");
+  return true;
 }
 
 void vConnectTOCb(TimerHandle_t xTimer)
@@ -444,7 +444,6 @@ void SetupWifi(void)
     WiFi.hostname(HOST_NAME); // 设置设备名
     connectToWiFi(connectTimeOut_s);
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2, ntpServer3);
-    vGetNetTime();
     WeatherRequest();
     WiFi.disconnect();
     WiFi.mode(WIFI_OFF);
