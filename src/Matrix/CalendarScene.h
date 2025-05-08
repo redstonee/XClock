@@ -28,8 +28,8 @@ class YearLayer : public Layer
 protected:
 	TextSprite *YearH = nullptr;
 	SpriteCanvas *YearHcanvas = nullptr;
-	TextSprite *YearL = nullptr;
-	SpriteCanvas *YearLcanvas = nullptr;
+	TextSprite *yearText = nullptr;
+	SpriteCanvas *yearCanvas = nullptr;
 	tm ClockTime;
 	tm ClockTimeSetting;
 	QueueHandle_t TimeSettingQ;
@@ -66,10 +66,10 @@ public:
 class MonthLayer : public Layer
 {
 protected:
-	TextSprite *Month = nullptr;
-	SpriteCanvas *Monthcanvas = nullptr;
-	TextSprite *Day = nullptr;
-	SpriteCanvas *Daycanvas = nullptr;
+	TextSprite *monthText = nullptr;
+	SpriteCanvas *monthCanvas = nullptr;
+	TextSprite *dayText = nullptr;
+	SpriteCanvas *dayCanvas = nullptr;
 	TextSprite *Split = nullptr;
 	SpriteCanvas *Splitcanvas = nullptr;
 	tm ClockTime;

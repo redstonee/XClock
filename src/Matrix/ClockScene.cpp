@@ -342,6 +342,7 @@ void TimeLayer::SendSettingTime(tm &settingtime)
 
 void TimeLayer::updateHour(uint8_t hour)
 {
+    ESP_LOGD(TAG, "hour %d", hour);
     if (hourText == nullptr)
     {
         ESP_LOGW(TAG, "hourText is null");
@@ -358,6 +359,7 @@ void TimeLayer::updateHour(uint8_t hour)
 
 void TimeLayer::updateMinute(uint8_t minute)
 {
+    ESP_LOGD(TAG, "minute %d", minute);
     if (minuteText == nullptr)
     {
         ESP_LOGW(TAG, "minuteText is null");
@@ -373,7 +375,7 @@ void TimeLayer::updateMinute(uint8_t minute)
 
 void TimeLayer::DrawWeek(uint8_t week)
 {
-    ESP_LOGI(TAG, "Week %d", week);
+    ESP_LOGD(TAG, "Week %d", week);
     Weekcanvas->canvasReset();
 
     DTRGB inactivecol = timecolor;
@@ -428,10 +430,10 @@ bool TimeLayer::initLayer()
     listener->onBtnClick = DT_CALLBACK_2(TimeLayer::BtnClickHandler, this);
     _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
 
-    char hour[5];
-    char minute[5];
-    sprintf(hour, "%02d", ClockTime.tm_hour);
-    sprintf(minute, "%02d", ClockTime.tm_min);
+    char hourStr[5];
+    char minuteSr[5];
+    sprintf(hourStr, "%02d", ClockTime.tm_hour);
+    sprintf(minuteSr, "%02d", ClockTime.tm_min);
 
     auto WeatherCode = GetCurWeatherCode();
     ESP_LOGI(TAG, "Weather code:%d", WeatherCode);
@@ -460,11 +462,11 @@ bool TimeLayer::initLayer()
         weekcolor.b = 255;
     }
 
-    hourText = TextSprite::create(Size(4, 5), Size(4, 5), timecolor, hour, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
+    hourText = TextSprite::create(Size(8, 5), Size(8, 5), timecolor, hourStr, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
     hourCanvas = hourText->getSpriteCanvas();
     minutePointText = TextSprite::create(Size(2, 5), Size(2, 5), timecolor, ":", TextSprite::TextAlign::TextAlignCenter, &TomThumb);
     minutePointCanvas = minutePointText->getSpriteCanvas();
-    minuteText = TextSprite::create(Size(4, 5), Size(4, 5), timecolor, minute, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
+    minuteText = TextSprite::create(Size(8, 5), Size(8, 5), timecolor, minuteSr, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
     minuteCanvas = minuteText->getSpriteCanvas();
     Week = CanvasSprite::create(21, 1);
     Weekcanvas = Week->getSpriteCanvas();
@@ -534,23 +536,28 @@ void TimeLayer::CleanUpAnimationTmp(void)
     }
 }
 
-void TimeLayer::digitSwitchAnimation(TextSprite *OldDigitalSprt, uint8_t OldDigital, uint8_t NewDigital, int tmpTag)
+void TimeLayer::digitSwitchAnimation(TextSprite *digitSprt, uint8_t oldDigit, uint8_t newDigit, int tmpTag)
 {
-    TextSprite *SprtTmp = TextSprite::create(Size(4, 5), Size(4, 5), timecolor, std::to_string(OldDigital), TextSprite::TextAlign::TextAlignCenter, &TomThumb);
-    SprtTmp->setPosition(OldDigitalSprt->getPositionX(), OldDigitalSprt->getPositionY());
+    char oldDigitStr[5];
+    char newDigitStr[5];
+    sprintf(oldDigitStr, "%02d", oldDigit);
+    sprintf(newDigitStr, "%02d", newDigit);
+
+    TextSprite *SprtTmp = TextSprite::create(Size(10, 5), Size(10, 5), timecolor, oldDigitStr, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
+    SprtTmp->setPosition(digitSprt->getPositionX(), digitSprt->getPositionY());
     this->addChild(SprtTmp, 0, tmpTag);
-    Vec2 TgtPos(OldDigitalSprt->getPositionX(), 1);
-    OldDigitalSprt->setPosition(OldDigitalSprt->getPositionX(), -6);
-    SpriteCanvas *OldCanvas = OldDigitalSprt->getSpriteCanvas();
-    OldCanvas->canvasReset();
-    OldCanvas->print(std::to_string(NewDigital).c_str());
+    Vec2 TgtPos(digitSprt->getPositionX(), 1);
+    digitSprt->setPosition(digitSprt->getPositionX(), -6);
+    SpriteCanvas *digitCanvas = digitSprt->getSpriteCanvas();
+    digitCanvas->canvasReset();
+    digitCanvas->print(newDigitStr);
     MoveBy *SwitchMove1 = MoveBy::create(0.5, Vec2(0, 7));
     MoveTo *SwitchMove2 = MoveTo::create(0.5, TgtPos);
     Sequence *Seq = Sequence::createWithTwoActions(SwitchMove1, CallFunc::create(DT_CALLBACK_0(TimeLayer::CleanUpAnimationTmp, this)));
     // Serial.printf("TmpSprt %x \n",SprtTmp);
     SprtTmp->runAction(Seq);
     // SprtTmp->runAction(SwitchMove1);
-    OldDigitalSprt->runAction(SwitchMove2);
+    digitSprt->runAction(SwitchMove2);
 }
 
 bool boActiveAlarm(void)

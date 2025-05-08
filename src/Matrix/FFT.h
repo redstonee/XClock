@@ -33,8 +33,6 @@ THE SOFTWARE.
 #define FREQUENCY_BANDS 24
 #define CONTENT_HIGHT   8
 #define CONTENT_WIDTH   32
-#define ADC_PIN         34
-#define ADC_MIC_EN_PIN  16
 NS_DT_BEGIN
 
 class FFT : public Scene

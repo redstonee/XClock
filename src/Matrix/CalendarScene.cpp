@@ -15,7 +15,6 @@ bool CalYearScene::init()
     YearLayer *YearLayer = YearLayer::create();
     YearLayer->setContentSize(Size(32, 8));
     YearLayer->setPosition(0, 0);
-    // ClockLayer->setOpacity
     this->addChild(YearLayer);
     YearLayer->initLayer();
     return true;
@@ -37,25 +36,24 @@ bool YearLayer::initLayer()
     Color.r = ColorFromPat.r;
     Color.g = ColorFromPat.g;
     Color.b = ColorFromPat.b;
+
     auto listener = EventListenerButton::create();
     listener->onBtnDuringLongPress = DT_CALLBACK_2(YearLayer::BtnDuringLongPressHandler, this);
     listener->onBtnLongPressStart = DT_CALLBACK_2(YearLayer::BtnLongPressStartHandler, this);
     listener->onBtnClick = DT_CALLBACK_2(YearLayer::BtnClickHandler, this);
     _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
+
     FrameSprite *CalendarIcon = FrameSprite::create(icon_calendar, sizeof(icon_calendar), BMP_GIF);
     CalendarIcon->setPosition(0, 0);
     CalendarIcon->setAutoSwitch(true);
-    // YearH = TextSprite::create(Size(8, 5), Size(8, 5), Color, "20", TextSprite::TextAlign::TextAlignCenter, &TomThumb);
-    // YearHcanvas = YearH->getSpriteCanvas();
-    YearL = TextSprite::create(Size(8, 5), Size(8, 5), Color, String(ClockTime.tm_year).c_str(), TextSprite::TextAlign::TextAlignCenter, &TomThumb);
-    YearLcanvas = YearL->getSpriteCanvas();
-    // YearH->setTransparent(true);
-    // YearH->setPosition(12, 1);
-    YearL->setTransparent(true);
-    YearL->setPosition(20, 1);
+
+    yearText = TextSprite::create(Size(16, 5), Size(16, 5), Color, String(ClockTime.tm_year + 1900).c_str(), TextSprite::TextAlign::TextAlignCenter, &TomThumb);
+    yearCanvas = yearText->getSpriteCanvas();
+    yearText->setTransparent(true);
+    yearText->setPosition(12, 1);
+
     this->addChild(CalendarIcon);
-    // this->addChild(YearH);
-    this->addChild(YearL);
+    this->addChild(yearText);
     this->scheduleUpdate();
     this->schedule(DT_SCHEDULE_SELECTOR(YearLayer::YearUpdate), 0.5);
     return true;
@@ -150,25 +148,25 @@ void YearLayer::YearUpdate(float dt)
     };
     if (true == boYearSetting)
     {
-        if (!YearL->getNumberOfRunningActions())
+        if (!yearText->getNumberOfRunningActions())
         {
-            YearL->runAction(RepeatForever::create(Blink::create(1, 2)));
+            yearText->runAction(RepeatForever::create(Blink::create(1, 2)));
         }
         if (ClockTimeSetting.tm_year != OldSettingTime.tm_year)
         {
-            YearLcanvas->canvasReset();
-            YearLcanvas->print(String(ClockTimeSetting.tm_year).c_str());
+            yearCanvas->canvasReset();
+            yearCanvas->print(String(ClockTimeSetting.tm_year + 1900).c_str());
         }
     }
     else
     {
-        if (YearL->getNumberOfRunningActions())
+        if (yearText->getNumberOfRunningActions())
         {
             ClockTime = currentTime;
-            YearL->stopAllActions();
-            YearLcanvas->canvasReset();
-            YearLcanvas->print(String(currentTime.tm_year).c_str());
-            YearL->setVisible(true);
+            yearText->stopAllActions();
+            yearCanvas->canvasReset();
+            yearCanvas->print(String(currentTime.tm_year + 1900).c_str());
+            yearText->setVisible(true);
         }
     }
 }
@@ -180,7 +178,6 @@ bool CalMonthScene::init()
     MonthLayer *Monthlayer = MonthLayer::create();
     Monthlayer->setContentSize(Size(32, 8));
     Monthlayer->setPosition(0, 0);
-    // ClockLayer->setOpacity
     this->addChild(Monthlayer);
     Monthlayer->initLayer();
     return true;
@@ -190,6 +187,10 @@ bool MonthLayer::initLayer()
 {
     auto currentTimeTime = time(nullptr);
     ClockTime = *localtime(&currentTimeTime);
+    char monthStr[5];
+    char dayStr[5];
+    sprintf(monthStr, "%02d", ClockTime.tm_mon + 1); // Month is 0-11 in tm struct
+    sprintf(dayStr, "%02d", ClockTime.tm_mday);
 
     TimeSettingQ = pGetTimeSettingQ();
     ColorIndex = u8GetGlobalColorIdx();
@@ -200,31 +201,39 @@ bool MonthLayer::initLayer()
     Color.r = ColorFromPat.r;
     Color.g = ColorFromPat.g;
     Color.b = ColorFromPat.b;
+
     auto listener = EventListenerButton::create();
     listener->onBtnDuringLongPress = DT_CALLBACK_2(MonthLayer::BtnDuringLongPressHandler, this);
     listener->onBtnLongPressStart = DT_CALLBACK_2(MonthLayer::BtnLongPressStartHandler, this);
     listener->onBtnClick = DT_CALLBACK_2(MonthLayer::BtnClickHandler, this);
     _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
+
     FrameSprite *CalendarIcon = FrameSprite::create(icon_calendar, sizeof(icon_calendar), BMP_GIF);
     CalendarIcon->setPosition(0, 0);
     CalendarIcon->setAutoSwitch(true);
-    Month = TextSprite::create(Size(8, 5), Size(8, 5), Color, String(ClockTime.tm_mon).c_str(), TextSprite::TextAlign::TextAlignCenter, &TomThumb);
-    Monthcanvas = Month->getSpriteCanvas();
+
+    monthText = TextSprite::create(Size(8, 5), Size(8, 5), Color, monthStr, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
+    monthCanvas = monthText->getSpriteCanvas();
+
     Split = TextSprite::create(Size(2, 5), Size(2, 5), Color, ".", TextSprite::TextAlign::TextAlignCenter, &TomThumb);
     Splitcanvas = Split->getSpriteCanvas();
-    Day = TextSprite::create(Size(8, 5), Size(8, 5), Color, String(ClockTime.tm_mday).c_str(), TextSprite::TextAlign::TextAlignCenter, &TomThumb);
-    Daycanvas = Day->getSpriteCanvas();
-    Month->setTransparent(true);
-    Month->setPosition(12, 1);
+
+    dayText = TextSprite::create(Size(8, 5), Size(8, 5), Color, dayStr, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
+    dayCanvas = dayText->getSpriteCanvas();
+
+    monthText->setTransparent(true);
+    monthText->setPosition(12, 1);
     Split->setTransparent(true);
     Split->setPosition(20, 1);
-    Day->setTransparent(true);
-    Day->setPosition(22, 1);
+    dayText->setTransparent(true);
+    dayText->setPosition(22, 1);
+
     this->addChild(CalendarIcon);
-    this->addChild(Month);
+    this->addChild(monthText);
     this->addChild(Split);
-    this->addChild(Day);
+    this->addChild(dayText);
     this->scheduleUpdate();
+
     this->schedule(DT_SCHEDULE_SELECTOR(MonthLayer::MonthUpdate), 0.5);
     return true;
 }
@@ -240,57 +249,66 @@ void MonthLayer::MonthUpdate(float dt)
     static tenMonthState OldState = State_MonthDis;
     if (State_MonthDis == enMonthState)
     {
-        if (0 != Month->getNumberOfRunningActions())
+        if (0 != monthText->getNumberOfRunningActions())
         {
-            Month->stopAllActions();
-            Month->setVisible(true);
+            monthText->stopAllActions();
+            monthText->setVisible(true);
         }
-        if (0 != Day->getNumberOfRunningActions())
+        if (0 != dayText->getNumberOfRunningActions())
         {
-            Day->stopAllActions();
-            Day->setVisible(true);
+            dayText->stopAllActions();
+            dayText->setVisible(true);
         }
         if (currentTime.tm_mday != ClockTime.tm_mday)
         {
-            Daycanvas->canvasReset();
-            Daycanvas->print(String(currentTime.tm_mday).c_str());
+            char dayStr[5];
+            sprintf(dayStr, "%02d", ClockTime.tm_mday);
+            dayCanvas->canvasReset();
+            dayCanvas->print(dayStr);
         }
         if (currentTime.tm_mon != ClockTime.tm_mon)
         {
-            Monthcanvas->canvasReset();
-            Monthcanvas->print(String(currentTime.tm_mon).c_str());
+            char monthStr[5];
+            sprintf(monthStr, "%02d", ClockTime.tm_mon + 1); // Month is 0-11 in tm struct
+            monthCanvas->canvasReset();
+            monthCanvas->print(monthStr);
         }
         ClockTime = currentTime;
     }
     else if (State_DaySet == enMonthState)
     {
-        if (0 != Month->getNumberOfRunningActions())
+        if (0 != monthText->getNumberOfRunningActions())
         {
-            Month->stopAllActions();
-            Month->setVisible(true);
+            monthText->stopAllActions();
+            monthText->setVisible(true);
         }
-        if (0 == Day->getNumberOfRunningActions())
+        if (0 == dayText->getNumberOfRunningActions())
         {
-            Day->runAction(RepeatForever::create(Blink::create(1, 2)));
+            dayText->runAction(RepeatForever::create(Blink::create(1, 2)));
         }
-        Daycanvas->canvasReset();
-        Daycanvas->print(String(ClockTimeSetting.tm_mday).c_str());
+        dayCanvas->canvasReset();
+        dayCanvas->print(String(ClockTimeSetting.tm_mday).c_str());
     }
     else if (State_MonthSet == enMonthState)
     {
-        if (0 != Day->getNumberOfRunningActions())
+        if (0 != dayText->getNumberOfRunningActions())
         {
-            Day->stopAllActions();
-            Daycanvas->canvasReset();
-            Daycanvas->print(String(ClockTimeSetting.tm_mday).c_str());
-            Day->setVisible(true);
+            char dayStr[5];
+            sprintf(dayStr, "%02d", ClockTime.tm_mday);
+
+            dayText->stopAllActions();
+            dayCanvas->canvasReset();
+            dayCanvas->print(dayStr);
+            dayText->setVisible(true);
         }
-        if (0 == Month->getNumberOfRunningActions())
+        if (0 == monthText->getNumberOfRunningActions())
         {
-            Month->runAction(RepeatForever::create(Blink::create(1, 2)));
+            monthText->runAction(RepeatForever::create(Blink::create(1, 2)));
         }
-        Monthcanvas->canvasReset();
-        Monthcanvas->print(String(ClockTimeSetting.tm_mon).c_str());
+        char monthStr[5];
+        sprintf(monthStr, "%02d", ClockTime.tm_mon + 1); // Month is 0-11 in tm struct
+        monthCanvas->canvasReset();
+        monthCanvas->print(monthStr);
     }
 }
 

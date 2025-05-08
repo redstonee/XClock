@@ -13,7 +13,7 @@ constexpr auto ADC_RES = 12; // ADC resolution
 // Microphone
 constexpr auto MIC_SIG_PIN = 34;
 constexpr auto MIC_EN_PIN = 16;
-constexpr auto NOISE_THRESH = 1000.0f;
+constexpr auto NOISE_THRESH = 500.0f;
 
 // RGB Matrix
 constexpr auto LED_EN_PIN = 27;
