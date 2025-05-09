@@ -17,7 +17,7 @@ void ClockKey::vClickLeft()
   // boReqSound(enSndID_Alarm1,1);
   tstKeyEvent key = {enKey_Left, enKey_ShortPress};
   SendKeyToQ(&key);
-  ESP_LOGI(TAG, "Button Left click.");
+  ESP_LOGD(TAG, "Button Left click.");
 } // clickLeft
 
 // This function will be called when the button1 was pressed 2 times in a short timeframe.
@@ -26,7 +26,7 @@ void ClockKey::vDoubleClickLeft()
   // boReqSound(enSndID_Alarm2,1);
   tstKeyEvent key = {enKey_Left, enKey_DoubleClick};
   SendKeyToQ(&key);
-  ESP_LOGI(TAG, "Button Left doubleclick.");
+  ESP_LOGD(TAG, "Button Left doubleclick.");
 } // doubleclickLeft
 
 // This function will be called once, when the button1 is pressed for a long time.
@@ -35,7 +35,7 @@ void ClockKey::vLongPressStartLeft()
   // boReqSound(enSndID_Ding,1);
   tstKeyEvent key = {enKey_Left, enKey_LongPressStart};
   SendKeyToQ(&key);
-  ESP_LOGI(TAG, "Button Left longPress start");
+  ESP_LOGD(TAG, "Button Left longPress start");
 } // longPressStartLeft
 
 // This function will be called often, while the button1 is pressed for a long time.
@@ -47,7 +47,7 @@ void ClockKey::vLongPressLeft()
     u16LongPresDelay = 0;
     tstKeyEvent key = {enKey_Left, enKey_LongPress};
     SendKeyToQ(&key);
-    ESP_LOGI(TAG, "Button Left longPress...");
+    ESP_LOGD(TAG, "Button Left longPress...");
   }
 
 } // longPressLeft
@@ -57,7 +57,7 @@ void ClockKey::vLongPressStopLeft()
 {
   tstKeyEvent key = {enKey_Left, enKey_LongPressStop};
   SendKeyToQ(&key);
-  ESP_LOGI(TAG, "Button Left longPress stop");
+  ESP_LOGD(TAG, "Button Left longPress stop");
 } // longPressStopLeft
 
 // ... and the same for button 2:
@@ -67,7 +67,7 @@ void ClockKey::vClickRight()
   // boReqSound(enSndID_DingDong,1);
   tstKeyEvent key = {enKey_Right, enKey_ShortPress};
   SendKeyToQ(&key);
-  ESP_LOGI(TAG, "Button Right click.");
+  ESP_LOGD(TAG, "Button Right click.");
 } // clickRight
 
 void ClockKey::vDoubleClickRight()
@@ -75,7 +75,7 @@ void ClockKey::vDoubleClickRight()
   // boReqSound(enSndID_Ding,1);
   tstKeyEvent key = {enKey_Right, enKey_DoubleClick};
   SendKeyToQ(&key);
-  ESP_LOGI(TAG, "Button Right doubleclick.");
+  ESP_LOGD(TAG, "Button Right doubleclick.");
 } // doubleclickRight
 
 void ClockKey::vLongPressStartRight()
@@ -83,7 +83,7 @@ void ClockKey::vLongPressStartRight()
   // boReqSound(enSndID_Ding,1);
   tstKeyEvent key = {enKey_Right, enKey_LongPressStart};
   SendKeyToQ(&key);
-  ESP_LOGI(TAG, "Button Right longPress start");
+  ESP_LOGD(TAG, "Button Right longPress start");
 } // longPressStartRight
 
 void ClockKey::vLongPressRight()
@@ -95,7 +95,7 @@ void ClockKey::vLongPressRight()
     u16LongPresDelay = 0;
     tstKeyEvent key = {enKey_Right, enKey_LongPress};
     SendKeyToQ(&key);
-    ESP_LOGI(TAG, "Button Right longPress...");
+    ESP_LOGD(TAG, "Button Right longPress...");
   }
 } // longPressRight
 
@@ -103,7 +103,7 @@ void ClockKey::vLongPressStopRight()
 {
   tstKeyEvent key = {enKey_Right, enKey_LongPressStop};
   SendKeyToQ(&key);
-  ESP_LOGI(TAG, "Button Right longPress stop");
+  ESP_LOGD(TAG, "Button Right longPress stop");
 } // longPressStopRight
 
 // ... and the same for button 3:
@@ -113,7 +113,7 @@ void ClockKey::vClickOk()
   tstKeyEvent key = {enKey_OK, enKey_ShortPress};
   SendKeyToQ(&key);
   // boReqSound(enSndID_Ding,1);
-  ESP_LOGI(TAG, "Button Ok click.");
+  ESP_LOGD(TAG, "Button Ok click.");
 } // clickOk
 
 void ClockKey::vDoubleClickOk()
@@ -121,7 +121,7 @@ void ClockKey::vDoubleClickOk()
   // boReqSound(enSndID_Ding,1);
   tstKeyEvent key = {enKey_OK, enKey_DoubleClick};
   SendKeyToQ(&key);
-  ESP_LOGI(TAG, "Button Ok doubleclick.");
+  ESP_LOGD(TAG, "Button Ok doubleclick.");
 } // doubleclick3
 
 void ClockKey::vLongPressStartOk()
@@ -129,7 +129,7 @@ void ClockKey::vLongPressStartOk()
   // boReqSound(enSndID_Ding,1);
   tstKeyEvent key = {enKey_OK, enKey_LongPressStart};
   SendKeyToQ(&key);
-  ESP_LOGI(TAG, "Button Ok longPress start");
+  ESP_LOGD(TAG, "Button Ok longPress start");
 } // longPressStartOk
 
 void ClockKey::vLongPressOk()
@@ -140,7 +140,7 @@ void ClockKey::vLongPressOk()
   {
     tstKeyEvent key = {enKey_OK, enKey_LongPress};
     SendKeyToQ(&key);
-    ESP_LOGI(TAG, "Button Ok longPress...");
+    ESP_LOGD(TAG, "Button Ok longPress...");
   }
 } // longPressOk
 
@@ -148,32 +148,22 @@ void ClockKey::vLongPressStopOk()
 {
   tstKeyEvent key = {enKey_OK, enKey_LongPressStop};
   SendKeyToQ(&key);
-  ESP_LOGI(TAG, "Button Ok longPress stop");
+  ESP_LOGD(TAG, "Button Ok longPress stop");
 } // longPressStopOk
 
 // End
 
-void ClockKey::KeyLoop(void *param)
+void ClockKey::tickKeys(TimerHandle_t)
 {
-  for (;;)
-  {
-    vTaskDelay(10);
-    ButtonLeft->tick();
-    ButtonRight->tick();
-    ButtonOk->tick();
-  }
+  ButtonLeft->tick();
+  ButtonRight->tick();
+  ButtonOk->tick();
 }
 
 void ClockKey::Start()
 {
-  xTaskCreate(
-      KeyLoop,                // Function that should be called
-      "Keyhandler main task", // Name of the task (for debugging)
-      1000,                   // Stack size (bytes)
-      NULL,                   // Parameter to pass
-      5,                      // Task priority
-      NULL                    // Task handle
-  );
+  auto tickKeysTimer = xTimerCreate("Tick keys", pdMS_TO_TICKS(10), true, nullptr, tickKeys);
+  xTimerStart(tickKeysTimer, 0);
 }
 
 void ClockKey::SetSendQueue(QueueHandle_t &Queue)

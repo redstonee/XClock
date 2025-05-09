@@ -50,7 +50,7 @@ private:
     static void vLongPressStartOk(void);
     static void vLongPressOk(void);
     static void vLongPressStopOk(void);
-    static void KeyLoop(void *param);
+    static void tickKeys(TimerHandle_t);
     static bool SendKeyToQ(tstKeyEvent *);
 
 public:

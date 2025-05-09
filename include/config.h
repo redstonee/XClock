@@ -39,5 +39,6 @@ constexpr auto AUDIO_EN_PIN = 21;
 
 // Light Sensor
 constexpr auto LIGHT_SENSOR_PIN = 36; // ADC1_CH0
+constexpr auto LIGHT_FILTER_BUFF_SIZE = 200;
 
 constexpr auto SLEEP_TIME = 3e6; // in microseconds

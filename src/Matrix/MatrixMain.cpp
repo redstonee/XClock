@@ -51,7 +51,7 @@ class MainDelegate : public dot2d::DirectorDelegate
     // 返回一个RGB对象的顺序表指针，用于初始化硬件屏幕
     void initMatrix(dot2d::DTRGB *data)
     {
-        FastLED.addLeds<WS2812Controller800Khz, MATRIX_LED_PIN, GRB>((CRGB *)data, MATRIX_WIDTH * MATRIX_HEIGHT);
+        FastLED.addLeds<WS2812Controller800Khz, LED_DATA_PIN, GRB>((CRGB *)data, MATRIX_WIDTH * MATRIX_HEIGHT);
     }
 
     // 用于计算坐标为(x,y)的灯珠在RGB对象顺序表中的具体位置，适配不同排列方式的屏幕，在此处修改
@@ -139,22 +139,22 @@ dot2d::TransitionSlideInL *MainSceneTrans(tstKeyEvent rcvkey)
 
 uint32_t u32ADCDataFilter(uint32_t volt)
 {
-    static uint32_t buffer[ADC_FILTER_CNT] = {
+    static uint32_t buffer[LIGHT_FILTER_BUFF_SIZE] = {
         0,
     };
     static uint8_t newdataindex = 0;
     static uint8_t datacnt = 0;
     uint32_t filteredvolt = 0;
     buffer[newdataindex] = volt;
-    if (datacnt < ADC_FILTER_CNT)
+    if (datacnt < LIGHT_FILTER_BUFF_SIZE)
     {
         datacnt++;
     }
-    if (++newdataindex >= ADC_FILTER_CNT)
+    if (++newdataindex >= LIGHT_FILTER_BUFF_SIZE)
     {
         newdataindex = 0;
     }
-    for (uint8_t i = 0; i < ADC_FILTER_CNT; i++)
+    for (uint8_t i = 0; i < LIGHT_FILTER_BUFF_SIZE; i++)
     {
         filteredvolt += buffer[i];
     }
@@ -170,7 +170,7 @@ void vBrightessTask(void)
     uint8_t u8NewBrightness = MATRIX_BRIGHTNESS_BASE;
     LDRADC = analogReadMilliVolts(LIGHT_SENSOR_PIN);
     LDRADC = u32ADCDataFilter(LDRADC);
-    u8NewBrightness = (MATRIX_LDR_ADC_MAX - LDRADC) / MATRIX_LDR2LIGHT_STEP + MATRIX_BRIGHTNESS_BASE;
+    u8NewBrightness = (3300 - LDRADC) / MATRIX_LDR2LIGHT_STEP + MATRIX_BRIGHTNESS_BASE;
     if (u8OldBrightness != u8NewBrightness)
     {
         FastLED.setBrightness(u8NewBrightness);
