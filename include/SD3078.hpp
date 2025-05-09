@@ -53,24 +53,24 @@ public:
         if (!_timeReg.read(reinterpret_cast<uint8_t *>(&timeReg), 7))
             return false;
 
-        time->tm_sec = ((timeReg.second >> 4) * 10) | (timeReg.second & 0x0f);
-        time->tm_min = ((timeReg.minute >> 4) * 10) | (timeReg.minute & 0x0f);
+        time->tm_sec = ((timeReg.second >> 4) * 10) + (timeReg.second & 0x0f);
+        time->tm_min = ((timeReg.minute >> 4) * 10) + (timeReg.minute & 0x0f);
 
         if (timeReg.hour & 0x80) // MSB = 1 for 24h format
         {
-            time->tm_hour = (((timeReg.hour & 0x7f) >> 4) * 10) | (timeReg.hour & 0x0f); // clear MSB
+            time->tm_hour = (((timeReg.hour & 0x7f) >> 4) * 10) + (timeReg.hour & 0x0f); // clear MSB
         }
         else
         {
-            time->tm_hour = (((timeReg.hour & 0x1f) >> 4) * 10) | (timeReg.hour & 0x0f); // clear AM/PM bit
+            time->tm_hour = (((timeReg.hour & 0x1f) >> 4) * 10) + (timeReg.hour & 0x0f); // clear AM/PM bit
             if (timeReg.hour & 0x20)                                                     // AM/PM bit = 1 for PM
                 time->tm_hour += 12;                                                     // convert to 24h format
         }
 
-        time->tm_mday = ((timeReg.day >> 4) * 10) | (timeReg.day & 0x0f);                  // tm_mday is 1-31
-        time->tm_mon = ((timeReg.month >> 4) * 10) | (timeReg.month & 0x0f) - 1;           // convert to 0-11
-        time->tm_year = ((timeReg.year >> 4) * 10) | (timeReg.month & 0x0f) + 2000 - 1900; // tm_year is years since 1900
-        time->tm_wday = ((timeReg.wday >> 4) * 10) | (timeReg.wday & 0x0f);                // tm_wday is 0-6
+        time->tm_mday = ((timeReg.day >> 4) * 10) + (timeReg.day & 0x0f);                  // tm_mday is 1-31
+        time->tm_mon = ((timeReg.month >> 4) * 10) + (timeReg.month & 0x0f) - 1;           // convert to 0-11
+        time->tm_year = ((timeReg.year >> 4) * 10) + (timeReg.month & 0x0f) + 2000 - 1900; // tm_year is years since 1900
+        time->tm_wday = ((timeReg.wday >> 4) * 10) + (timeReg.wday & 0x0f);                // tm_wday is 0-6
         time->tm_yday = 0;                                                                 // not used
         time->tm_isdst = 0;                                                                // not used
         return true;

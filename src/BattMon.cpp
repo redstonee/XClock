@@ -10,6 +10,7 @@ namespace BattMon
     static uint8_t dataIndex = 0;
     static bool bufferFilled = false;
 
+    const char *TAG = "BattMon";
     /**
      * @brief Read the battery voltage and store it in the buffer.
      * @param TimerHandle_t Timer handle (not used).
@@ -34,7 +35,7 @@ namespace BattMon
     {
         analogReadResolution(ADC_RES);     // Set ADC resolution
         pinMode(CHARGE_STATUS_PIN, INPUT); // battery charging status
-        auto readBattTimer = xTimerCreate("ReadBatteryTimer", pdMS_TO_TICKS(1000), pdTRUE, nullptr, readVoltage);
+        auto readBattTimer = xTimerCreate("ReadBatteryTimer", pdMS_TO_TICKS(VBAT_SAMPLE_PERIOD), pdTRUE, nullptr, readVoltage);
         xTimerStart(readBattTimer, 0);
     }
 
@@ -56,22 +57,31 @@ namespace BattMon
     uint8_t getBatteryLevel()
     {
         uint32_t sum = 0;
-        for (int i = 0; i < VBAT_FILTER_BUFF_SIZE; ++i)
-        {
-            sum += adcBuffer[i];
-        }
 
         // Average the samples
         if (bufferFilled)
+        {
+            for (int i = 0; i < VBAT_FILTER_BUFF_SIZE; ++i)
+            {
+                sum += adcBuffer[i];
+            }
             sum /= VBAT_FILTER_BUFF_SIZE;
+        }
         else
         {
             if (!dataIndex)
                 return 0; // Avoid division by zero
+
+            for (int i = 0; i < dataIndex; ++i)
+            {
+                sum += adcBuffer[i];
+            }
             sum /= dataIndex;
         }
 
-        auto voltage = sum * VBAT_MULTIPLIER / (1 << ADC_RES);
+        auto voltage = sum * VBAT_MULTIPLIER / N_BATT_SERIES; // Convert to voltage per cell in mV
+
+        // ESP_LOGD(TAG, "Battery voltage: %f mV", voltage);
 
         // Map the voltage to a percentage
         if (voltage <= VBAT_EMPTY)

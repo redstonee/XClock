@@ -190,14 +190,6 @@ bool ClearWakeupRequest(bool boHMIDis)
     return res;
 }
 
-tm stUpdateTime(void)
-{
-    tm curtime;
-    RTC.getTime(&curtime);
-    // Serial.printf("%x:%x:%x Week %d\n",curtime.hour,curtime.minute,curtime.second,curtime.week);
-    return curtime;
-}
-
 QueueHandle_t pGetTimeSettingQ(void)
 {
     return TimeSettingQ;
@@ -335,9 +327,15 @@ void setup()
             delay(1000);
         }
     }
+    // Set the system time to RTC time
+    // auto t = mktime(&currentTime);
+    // struct timeval now = {.tv_sec = t, .tv_usec = 0};
+    // settimeofday(&now, NULL);
+
+    // TODO: Check battery level
     vCheckAlarms(currentTime);
 
-    ESP_LOGI(TAG, "Fuck Me");
+    ESP_LOGD(TAG, "Fuck Me");
 
     delay(50); // delay for ADC stable
     if (boNoisy() || boNeedWakeup(true) || ESP_SLEEP_WAKEUP_EXT0 == esp_sleep_get_wakeup_cause())
@@ -362,8 +360,19 @@ void loop()
 {
     delay(1000);
 
+    // Set the system time to RTC time
     tm currentTime;
     RTC.getTime(&currentTime);
+
+    // char timeStr[32];
+    // strftime(timeStr, 32, "%c", &currentTime);
+    // ESP_LOGD(TAG, "Current time: %s", timeStr);
+    
+    // auto t = mktime(&currentTime);
+    // struct timeval now = {.tv_sec = t, .tv_usec = 0};
+    // settimeofday(&now, NULL);
+
+
     vCheckAlarms(currentTime);
     vRcvTimeSettingReq();
 

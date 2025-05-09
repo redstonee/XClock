@@ -4,11 +4,13 @@
 constexpr auto CHARGE_STATUS_PIN = 35;
 constexpr auto BAT_VSENSE_PIN = 39;
 
-constexpr auto VBAT_FULL = 4200;       // in mV
-constexpr auto VBAT_EMPTY = 3300;      // in mV
-constexpr auto VBAT_MULTIPLIER = 4.3f; // for ADC reading
+constexpr auto VBAT_FULL = 4200;        // in mV
+constexpr auto VBAT_EMPTY = 3300;       // in mV
+constexpr auto N_BATT_SERIES = 2;       // number of batteries in series
+constexpr auto VBAT_MULTIPLIER = 4.35f; // for ADC reading
 constexpr auto VBAT_FILTER_BUFF_SIZE = 200;
-constexpr auto ADC_RES = 12; // ADC resolution
+constexpr auto VBAT_SAMPLE_PERIOD = 20; // in ms
+constexpr auto ADC_RES = 12;            // ADC resolution
 
 // Microphone
 constexpr auto MIC_SIG_PIN = 34;
