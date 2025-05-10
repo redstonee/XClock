@@ -181,7 +181,7 @@ void vBrightessTask(void)
 
 void vAlarmTask(void)
 {
-    uint8_t AlarmNum = u8GetAlarmClkNum();
+    uint8_t AlarmNum = getAlarmClockCount();
     AlarmConfig AlarmClkTmp = {
         0,
     };
@@ -189,7 +189,7 @@ void vAlarmTask(void)
     {
         for (uint8_t i = 0; i < AlarmNum; i++)
         {
-            AlarmClkTmp = stGetAlarmClk(i);
+            AlarmClkTmp = getAlarmClock(i);
             if (AlarmClkTmp.alarmStatus == Alarm_GoOff)
             {
                 boAlarming = true;
@@ -217,7 +217,7 @@ void vAlarmTask(void)
 
 void vAlarmClick(void)
 {
-    uint8_t AlarmNum = u8GetAlarmClkNum();
+    uint8_t AlarmNum = getAlarmClockCount();
     AlarmConfig AlarmClkTmp = {
         0,
     };
@@ -225,7 +225,7 @@ void vAlarmClick(void)
     {
         for (uint8_t i = 0; i < AlarmNum; i++)
         {
-            AlarmClkTmp = stGetAlarmClk(i);
+            AlarmClkTmp = getAlarmClock(i);
             if (AlarmClkTmp.alarmStatus == Alarm_GoOff)
             {
                 boAlarming = false;

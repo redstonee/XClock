@@ -10,13 +10,9 @@
 
 QueueHandle_t pGetTimeSettingQ(void);
 
-bool RequestWakeup(bool boHMIDis);
+void RequestWakeup(bool boHMIDis);
 
-bool boNeedWakeup(bool boHMIDis);
-
-bool ClearWakeupRequest(bool boHMIDis);
-
-void vSetWeatherFlag(bool flag);
+void ClearWakeupRequest(bool boHMIDis);
 
 
 #endif

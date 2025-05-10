@@ -28,9 +28,9 @@ struct AlarmConfig
 
 void boInitAlarmClkList(void);
 
-uint8_t u8GetAlarmClkNum(void);
+size_t getAlarmClockCount(void);
 
-AlarmConfig stGetAlarmClk(uint8_t index);
+AlarmConfig getAlarmClock(uint8_t index);
 
 bool boAddAlarmClk(AlarmConfig *alarmclk);
 

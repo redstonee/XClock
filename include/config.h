@@ -19,7 +19,7 @@ constexpr auto NOISE_THRESH = 500.0f;
 
 // RGB Matrix
 constexpr auto LED_EN_PIN = 27;
-constexpr auto LED_DATA_PIN = 7;
+constexpr auto LED_DATA_PIN = 17;
 
 // RTC
 constexpr auto RTC_SDA_PIN = 23;
@@ -41,4 +41,4 @@ constexpr auto AUDIO_EN_PIN = 21;
 constexpr auto LIGHT_SENSOR_PIN = 36; // ADC1_CH0
 constexpr auto LIGHT_FILTER_BUFF_SIZE = 200;
 
-constexpr auto SLEEP_TIME = 3e6; // in microseconds
+constexpr auto SLEEP_TIME = 5e6; // in microseconds

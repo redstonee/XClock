@@ -5,6 +5,8 @@
 #include "Sound.h"
 #include "SoundData.h"
 
+#include "config.h"
+
 AudioGeneratorWAV *wav = NULL;
 AudioFileSourcePROGMEM *file = NULL;
 AudioOutputI2S *out = NULL;
@@ -70,12 +72,11 @@ void vStopSound(void)
     {
 
         wav->stop();
-        digitalWrite(21, LOW);
+        digitalWrite(AUDIO_EN_PIN, LOW);
         if (xSemaphoreTake(xMutex_ReqSnd, (TickType_t)100) == pdTRUE)
         {
             u16ReqTime = 0;
             RequestedSnd = enSndID_None;
-            // digitalWrite(21,LOW);
             xSemaphoreGive(xMutex_ReqSnd);
         }
         else
@@ -94,20 +95,19 @@ void vSoundLoop(void *param)
             if (!wav->loop())
             {
                 wav->stop();
-                digitalWrite(21, LOW);
+                digitalWrite(AUDIO_EN_PIN, LOW);
                 if (xSemaphoreTake(xMutex_ReqSnd, (TickType_t)100) == pdTRUE)
                 {
 
                     if (0 < --u16ReqTime)
                     {
                         file->open(SndList[RequestedSnd].pSndData, SndList[RequestedSnd].u32DataLen);
-                        digitalWrite(21, HIGH);
+                        digitalWrite(AUDIO_EN_PIN, HIGH);
                         wav->begin(file, out);
                     }
                     else
                     {
                         RequestedSnd = enSndID_None;
-                        // digitalWrite(21,LOW);
                     }
                     xSemaphoreGive(xMutex_ReqSnd);
                 }
@@ -123,13 +123,9 @@ void vSoundLoop(void *param)
             {
                 if (enSndID_None != RequestedSnd)
                 {
-                    // Serial.printf("Request Snd:%d!\n",RequestedSnd);
-                    // digitalWrite(21,HIGH);
-                    // Serial.printf("SoundData:%d len:%d!\n",SndList[RequestedSnd].pSndData[64],SndList[RequestedSnd].u32DataLen);
                     file->open(SndList[RequestedSnd].pSndData, SndList[RequestedSnd].u32DataLen);
-                    digitalWrite(21, HIGH);
+                    digitalWrite(AUDIO_EN_PIN, HIGH);
                     wav->begin(file, out);
-                    // Serial.printf("begin!\n");
                 }
                 xSemaphoreGive(xMutex_ReqSnd);
             }
@@ -144,10 +140,8 @@ void vSoundLoop(void *param)
 
 bool vSoundInit(void)
 {
-    pinMode(21, OUTPUT); // Sound SD_Mode
-    // digitalWrite(21,HIGH);
-    digitalWrite(21, LOW);
-    audioLogger = &Serial;
+    pinMode(AUDIO_EN_PIN, OUTPUT); // Sound SD_Mode
+    digitalWrite(AUDIO_EN_PIN, LOW);
     file = new AudioFileSourcePROGMEM();
     if (file == NULL)
     {

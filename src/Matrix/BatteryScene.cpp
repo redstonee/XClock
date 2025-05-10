@@ -55,7 +55,7 @@ SpriteFrame *BattLayer::pGetBattIconSprt(bool charging, uint8_t batteryLevel)
 std::pair<String, DTRGB> genBattLevelStr(uint8_t batteryLevel)
 {
     auto BattLvlstr = String(batteryLevel) + " %";
-    ESP_LOGI(TAG, "Battlvl %s", BattLvlstr.c_str());
+    ESP_LOGD(TAG, "Battery level: %s", BattLvlstr.c_str());
 
     DTRGB color;
     if (batteryLevel < 20)

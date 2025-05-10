@@ -52,7 +52,7 @@ protected:
 	SpriteCanvas *AlarmIconCanvas = nullptr;
 	tm ClockTime;
 	tm ClockTimeSetting;
-	QueueHandle_t TimeSettingQ;
+	QueueHandle_t timeSettingQueue;
 	float interval;
 	bool ScrollUp = false;
 	uint8_t ColorIndex = 0;

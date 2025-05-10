@@ -7,25 +7,16 @@
 #define PrefKey_WifiConfiged                "WifiConfiged"
 #define PrefKey_WifiSSID                    "WifiSSID"
 
-void vWifiInit(void);
-
-bool boValidWifi(void);
-
-void handleRoot();
-
-void handleConfigWifi();
-
-void handleNotFound();
+void initWiFi(void);
 
 void wifiConfig();
 
-void restoreWiFi();
+void clearWiFiConfig();
 
-bool IsWifiConfig(void);
+bool isWifiConfigured(void);
 
-String GetWifiSSID(void);
+String getSSIDConfig(void);
 
 uint8_t GetCurWeatherCode();
 
-void SetupWifi(void);
 #endif

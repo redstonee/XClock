@@ -29,7 +29,7 @@ bool YearLayer::initLayer()
     auto currentTimeTime = time(nullptr);
     ClockTime = *localtime(&currentTimeTime);
 
-    TimeSettingQ = pGetTimeSettingQ();
+    timeSettingQueue = pGetTimeSettingQ();
     CRGBPalette16 currentPalette = pGetPalette(PaletteIndex);
     CRGB ColorFromPat = ColorFromPalette(currentPalette, ColorIndex);
     DTRGB Color;
@@ -127,9 +127,9 @@ void YearLayer::BtnDuringLongPressHandler(int8_t keyCode, Event *event)
 
 void YearLayer::SendSettingYear(tm *settingtime)
 {
-    if (TimeSettingQ != nullptr)
+    if (timeSettingQueue != nullptr)
     {
-        if (xQueueSend(TimeSettingQ,
+        if (xQueueSend(timeSettingQueue,
                        (void *)settingtime,
                        (TickType_t)10) != pdPASS)
         {
@@ -192,7 +192,7 @@ bool MonthLayer::initLayer()
     sprintf(monthStr, "%02d", ClockTime.tm_mon + 1); // Month is 0-11 in tm struct
     sprintf(dayStr, "%02d", ClockTime.tm_mday);
 
-    TimeSettingQ = pGetTimeSettingQ();
+    timeSettingQueue = pGetTimeSettingQ();
     ColorIndex = u8GetGlobalColorIdx();
     PaletteIndex = u8GetGlobalPaltIdx();
     CRGBPalette16 currentPalette = pGetPalette(PaletteIndex);
@@ -401,9 +401,9 @@ void MonthLayer::MonthStateMachine(int8_t key_type, int8_t key_event)
 
 void MonthLayer::SendSettingMonth(const tm &settingtime)
 {
-    if (TimeSettingQ != nullptr)
+    if (timeSettingQueue != nullptr)
     {
-        if (xQueueSend(TimeSettingQ,
+        if (xQueueSend(timeSettingQueue,
                        reinterpret_cast<const void *>(&settingtime),
                        (TickType_t)10) != pdPASS)
         {

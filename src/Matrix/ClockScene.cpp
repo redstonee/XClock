@@ -211,14 +211,14 @@ void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
         else if (key_type == enKey_Left)
         {
 
-            if (--min_temp > 59)
+            if (min_temp-- <= 0)
             {
                 min_temp = 59;
             }
         }
         else if (key_type == enKey_Right)
         {
-            if (++min_temp > 59)
+            if (min_temp++ >= 59)
             {
                 min_temp = 0;
             }
@@ -235,14 +235,14 @@ void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
         }
         else if (key_type == enKey_Left)
         {
-            if (--hour_temp > 23)
+            if (hour_temp-- <= 0)
             {
                 hour_temp = 23;
             }
         }
         else if (key_type == enKey_Right)
         {
-            if (++hour_temp > 23)
+            if (hour_temp++ >= 23)
             {
                 hour_temp = 0;
             }
@@ -260,14 +260,14 @@ void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
         }
         else if (key_type == enKey_Left)
         {
-            if (--ClockTimeSetting.tm_wday > 6)
+            if (ClockTimeSetting.tm_wday-- <= 0)
             {
                 ClockTimeSetting.tm_wday = 6;
             }
         }
         else if (key_type == enKey_Right)
         {
-            if (++ClockTimeSetting.tm_wday > 6)
+            if (ClockTimeSetting.tm_wday++ >= 6)
             {
                 ClockTimeSetting.tm_wday = 0;
             }
@@ -331,9 +331,9 @@ void TimeLayer::UpdateColor(int8_t key_type, int8_t key_event)
 
 void TimeLayer::SendSettingTime(tm &settingtime)
 {
-    if (TimeSettingQ != nullptr)
+    if (TimeSettingQueue != nullptr)
     {
-        if (!xQueueSend(TimeSettingQ, &settingtime, 10))
+        if (!xQueueSend(TimeSettingQueue, &settingtime, 10))
         {
             /* Failed to post the message, even after 10 ticks. */
         }
@@ -415,7 +415,7 @@ bool TimeLayer::initLayer()
     auto currentTimeTime = time(nullptr);
     ClockTime = *localtime(&currentTimeTime);
 
-    TimeSettingQ = pGetTimeSettingQ();
+    TimeSettingQueue = pGetTimeSettingQ();
     ColorIndex = u8GetGlobalColorIdx();
     PaletteIndex = u8GetGlobalPaltIdx();
 
@@ -436,11 +436,11 @@ bool TimeLayer::initLayer()
     sprintf(minuteSr, "%02d", ClockTime.tm_min);
 
     auto WeatherCode = GetCurWeatherCode();
-    ESP_LOGI(TAG, "Weather code:%d", WeatherCode);
+    ESP_LOGD(TAG, "Weather code:%d", WeatherCode);
 
     uint32_t gifsize = 0;
     const unsigned char *picon = pGetWeatherIcon(WeatherCode, &gifsize);
-    ESP_LOGI(TAG, "Weather icon:%x", picon);
+    ESP_LOGD(TAG, "Weather icon:%x", picon);
 
     Weather = FrameSprite::create(picon, gifsize, BMP_GIF);
     Weather->setPosition(0, 0);
@@ -546,40 +546,32 @@ void TimeLayer::digitSwitchAnimation(TextSprite *digitSprt, uint8_t oldDigit, ui
     TextSprite *SprtTmp = TextSprite::create(Size(10, 5), Size(10, 5), timecolor, oldDigitStr, TextSprite::TextAlign::TextAlignCenter, &TomThumb);
     SprtTmp->setPosition(digitSprt->getPositionX(), digitSprt->getPositionY());
     this->addChild(SprtTmp, 0, tmpTag);
-    Vec2 TgtPos(digitSprt->getPositionX(), 1);
+
     digitSprt->setPosition(digitSprt->getPositionX(), -6);
     SpriteCanvas *digitCanvas = digitSprt->getSpriteCanvas();
     digitCanvas->canvasReset();
     digitCanvas->print(newDigitStr);
+
     MoveBy *SwitchMove1 = MoveBy::create(0.5, Vec2(0, 7));
+    Vec2 TgtPos(digitSprt->getPositionX(), 1);
     MoveTo *SwitchMove2 = MoveTo::create(0.5, TgtPos);
     Sequence *Seq = Sequence::createWithTwoActions(SwitchMove1, CallFunc::create(DT_CALLBACK_0(TimeLayer::CleanUpAnimationTmp, this)));
-    // Serial.printf("TmpSprt %x \n",SprtTmp);
     SprtTmp->runAction(Seq);
-    // SprtTmp->runAction(SwitchMove1);
     digitSprt->runAction(SwitchMove2);
 }
 
 bool boActiveAlarm(void)
 {
-    bool res = false;
-    uint8_t AlarmNum = u8GetAlarmClkNum();
-    AlarmConfig AlarmClkTmp = {
-        0,
-    };
-    if (AlarmNum)
+    auto nAlarms = getAlarmClockCount();
+    if (nAlarms)
     {
-        for (uint8_t i = 0; i < AlarmNum; i++)
+        for (uint8_t i = 0; i < nAlarms; i++)
         {
-            AlarmClkTmp = stGetAlarmClk(i);
-            if (AlarmClkTmp.alarmStatus == Alarm_GoOff)
-            {
-                res = true;
-                break;
-            }
+            if (getAlarmClock(i).alarmStatus == Alarm_GoOff)
+                return true;
         }
     }
-    return res;
+    return false;
 }
 
 void TimeLayer::StateTimeDisShow(void)
@@ -658,20 +650,20 @@ void TimeLayer::StateTimeDisShow(void)
 
 void TimeLayer::StateSetMinShow(void)
 {
-    bool boFirstEnterflag = false;
-    static tm OldSettingTime = {
+    bool isFirstEnter = false;
+    static tm oldSettingTime = {
         0,
     };
     if (0 != minutePointText->getNumberOfRunningActions())
     {
         minutePointText->stopAllActions();
-        boFirstEnterflag = true;
+        isFirstEnter = true;
     }
     if (0 == minuteText->getNumberOfRunningActions())
     {
         minuteText->runAction(RepeatForever::create(Blink::create(1, 2)));
     }
-    if (true == boFirstEnterflag)
+    if (isFirstEnter)
     {
         updateHour(ClockTimeSetting.tm_hour);
         updateMinute(ClockTimeSetting.tm_min);
@@ -679,30 +671,30 @@ void TimeLayer::StateSetMinShow(void)
         Week->setVisible(true);
         minutePointText->setVisible(true);
     }
-    if (ClockTimeSetting.tm_min != OldSettingTime.tm_min)
+    if (ClockTimeSetting.tm_min != oldSettingTime.tm_min)
     {
         updateMinute(ClockTimeSetting.tm_min);
         DrawWeek(ClockTimeSetting.tm_wday);
     }
-    OldSettingTime = ClockTimeSetting;
+    oldSettingTime = ClockTimeSetting;
 }
 
 void TimeLayer::StateSetHourShow(void)
 {
-    bool boFirstEnterflag = false;
-    static tm OldSettingTime = {
+    bool isFirstEnter = false;
+    static tm oldSettingTime = {
         0,
     };
     if (0 != minuteText->getNumberOfRunningActions())
     {
         minuteText->stopAllActions();
-        boFirstEnterflag = true;
+        isFirstEnter = true;
     }
     if (0 == hourText->getNumberOfRunningActions())
     {
         hourText->runAction(RepeatForever::create(Blink::create(1, 2)));
     }
-    if (true == boFirstEnterflag)
+    if (isFirstEnter)
     {
         updateHour(ClockTimeSetting.tm_hour);
         updateMinute(ClockTimeSetting.tm_min);
@@ -710,29 +702,29 @@ void TimeLayer::StateSetHourShow(void)
         Week->setVisible(true);
         minutePointText->setVisible(true);
     }
-    if (ClockTimeSetting.tm_hour != OldSettingTime.tm_hour)
+    if (ClockTimeSetting.tm_hour != oldSettingTime.tm_hour)
     {
         updateHour(ClockTimeSetting.tm_hour);
     }
-    OldSettingTime = ClockTimeSetting;
+    oldSettingTime = ClockTimeSetting;
 }
 
 void TimeLayer::StateSetWeekShow(void)
 {
-    bool boFirstEnterflag = false;
-    static tm OldSettingTime = {
+    bool isFirstEnter = false;
+    static tm oldSettingTime = {
         0,
     };
     if (hourText->getNumberOfRunningActions())
     {
         hourText->stopAllActions();
-        boFirstEnterflag = true;
+        isFirstEnter = true;
     }
     if (!Week->getNumberOfRunningActions())
     {
         Week->runAction(RepeatForever::create(Blink::create(1, 2)));
     }
-    if (boFirstEnterflag)
+    if (isFirstEnter)
     {
         updateHour(ClockTimeSetting.tm_hour);
         updateMinute(ClockTimeSetting.tm_min);
@@ -741,11 +733,11 @@ void TimeLayer::StateSetWeekShow(void)
         Week->setVisible(true);
         minutePointText->setVisible(true);
     }
-    if (ClockTimeSetting.tm_wday != OldSettingTime.tm_wday)
+    if (ClockTimeSetting.tm_wday != oldSettingTime.tm_wday)
     {
         DrawWeek(ClockTimeSetting.tm_wday);
     }
-    OldSettingTime = ClockTimeSetting;
+    oldSettingTime = ClockTimeSetting;
 }
 
 void TimeLayer::TimeUpdate(float dt)

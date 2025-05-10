@@ -44,14 +44,12 @@ void boInitAlarmClkList(void)
     }
 }
 
-uint8_t u8GetAlarmClkNum(void)
+size_t getAlarmClockCount(void)
 {
-    uint8_t num = 0;
-    num = AlarmClkList.size();
-    return num;
+    return AlarmClkList.size();
 }
 
-AlarmConfig stGetAlarmClk(uint8_t index)
+AlarmConfig getAlarmClock(uint8_t index)
 {
     AlarmConfig stAlarmClk = {
         0,
@@ -69,26 +67,20 @@ AlarmConfig stGetAlarmClk(uint8_t index)
 
 bool boAddAlarmClk(AlarmConfig *alarmclk)
 {
-    bool res = true;
-    if (AlarmClkList.size() < 255)
-    {
-        uint8_t index = AlarmClkList.size();
-        AlarmConfig alarm_tmp = *alarmclk;
-        Preferences pref;
-        pref.begin(PrefKey_AlarmNameSpace);
-        pref.putUChar((PrefKey_AlarmMin + std::to_string(index)).c_str(), alarm_tmp.minute);
-        pref.putUChar((PrefKey_AlarmHour + std::to_string(index)).c_str(), alarm_tmp.hour);
-        pref.putUChar((PrefKey_AlarmWeek + std::to_string(index)).c_str(), alarm_tmp.week);
-        pref.putBool((PrefKey_AlarmActive + std::to_string(index)).c_str(), alarm_tmp.isActive);
-        pref.putUChar(PrefKey_AlarmNum, index + 1);
-        pref.end();
-        AlarmClkList.push_back(alarm_tmp);
-    }
-    else
-    {
-        res = false;
-    }
-    return res;
+    if (AlarmClkList.size() >= 255)
+        return false; // max 255 alarm clocks
+
+    uint8_t index = AlarmClkList.size();
+    AlarmConfig alarm_tmp = *alarmclk;
+    Preferences pref;
+    pref.begin(PrefKey_AlarmNameSpace);
+    pref.putUChar((PrefKey_AlarmMin + std::to_string(index)).c_str(), alarm_tmp.minute);
+    pref.putUChar((PrefKey_AlarmHour + std::to_string(index)).c_str(), alarm_tmp.hour);
+    pref.putUChar((PrefKey_AlarmWeek + std::to_string(index)).c_str(), alarm_tmp.week);
+    pref.putBool((PrefKey_AlarmActive + std::to_string(index)).c_str(), alarm_tmp.isActive);
+    pref.putUChar(PrefKey_AlarmNum, index + 1);
+    pref.end();
+    AlarmClkList.push_back(alarm_tmp);
 }
 
 bool boDelAlarmClk(uint8_t index)
