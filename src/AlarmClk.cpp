@@ -71,7 +71,10 @@ bool boAddAlarmClk(AlarmConfig *alarmclk)
         return false; // max 255 alarm clocks
 
     uint8_t index = AlarmClkList.size();
-    AlarmConfig alarm_tmp = *alarmclk;
+    AlarmConfig alarm_tmp{0, 0, 0, false, Alarm_Idle};
+    if (alarmclk)
+        alarm_tmp = *alarmclk;
+
     Preferences pref;
     pref.begin(PrefKey_AlarmNameSpace);
     pref.putUChar((PrefKey_AlarmMin + std::to_string(index)).c_str(), alarm_tmp.minute);
@@ -81,6 +84,8 @@ bool boAddAlarmClk(AlarmConfig *alarmclk)
     pref.putUChar(PrefKey_AlarmNum, index + 1);
     pref.end();
     AlarmClkList.push_back(alarm_tmp);
+    
+    return true;
 }
 
 bool boDelAlarmClk(uint8_t index)

@@ -8,6 +8,8 @@
 #include "ClockKey.h"
 #include "Palette.h"
 
+#include "shitTime.h"
+
 NS_DT_BEGIN
 
 bool CalYearScene::init()
@@ -29,7 +31,6 @@ bool YearLayer::initLayer()
     auto currentTimeTime = time(nullptr);
     ClockTime = *localtime(&currentTimeTime);
 
-    timeSettingQueue = pGetTimeSettingQ();
     CRGBPalette16 currentPalette = pGetPalette(PaletteIndex);
     CRGB ColorFromPat = ColorFromPalette(currentPalette, ColorIndex);
     DTRGB Color;
@@ -67,7 +68,9 @@ void YearLayer::BtnClickHandler(int8_t keyCode, Event *event)
         if (enKey_OK == keyCode)
         {
             boYearSetting = false;
-            SendSettingYear(&ClockTimeSetting);
+            setSystemTime(ClockTimeSetting); // set the system time
+
+            // SendSettingYear(&ClockTimeSetting);
         }
         else if (enKey_Left == keyCode)
         {
@@ -125,18 +128,6 @@ void YearLayer::BtnDuringLongPressHandler(int8_t keyCode, Event *event)
     }
 }
 
-void YearLayer::SendSettingYear(tm *settingtime)
-{
-    if (timeSettingQueue != nullptr)
-    {
-        if (xQueueSend(timeSettingQueue,
-                       (void *)settingtime,
-                       (TickType_t)10) != pdPASS)
-        {
-            /* Failed to post the message, even after 10 ticks. */
-        }
-    }
-}
 
 void YearLayer::YearUpdate(float dt)
 {
@@ -192,7 +183,6 @@ bool MonthLayer::initLayer()
     sprintf(monthStr, "%02d", ClockTime.tm_mon + 1); // Month is 0-11 in tm struct
     sprintf(dayStr, "%02d", ClockTime.tm_mday);
 
-    timeSettingQueue = pGetTimeSettingQ();
     ColorIndex = u8GetGlobalColorIdx();
     PaletteIndex = u8GetGlobalPaltIdx();
     CRGBPalette16 currentPalette = pGetPalette(PaletteIndex);
@@ -374,7 +364,9 @@ void MonthLayer::MonthStateMachine(int8_t key_type, int8_t key_event)
             if (key_event == enKey_ShortPress)
             {
                 enMonthState = State_MonthDis;
-                SendSettingMonth(ClockTimeSetting);
+                setSystemTime(ClockTimeSetting); // set the system time
+
+                // SendSettingMonth(ClockTimeSetting);
             }
         }
         else if (key_type == enKey_Left)
@@ -399,17 +391,5 @@ void MonthLayer::MonthStateMachine(int8_t key_type, int8_t key_event)
     }
 }
 
-void MonthLayer::SendSettingMonth(const tm &settingtime)
-{
-    if (timeSettingQueue != nullptr)
-    {
-        if (xQueueSend(timeSettingQueue,
-                       reinterpret_cast<const void *>(&settingtime),
-                       (TickType_t)10) != pdPASS)
-        {
-            /* Failed to post the message, even after 10 ticks. */
-        }
-    }
-}
 
 NS_DT_END

@@ -9,6 +9,8 @@
 #include "ClockKey.h"
 #include "AlarmClk.h"
 
+#include "shitTime.h"
+
 NS_DT_BEGIN
 
 #define WeekColorIdxOffset (80)
@@ -255,7 +257,8 @@ void TimeLayer::TimeStateMachine(int8_t key_type, int8_t key_event)
             if (key_event == enKey_ShortPress)
             {
                 enTimests = State_TimeDis;
-                SendSettingTime(ClockTimeSetting);
+                setSystemTime(ClockTimeSetting); // set the system time
+                // SendSettingTime(ClockTimeSetting);
             }
         }
         else if (key_type == enKey_Left)
@@ -329,16 +332,6 @@ void TimeLayer::UpdateColor(int8_t key_type, int8_t key_event)
     DrawWeek(ClockTime.tm_wday);
 }
 
-void TimeLayer::SendSettingTime(tm &settingtime)
-{
-    if (TimeSettingQueue != nullptr)
-    {
-        if (!xQueueSend(TimeSettingQueue, &settingtime, 10))
-        {
-            /* Failed to post the message, even after 10 ticks. */
-        }
-    }
-}
 
 void TimeLayer::updateHour(uint8_t hour)
 {
@@ -415,7 +408,6 @@ bool TimeLayer::initLayer()
     auto currentTimeTime = time(nullptr);
     ClockTime = *localtime(&currentTimeTime);
 
-    TimeSettingQueue = pGetTimeSettingQ();
     ColorIndex = u8GetGlobalColorIdx();
     PaletteIndex = u8GetGlobalPaltIdx();
 

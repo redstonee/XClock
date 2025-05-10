@@ -32,7 +32,7 @@ size_t getAlarmClockCount(void);
 
 AlarmConfig getAlarmClock(uint8_t index);
 
-bool boAddAlarmClk(AlarmConfig *alarmclk);
+bool boAddAlarmClk(AlarmConfig *alarmclk = nullptr);
 
 bool boDelAlarmClk(uint8_t index);
 

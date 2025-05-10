@@ -32,7 +32,6 @@ protected:
 	SpriteCanvas *yearCanvas = nullptr;
 	tm ClockTime;
 	tm ClockTimeSetting;
-	QueueHandle_t timeSettingQueue;
 	uint8_t ColorIndex = 0;
 	uint8_t PaletteIndex = 0;
 	bool boYearSetting = false;
@@ -74,7 +73,6 @@ protected:
 	SpriteCanvas *Splitcanvas = nullptr;
 	tm ClockTime;
 	tm ClockTimeSetting;
-	QueueHandle_t timeSettingQueue;
 	uint8_t ColorIndex = 0;
 	uint8_t PaletteIndex = 0;
 	tenMonthState enMonthState = State_MonthDis;
