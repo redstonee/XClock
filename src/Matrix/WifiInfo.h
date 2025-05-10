@@ -46,7 +46,7 @@ class WifiInfoLayer : public Layer
 protected:
     TextSprite *WifiInfoTxt = nullptr;
     SpriteCanvas *WifiTxtcanvas = nullptr;
-    bool boWifiConfiged = false;
+    bool boWifiConfigured = false;
 
 public:
 

@@ -4,6 +4,8 @@
 #include "Dot2D/dot2d.h"
 #include "SD3078.hpp"
 #include "AlarmClk.h"
+#include "ClockKey.h"
+
 #include "main.h"
 
 NS_DT_BEGIN
@@ -70,11 +72,11 @@ public:
 
 	void StateDisHandle(tenKeyID, tenKeyEventType);
 
-	void StateSetMinHandle(int8_t, int8_t);
+	void StateSetMinHandle(tenKeyID, tenKeyEventType);
 
-	void StateSetHourHandle(int8_t, int8_t);
+	void StateSetHourHandle(tenKeyID, tenKeyEventType);
 
-	void StateSetWeekHandle(int8_t, int8_t);
+	void StateSetWeekHandle(tenKeyID, tenKeyEventType);
 
 	void SwitchAlarmAnimation(AlarmConfig OldAlarm, bool boUp);
 
@@ -90,7 +92,7 @@ public:
 
 	void DrawWeek(uint8_t week, tenAlarmState AlarmState, SpriteCanvas *weekcanvas, uint8_t settingidx);
 
-	void AlarmStateMachine(int8_t, int8_t);
+	void AlarmStateMachine(tenKeyID, tenKeyEventType);
 };
 
 NS_DT_END

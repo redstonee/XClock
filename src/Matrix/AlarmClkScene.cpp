@@ -36,7 +36,7 @@ bool AlarmClkLayer::initLayer()
         AlarmTime.minute = 0;
         AlarmTime.week = 0;
         AlarmTime.isActive = false;
-        boAddAlarmClk(&AlarmTime);
+        boAddAlarmClk();
     }
     auto listener = EventListenerButton::create();
     listener->onBtnDuringLongPress = DT_CALLBACK_2(AlarmClkLayer::BtnDuringLongPressHandler, this);
@@ -134,22 +134,22 @@ void AlarmClkLayer::AlarmUpdate(float dt)
 
 void AlarmClkLayer::BtnClickHandler(int8_t keyCode, Event *event)
 {
-    AlarmStateMachine(keyCode, enKey_ShortPress);
+    AlarmStateMachine(static_cast<tenKeyID>(keyCode), enKey_ShortPress);
 }
 
 void AlarmClkLayer::BtnDoubleClickHandler(int8_t keyCode, Event *event)
 {
-    AlarmStateMachine(keyCode, enKey_DoubleClick);
+    AlarmStateMachine(static_cast<tenKeyID>(keyCode), enKey_DoubleClick);
 }
 
 void AlarmClkLayer::BtnLongPressStartHandler(int8_t keyCode, Event *event)
 {
-    AlarmStateMachine(keyCode, enKey_LongPressStart);
+    AlarmStateMachine(static_cast<tenKeyID>(keyCode), enKey_LongPressStart);
 }
 
 void AlarmClkLayer::BtnDuringLongPressHandler(int8_t keyCode, Event *event)
 {
-    AlarmStateMachine(keyCode, enKey_LongPress);
+    AlarmStateMachine(static_cast<tenKeyID>(keyCode), enKey_LongPress);
 }
 
 void AlarmClkLayer::DrawWeek(uint8_t week, tenAlarmState AlarmState, SpriteCanvas *weekcanvas, uint8_t settingidx)
@@ -523,8 +523,7 @@ void AlarmClkLayer::StateDisHandle(tenKeyID keyID, tenKeyEventType eventID)
             break;
 
         case enKey_LongPressStart:
-            AlarmConfig newAlarmClk = {0, 0, 0, false};
-            if (boAddAlarmClk(&newAlarmClk))
+            if (boAddAlarmClk())
             {
                 currentAlarmIndex++;
                 numberOfAlarms = getAlarmClockCount();
@@ -557,14 +556,14 @@ void AlarmClkLayer::StateDisHandle(tenKeyID keyID, tenKeyEventType eventID)
                 }
             }
             break;
-            
+
         default:
             break;
         }
     }
 }
 
-void AlarmClkLayer::StateSetMinHandle(int8_t keyID, int8_t eventID)
+void AlarmClkLayer::StateSetMinHandle(tenKeyID keyID, tenKeyEventType eventID)
 {
     if (enKey_OK == keyID)
     {
@@ -591,7 +590,7 @@ void AlarmClkLayer::StateSetMinHandle(int8_t keyID, int8_t eventID)
     }
 }
 
-void AlarmClkLayer::StateSetHourHandle(int8_t keyID, int8_t eventID)
+void AlarmClkLayer::StateSetHourHandle(tenKeyID keyID, tenKeyEventType eventID)
 {
     if (enKey_OK == keyID)
     {
@@ -619,7 +618,7 @@ void AlarmClkLayer::StateSetHourHandle(int8_t keyID, int8_t eventID)
     }
 }
 
-void AlarmClkLayer::StateSetWeekHandle(int8_t keyID, int8_t eventID)
+void AlarmClkLayer::StateSetWeekHandle(tenKeyID keyID, tenKeyEventType eventID)
 {
     if (enKey_OK == keyID)
     {
@@ -659,7 +658,7 @@ void AlarmClkLayer::StateSetWeekHandle(int8_t keyID, int8_t eventID)
     }
 }
 
-void AlarmClkLayer::AlarmStateMachine(int8_t keyID, int8_t eventID)
+void AlarmClkLayer::AlarmStateMachine(tenKeyID keyID, tenKeyEventType eventID)
 {
     switch (enAlarmState)
     {

@@ -18,7 +18,7 @@ int connectTimeOut = 15000;        // Timeout for WiFi connection in millisecond
 IPAddress apIP(192, 168, 4, 1);    // 设置AP的IP地址
 String wifi_ssid = "";             // 暂时存储wifi账号密码
 String wifi_pass = "";             // 暂时存储wifi账号密码
-bool WifiConfiging = false;
+bool WifiConfiguring = false;
 const char *ntpServer1 = "ntp1.aliyun.com";
 const char *ntpServer2 = "ntp2.aliyun.com";
 const char *ntpServer3 = "ntp3.aliyun.com";
@@ -236,30 +236,13 @@ void parseWeatherJson(WiFiClient client)
   ClearWakeupRequest(false);
 }
 
-bool vGetNetTime(tm &dateTime)
-{
-
-  uint8_t retry_cnt = 0;
-  bool boTimeGetted = false;
-  delay(1000);
-  while ((!boTimeGetted) && (retry_cnt++ < 10))
-  {
-    boTimeGetted = getLocalTime(&dateTime);
-    delay(1000);
-  };
-  if (!boTimeGetted)
-    return false;
-
-  return true;
-}
-
-void vConnectTOCb(TimerHandle_t xTimer)
-{
-  ESP_LOGI(TAG, "WiFi connection timeout.");
-  WiFi.disconnect();
-  WiFi.mode(WIFI_OFF);
-  ClearWakeupRequest(false);
-}
+// void vConnectTOCb(TimerHandle_t xTimer)
+// {
+//   ESP_LOGI(TAG, "WiFi connection timeout.");
+//   WiFi.disconnect();
+//   WiFi.mode(WIFI_OFF);
+//   ClearWakeupRequest(false);
+// }
 
 /**
  * @brief Try to connect to WiFi, if failed, start AP mode for web config.
@@ -291,14 +274,14 @@ void connectToWiFi(int timeout)
     if (millis() - startTime > timeout)
     {
       ESP_LOGW(TAG, "Failed to connect to WiFi, starting AP for web config.");
-      WifiConfiging = true;
+      WifiConfiguring = true;
       wifiConfig();
       return;
     }
   }
   if (WiFi.status() == WL_CONNECTED)
   {
-    WifiConfiging = false;
+    WifiConfiguring = false;
     ESP_LOGI(TAG, "Connected to WiFi: %s", WiFi.SSID().c_str());
     server.stop();
     Preferences pref;
@@ -355,7 +338,7 @@ void handleConfigWifi()
   else
   {
     Serial.println("提交的配置信息自动连接成功..");
-    WifiConfiging = false;
+    WifiConfiguring = false;
     ClearWakeupRequest(false);
   }
 }
@@ -385,54 +368,37 @@ void wifiConfig()
   scanWiFi();
 }
 
-void SetupWifi(void)
-{
-  if (WifiConfiging != true)
-  {
-    RequestWakeup(false);
-    wifiCconnectTimer = xTimerCreate("ConnectWifiTimer", pdMS_TO_TICKS(1000 * 20),
-                                     pdFALSE, nullptr, vConnectTOCb);
-    xTimerStart(wifiCconnectTimer, 10);
-    WiFi.hostname(HOST_NAME);
-    connectToWiFi(connectTimeOut);
-    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2, ntpServer3);
-    WeatherRequest();
-    WiFi.disconnect();
-    WiFi.mode(WIFI_OFF);
-  }
-}
+// void SetupWifi(void)
+// {
+//   if (WifiConfiguring != true)
+//   {
+//     RequestWakeup(false);
+//     wifiCconnectTimer = xTimerCreate("ConnectWifiTimer", pdMS_TO_TICKS(1000 * 20),
+//                                      pdFALSE, nullptr, vConnectTOCb);
+//     xTimerStart(wifiCconnectTimer, 10);
+//     WiFi.hostname(HOST_NAME);
+//     connectToWiFi(connectTimeOut);
+//     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2, ntpServer3);
+//     WeatherRequest();
+//     WiFi.disconnect();
+//     WiFi.mode(WIFI_OFF);
+//   }
+// }
 
-void checkConnect(bool reConnect)
-{
-  if (WiFi.status() != WL_CONNECTED)
-  {
-    if (reConnect == true && WiFi.getMode() != WIFI_AP && WiFi.getMode() != WIFI_AP_STA)
-    {
-      ESP_LOGD(TAG, "WiFi disconnected, trying to reconnect.");
-      connectToWiFi(connectTimeOut);
-    }
-  }
-}
 
-void vWebLoop(void *param)
+void handleNetworkEvents(TimerHandle_t)
 {
-  RequestWakeup(false);
-  WiFi.hostname(HOST_NAME); // 设置设备名
-  connectToWiFi(connectTimeOut);
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2, ntpServer3);
-  // WeatherRequest();
-  for (;;)
-  {
-    dnsServer.processNextRequest(); // 检查客户端DNS请求
-    // server.handleClient();          // 检查客户端(浏览器)http请求
-    checkConnect(true);             // 检测网络连接状态，参数true表示如果断开重新连接
-    tm ntpTime;
-    vGetNetTime(ntpTime);
-    delay(1000);
-  }
+  dnsServer.processNextRequest(); // 检查客户端DNS请求
+  server.handleClient();          // 检查客户端(浏览器)http请求
 }
 
 void initWiFi(void)
 {
-  xTaskCreatePinnedToCore(vWebLoop, "web main task", 4000, nullptr, 1, nullptr, 0);
+  WiFi.hostname(HOST_NAME); // 设置设备名
+  connectToWiFi(connectTimeOut);
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2, ntpServer3);
+
+  auto networkEventTimer = xTimerCreate("Network fucking timer", pdMS_TO_TICKS(1000),
+                                        true, nullptr, handleNetworkEvents);
+  xTimerStart(networkEventTimer, 0);
 }

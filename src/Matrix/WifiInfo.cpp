@@ -53,13 +53,13 @@ bool WifiInfoLayer::initLayer()
     {
         WifiInfoTxt = TextSprite::create(Size(32,5),Size(128,5),TextColor,getSSIDConfig().c_str(),TextSprite::TextAlign::TextAlignScroll,&TomThumb);
         WifiInfoTxt->setAutoScroll(TextSprite::ScrollType::Translate,32,32,0.2);
-        boWifiConfiged = true;
+        boWifiConfigured = true;
     }
     else
     {
         WifiInfoTxt = TextSprite::create(Size(32,5),Size(128,5),TextColor,"Please connect XClock_AP",TextSprite::TextAlign::TextAlignScroll,&TomThumb);
         WifiInfoTxt->setAutoScroll(TextSprite::ScrollType::Translate,32,32,0.2);
-        boWifiConfiged = false;
+        boWifiConfigured = false;
     }
     WifiTxtcanvas = WifiInfoTxt->getSpriteCanvas();
     auto listener = EventListenerButton::create();
@@ -73,13 +73,13 @@ bool WifiInfoLayer::initLayer()
 
 void WifiInfoLayer::update(float dt)
 {    
-    if(boWifiConfiged == false)
+    if(boWifiConfigured == false)
     {
         if(isWifiConfigured())
         {
             WifiTxtcanvas->canvasReset();
             WifiTxtcanvas->print(getSSIDConfig().c_str());
-            boWifiConfiged = true;
+            boWifiConfigured = true;
         } 
     }
 }
@@ -88,7 +88,7 @@ void WifiInfoLayer::BtnLongPressStartHandler(int8_t keyCode, Event* event)
 {
     if(enKey_OK == keyCode)
     {
-        boWifiConfiged = false;
+        boWifiConfigured = false;
         clearWiFiConfig();
         WifiTxtcanvas->print("Please connect XClock_AP");
     }
