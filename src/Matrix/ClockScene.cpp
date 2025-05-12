@@ -332,7 +332,6 @@ void TimeLayer::UpdateColor(int8_t key_type, int8_t key_event)
     DrawWeek(ClockTime.tm_wday);
 }
 
-
 void TimeLayer::updateHour(uint8_t hour)
 {
     ESP_LOGD(TAG, "hour %d", hour);
@@ -427,16 +426,15 @@ bool TimeLayer::initLayer()
     sprintf(hourStr, "%02d", ClockTime.tm_hour);
     sprintf(minuteSr, "%02d", ClockTime.tm_min);
 
-    auto WeatherCode = GetCurWeatherCode();
-    ESP_LOGD(TAG, "Weather code:%d", WeatherCode);
-
+    // TODO: Get the weather info from the server and set the icon
+    // For now, we will use a default icon
     uint32_t gifsize = 0;
-    const unsigned char *picon = pGetWeatherIcon(WeatherCode, &gifsize);
+    const unsigned char *picon = pGetWeatherIcon(0, &gifsize);
     ESP_LOGD(TAG, "Weather icon:%x", picon);
 
-    Weather = FrameSprite::create(picon, gifsize, BMP_GIF);
-    Weather->setPosition(0, 0);
-    Weather->setAutoSwitch(true);
+    weatherFrame = FrameSprite::create(picon, gifsize, BMP_GIF);
+    weatherFrame->setPosition(0, 0);
+    weatherFrame->setAutoSwitch(true);
     timecolor.r = ColorFromPat.r;
     timecolor.g = ColorFromPat.g;
     timecolor.b = ColorFromPat.b;
@@ -476,7 +474,7 @@ bool TimeLayer::initLayer()
     minuteText->setPosition(21, 1);
     Week->setPosition(10, 7);
     DrawWeek(ClockTime.tm_wday);
-    this->addChild(Weather);
+    this->addChild(weatherFrame);
     this->addChild(hourText);
     this->addChild(minutePointText);
     this->addChild(minuteText);
@@ -568,10 +566,6 @@ bool boActiveAlarm(void)
 
 void TimeLayer::StateTimeDisShow(void)
 {
-    static uint8_t WeatherCodeOld = 0;
-    uint8_t WeatherCode = 0;
-    WeatherCode = (uint8_t)GetCurWeatherCode();
-
     auto currentTimeTime = time(nullptr);
     auto currentTime = *localtime(&currentTimeTime);
     char hourStr[5];
@@ -582,12 +576,15 @@ void TimeLayer::StateTimeDisShow(void)
     bool boReEnterflag = false;
     static bool boPreAlarmActive = false;
     bool boAlarmActive = boActiveAlarm();
-    uint32_t gifsize = 0;
-    const unsigned char *picon = pGetWeatherIcon(WeatherCode, &gifsize);
-    if (WeatherCodeOld != WeatherCode)
-    {
-        Weather->setSpriteFrame(SpriteFrame::create(picon, gifsize, BMP_GIF));
-    }
+
+    // TODO: Get the weather info from the server and set the icon
+    // For now, we will use a default icon
+    // uint32_t gifsize = 0;
+    // const unsigned char *picon = pGetWeatherIcon(0, &gifsize);
+    // if (WeatherCodeOld != WeatherCode)
+    // {
+    //     weatherFrame->setSpriteFrame(SpriteFrame::create(picon, gifsize, BMP_GIF));
+    // }
     if (0 != Week->getNumberOfRunningActions())
     {
         Week->stopAllActions();
@@ -637,7 +634,7 @@ void TimeLayer::StateTimeDisShow(void)
     }
     ClockTime = currentTime;
     boPreAlarmActive = boAlarmActive;
-    WeatherCodeOld = WeatherCode;
+    // WeatherCodeOld = WeatherCode;
 }
 
 void TimeLayer::StateSetMinShow(void)

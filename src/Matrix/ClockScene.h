@@ -47,7 +47,7 @@ protected:
 	SpriteCanvas *Sec2canvas = nullptr;
 	CanvasSprite *Week = nullptr;
 	SpriteCanvas *Weekcanvas = nullptr;
-	FrameSprite *Weather = nullptr;
+	FrameSprite *weatherFrame = nullptr;
 	CanvasSprite *AlarmIcon = nullptr;
 	SpriteCanvas *AlarmIconCanvas = nullptr;
 	tm ClockTime;

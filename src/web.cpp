@@ -25,19 +25,6 @@ const char *ntpServer3 = "ntp3.aliyun.com";
 const long gmtOffset_sec = 8 * 3600;
 const int daylightOffset_sec = 0;
 TimerHandle_t wifiCconnectTimer = nullptr;
-/*天气*/
-const char *Weatherhost = "api.seniverse.com"; // 服务器地址
-const int WeatherhttpPort = 80;                // 端口号
-String reqUserKey = "S7KrrqZRFf8fC52mJ";       // 知心天气API私钥
-String reqLocation = "南京";                   // 地址
-String reqUnit = "c";                          // 摄氏度
-                                               //-------------------http请求-----------------------------//
-String reqRes = "/v3/weather/now.json?key=" + reqUserKey +
-                +"&location=" + reqLocation +
-                "&language=en&unit=" + reqUnit;
-String httprequest = String("GET ") + reqRes + " HTTP/1.1\r\n" +
-                     "Host: " + Weatherhost + "\r\n" +
-                     "Connection: close\r\n\r\n";
 
 // 定义根目录首页网页HTML源代码
 #define ROOT_HTML "<!DOCTYPE html><html><head><title>XClock WIFI Config</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><style type=\"text/css\">.input{display: block; margin-top: 10px;}.input span{width: 100px; float: left; float: left; height: 36px; line-height: 36px;}.input input{height: 30px;width: 200px;}.btn{width: 120px; height: 35px; background-color: #000000; border:0px; color:#ffffff; margin-top:15px; margin-left:100px;}</style><body><form method=\"POST\" action=\"configwifi\"><label class=\"input\"><span>WiFi SSID</span><input type=\"text\" name=\"ssid\" value=\"\"></label><label class=\"input\"><span>WiFi PASS</span><input type=\"text\"  name=\"pass\"></label><input class=\"btn\" type=\"submit\" name=\"submit\" value=\"Submie\"> <p><span> Nearby wifi:</P></form>"
@@ -49,8 +36,6 @@ static const char *TAG = "web";
 DNSServer dnsServer; // 创建dnsServer实例
 WebServer server;
 
-void WeatherRequest();
-void parseWeatherJson(WiFiClient client);
 
 // 初始化AP模式
 void initSoftAP()
@@ -167,82 +152,6 @@ String getSSIDConfig(void)
   return buf;
 }
 
-void SetCurWeatherCode(uint8_t code)
-{
-  Preferences pref;
-  pref.begin(PrefKey_WeatherSpace);
-  pref.putUChar(PrefKey_WeatherCodeCur, code);
-  pref.end();
-}
-
-uint8_t GetCurWeatherCode()
-{
-  int code = 0;
-  Preferences pref;
-  pref.begin(PrefKey_WeatherSpace);
-  code = pref.getUChar(PrefKey_WeatherCodeCur, 0);
-  pref.end();
-  return code;
-}
-
-void WeatherRequest()
-{
-  WiFiClient client;
-  // 1 连接服务器
-  if (client.connect(Weatherhost, WeatherhttpPort))
-  {
-    ESP_LOGD(TAG, "Success connect to weather server");
-    client.print(httprequest); // 访问API接口
-    String response_status = client.readStringUntil('\n');
-    ESP_LOGD(TAG, "Weather response status: %s", response_status.c_str());
-
-    if (client.find("\r\n\r\n"))
-    {
-      ESP_LOGD(TAG, "Try to parse weather json data");
-      parseWeatherJson(client);
-      client.stop();
-    }
-  }
-  else
-  {
-    ESP_LOGE(TAG, "Connect to weather server failed");
-  }
-}
-
-void parseWeatherJson(WiFiClient client)
-{
-  const size_t capacity = JSON_ARRAY_SIZE(1) + JSON_OBJECT_SIZE(1) + 2 * JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(6) + 230;
-  DynamicJsonDocument doc(capacity);
-  deserializeJson(doc, client);
-
-  JsonObject obj1 = doc["results"][0];
-  String cityName = obj1["location"]["name"].as<String>();
-  String weather = obj1["now"]["text"].as<String>();
-  String code = obj1["now"]["code"].as<String>();
-  String temperature = obj1["now"]["temperature"].as<String>();
-  int code_int = obj1["now"]["code"].as<int>();
-  ESP_LOGD(TAG, "City: %s", cityName.c_str());
-  ESP_LOGD(TAG, "Weather: %s", weather.c_str());
-  Serial.println(cityName);
-  Serial.println(code);
-  // Serial.println(weather);
-  Serial.println(temperature);
-  SetCurWeatherCode(code_int);
-  if (pdPASS != xTimerStop(wifiCconnectTimer, 10))
-  {
-    Serial.println("Stop timer failed");
-  }
-  Serial.println("Get weather,sleep");
-  ClearWakeupRequest(false);
-}
-
-// void vConnectTOCb(TimerHandle_t xTimer)
-// {
-//   ESP_LOGI(TAG, "WiFi connection timeout.");
-//   WiFi.disconnect();
-//   WiFi.mode(WIFI_OFF);
-//   ClearWakeupRequest(false);
-// }
 
 /**
  * @brief Try to connect to WiFi, if failed, start AP mode for web config.
@@ -379,7 +288,6 @@ void wifiConfig()
 //     WiFi.hostname(HOST_NAME);
 //     connectToWiFi(connectTimeOut);
 //     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2, ntpServer3);
-//     WeatherRequest();
 //     WiFi.disconnect();
 //     WiFi.mode(WIFI_OFF);
 //   }
