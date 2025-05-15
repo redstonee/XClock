@@ -27,70 +27,80 @@ THE SOFTWARE.
 #include "Dot2D/third/gfxfont.h"
 #include "Dot2D/third/Picopixel.h"
 #include "Dot2D/third/TomThumb.h"
-#include "web.h"
 #include "ClockKey.h"
 NS_DT_BEGIN
+const char *WifiInfoLayer::NOWIFI_HINT = "No WiFi";
+const char *WifiInfoLayer::SMARTCFG_HINT = "SmartConfig...";
 
 bool WifiInfo::init()
 {
     WifiInfoLayer *rootLayer = WifiInfoLayer::create();
-    rootLayer->setContentSize(Size(32,8));
-    rootLayer->setPosition(0,1);
+    rootLayer->setContentSize(Size(32, 8));
+    rootLayer->setPosition(0, 1);
     this->addChild(rootLayer);
     rootLayer->initLayer();
     return true;
 }
 
-WifiInfoLayer::~WifiInfoLayer()
-{
-    
-}
+WifiInfoLayer::~WifiInfoLayer() {}
 
 bool WifiInfoLayer::initLayer()
 {
-    DTRGB TextColor = {255,255,255};
-    if(isWifiConfigured())
+    DTRGB TextColor = {255, 255, 255};
+    if (Network::getWiFiStatus() == Network::WiFiStatus::CONNECTED)
     {
-        WifiInfoTxt = TextSprite::create(Size(32,5),Size(128,5),TextColor,getSSIDConfig().c_str(),TextSprite::TextAlign::TextAlignScroll,&TomThumb);
-        WifiInfoTxt->setAutoScroll(TextSprite::ScrollType::Translate,32,32,0.2);
-        boWifiConfigured = true;
+        WifiInfoTxt = TextSprite::create(Size(32, 5), Size(128, 5), TextColor, Network::getSSID().c_str(), TextSprite::TextAlign::TextAlignScroll, &TomThumb);
+        WifiInfoTxt->setAutoScroll(TextSprite::ScrollType::Translate, 32, 32, 0.2);
+        lastWiFiStatus = Network::WiFiStatus::CONNECTED;
     }
     else
     {
-        WifiInfoTxt = TextSprite::create(Size(32,5),Size(128,5),TextColor,"Please connect XClock_AP",TextSprite::TextAlign::TextAlignScroll,&TomThumb);
-        WifiInfoTxt->setAutoScroll(TextSprite::ScrollType::Translate,32,32,0.2);
-        boWifiConfigured = false;
+        WifiInfoTxt = TextSprite::create(Size(32, 5), Size(128, 5), TextColor, NOWIFI_HINT, TextSprite::TextAlign::TextAlignScroll, &TomThumb);
+        WifiInfoTxt->setAutoScroll(TextSprite::ScrollType::Translate, 32, 32, 0.2);
+        lastWiFiStatus = Network::WiFiStatus::DISCONNECTED;
     }
     WifiTxtcanvas = WifiInfoTxt->getSpriteCanvas();
     auto listener = EventListenerButton::create();
-    listener ->onBtnLongPressStart = DT_CALLBACK_2(WifiInfoLayer::BtnLongPressStartHandler,this);
-    _eventDispatcher->addEventListenerWithSceneGraphPriority ( listener, this );
+    listener->onBtnLongPressStart = DT_CALLBACK_2(WifiInfoLayer::BtnLongPressStartHandler, this);
+    _eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
     this->addChild(WifiInfoTxt);
     this->scheduleUpdate();
-    this->schedule(DT_SCHEDULE_SELECTOR(WifiInfoLayer::update),1);
+    this->schedule(DT_SCHEDULE_SELECTOR(WifiInfoLayer::update), 1);
     return true;
 }
 
 void WifiInfoLayer::update(float dt)
-{    
-    if(boWifiConfigured == false)
+{
+    auto currentStatus = Network::getWiFiStatus();
+    if (currentStatus != lastWiFiStatus)
     {
-        if(isWifiConfigured())
+        WifiTxtcanvas->canvasReset();
+
+        switch (currentStatus)
         {
-            WifiTxtcanvas->canvasReset();
-            WifiTxtcanvas->print(getSSIDConfig().c_str());
-            boWifiConfigured = true;
-        } 
+        case Network::WiFiStatus::CONNECTED:
+            WifiTxtcanvas->print(Network::getSSID().c_str());
+            break;
+
+        case Network::WiFiStatus::CONFIGURING:
+            WifiTxtcanvas->print(SMARTCFG_HINT);
+            break;
+        case Network::WiFiStatus::DISCONNECTED:
+            WifiTxtcanvas->print(NOWIFI_HINT);
+            break;
+        }
+
+        lastWiFiStatus = currentStatus;
     }
 }
-
-void WifiInfoLayer::BtnLongPressStartHandler(int8_t keyCode, Event* event)
+void WifiInfoLayer::BtnLongPressStartHandler(int8_t keyCode, Event *event)
 {
-    if(enKey_OK == keyCode)
+    if (enKey_OK == keyCode)
     {
-        boWifiConfigured = false;
-        clearWiFiConfig();
-        WifiTxtcanvas->print("Please connect XClock_AP");
+        if (Network::getWiFiStatus() == Network::WiFiStatus::CONFIGURING)
+            return;
+
+        Network::runSmartConfig();
     }
 }
 

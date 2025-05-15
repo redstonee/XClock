@@ -6,7 +6,7 @@
 #include "Dot2D/dot2d.h"
 #include "Matrix/MatrixMain.h"
 #include "ClockKey.h"
-#include "web.h"
+#include "Network.h"
 #include "SD3078.hpp"
 #include "AlarmClk.h"
 #include "Sound.h"
@@ -34,8 +34,6 @@ void vCreateKeyQueue(void)
         sizeof(tstKeyEvent));
 }
 
-
-
 void RequestWakeup(bool boHMIDis)
 {
     if (boHMIDis)
@@ -62,8 +60,6 @@ void ClearWakeupRequest(bool boHMIDis)
             i8SleepReqCnt--;
     }
 }
-
-
 
 void vCheckAlarms(tm currentTime)
 {
@@ -114,7 +110,7 @@ void vGotoSleep(bool enableTimerWake = true)
     esp_deep_sleep_start();
 }
 
-bool boNoisy()
+bool isNoisy()
 {
     digitalWrite(MIC_EN_PIN, HIGH);
     for (int i = 0; i < 64; i++)
@@ -133,13 +129,8 @@ bool boNoisy()
     {
         sum += realComponent[i];
     }
-    if (sum > NOISE_THRESH)
-    {
-        ESP_LOGD(TAG, "nosiy %g\n\r", sum);
-        return true;
-    }
-    ESP_LOGD(TAG, "%g\n\r", sum);
-    return false;
+
+    return (sum > NOISE_THRESH);
 }
 
 void setup()
@@ -197,7 +188,7 @@ void setup()
     ESP_LOGD(TAG, "Fuck Me");
 
     delay(50); // delay for ADC stable
-    if (boNoisy() || isWakeupNeeded(true) || ESP_SLEEP_WAKEUP_EXT0 == esp_sleep_get_wakeup_cause())
+    if (isNoisy() || isWakeupNeeded(true) || ESP_SLEEP_WAKEUP_EXT0 == esp_sleep_get_wakeup_cause())
     {
         vCreateKeyQueue();
         static ClockKey keyHandler;
@@ -212,7 +203,7 @@ void setup()
         vGotoSleep();
     }
 
-    initWiFi();
+    Network::begin();
 }
 
 void loop()
@@ -230,13 +221,12 @@ void loop()
     vCheckAlarms(currentTime);
     RTC.setTime(currentTime);
 
-
     if (!(isWakeupNeeded(true) || isWakeupNeeded(false)))
     {
         vGotoSleep();
     }
 
-    if (boNoisy())
+    if (isNoisy())
     {
         vResetSleepTimer();
     }
