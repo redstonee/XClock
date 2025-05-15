@@ -273,7 +273,9 @@ void vMatrixMain(void *param)
                             if (nullptr != transition)
                             {
                                 director->replaceScene(transition);
-                                if (Feature_Clock != stMainSts.enMainSceneIdx && Feature_Music != stMainSts.enMainSceneIdx && Feature_Wifi != stMainSts.enMainSceneIdx && false == dot2d::boIsTimerCounterActive() && false == dot2d::boIsCountDownTimerActive())
+                                if (Feature_Clock != stMainSts.enMainSceneIdx && Feature_Music != stMainSts.enMainSceneIdx &&
+                                    Feature_Wifi != stMainSts.enMainSceneIdx && (!dot2d::boIsTimerCounterActive()) &&
+                                    (!dot2d::CountDownLayer::isCountDownTimerActive()))
                                 {
                                     if (nullptr != FeatureEnterTO) /*Start a timeout timer to exit the feature*/
                                     {
@@ -351,7 +353,9 @@ void vMatrixMain(void *param)
 void vFeatureTOCb(TimerHandle_t xTimer)
 {
 
-    if ((Feature_Timer != stMainSts.enEnteredFeature || false == dot2d::boIsTimerCounterActive()) && (Feature_CountDown != stMainSts.enEnteredFeature || false == dot2d::boIsCountDownTimerActive()) && Feature_Music != stMainSts.enEnteredFeature && Feature_Wifi != stMainSts.enMainSceneIdx)
+    if ((Feature_Timer != stMainSts.enEnteredFeature || (!dot2d::boIsTimerCounterActive())) &&
+        (Feature_CountDown != stMainSts.enEnteredFeature || (!dot2d::CountDownLayer::isCountDownTimerActive())) &&
+        Feature_Music != stMainSts.enEnteredFeature && Feature_Wifi != stMainSts.enMainSceneIdx)
     {
         stMainSts.enEnteredFeature = Feature_None;
         stMainSts.enMainSceneIdx = Feature_Clock;
@@ -375,7 +379,9 @@ void vOffSeqFinishCb()
 void vSleepTOCb(TimerHandle_t xTimer)
 {
     ESP_LOGW(TAG, "Sleep timeout");
-    if (stMainSts.enEnteredFeature == Feature_None && stMainSts.enMainSceneIdx != Feature_CountDown && stMainSts.enMainSceneIdx != Feature_Timer && stMainSts.enMainSceneIdx != Feature_Music && Feature_Wifi != stMainSts.enMainSceneIdx)
+    if (stMainSts.enEnteredFeature == Feature_None && stMainSts.enMainSceneIdx != Feature_CountDown &&
+        stMainSts.enMainSceneIdx != Feature_Timer && stMainSts.enMainSceneIdx != Feature_Music &&
+        Feature_Wifi != stMainSts.enMainSceneIdx)
     {
         dot2d::MoveTo *MoveOff = dot2d::MoveTo::create(0.5, dot2d::Vec2(0, 8));
         dot2d::Sequence *OffSeq = dot2d::Sequence::createWithTwoActions(MoveOff, dot2d::CallFunc::create(vOffSeqFinishCb));
