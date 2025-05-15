@@ -2,7 +2,6 @@
 #include "Dot2D/third/gfxfont.h"
 #include "Dot2D/third/Picopixel.h"
 #include "Dot2D/third/TomThumb.h"
-#include "web.h"
 #include "main.h"
 #include "Palette.h"
 #include "Icon.h"

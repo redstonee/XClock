@@ -47,7 +47,6 @@ void ClockKey::vLongPressLeft()
     u16LongPresDelay = 0;
     tstKeyEvent key = {enKey_Left, enKey_LongPress};
     SendKeyToQ(&key);
-    ESP_LOGD(TAG, "Button Left longPress...");
   }
 
 } // longPressLeft
@@ -95,7 +94,6 @@ void ClockKey::vLongPressRight()
     u16LongPresDelay = 0;
     tstKeyEvent key = {enKey_Right, enKey_LongPress};
     SendKeyToQ(&key);
-    ESP_LOGD(TAG, "Button Right longPress...");
   }
 } // longPressRight
 
@@ -140,7 +138,6 @@ void ClockKey::vLongPressOk()
   {
     tstKeyEvent key = {enKey_OK, enKey_LongPress};
     SendKeyToQ(&key);
-    ESP_LOGD(TAG, "Button Ok longPress...");
   }
 } // longPressOk
 
