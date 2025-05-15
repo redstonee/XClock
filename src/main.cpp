@@ -6,7 +6,7 @@
 #include "Dot2D/dot2d.h"
 #include "Matrix/MatrixMain.h"
 #include "ClockKey.h"
-#include "web.h"
+#include "Network.h"
 #include "SD3078.hpp"
 #include "AlarmClk.h"
 #include "Sound.h"
@@ -34,8 +34,6 @@ void vCreateKeyQueue(void)
         sizeof(tstKeyEvent));
 }
 
-
-
 void RequestWakeup(bool boHMIDis)
 {
     if (boHMIDis)
@@ -62,8 +60,6 @@ void ClearWakeupRequest(bool boHMIDis)
             i8SleepReqCnt--;
     }
 }
-
-
 
 void vCheckAlarms(tm currentTime)
 {
@@ -212,7 +208,7 @@ void setup()
         vGotoSleep();
     }
 
-    initWiFi();
+    Network::begin();
 }
 
 void loop()
@@ -229,7 +225,6 @@ void loop()
     getLocalTime(&currentTime);
     vCheckAlarms(currentTime);
     RTC.setTime(currentTime);
-
 
     if (!(isWakeupNeeded(true) || isWakeupNeeded(false)))
     {

@@ -26,44 +26,44 @@ THE SOFTWARE.
 #define __WIFIINFO_H__
 
 #include "Dot2D/dot2d.h"
+#include "Network.h"
 NS_DT_BEGIN
 
 class WifiInfo : public Scene
 {
 
 protected:
-
     bool init() override;
 
 public:
-
     STATIC_CREATE(WifiInfo);
-
 };
 
 class WifiInfoLayer : public Layer
 {
+private:
+    static const char *NOWIFI_HINT;
+    static const char *WIFI_CFG_HINT;
+
 protected:
     TextSprite *WifiInfoTxt = nullptr;
     SpriteCanvas *WifiTxtcanvas = nullptr;
-    bool boWifiConfigured = false;
+    Network::WiFiStatus lastWiFiStatus = Network::WiFiStatus::DISCONNECTED;
 
 public:
-
     virtual ~WifiInfoLayer();
 
 protected:
-    
-    TextSprite* WifiInfoSprite = nullptr;
-public:
+    TextSprite *WifiInfoSprite = nullptr;
 
+public:
     STATIC_CREATE(WifiInfoLayer);
 
     virtual bool initLayer();
-    
+
     void update(float dt) override;
 
-    void BtnLongPressStartHandler(int8_t, Event*);
+    void BtnLongPressStartHandler(int8_t, Event *);
 };
 
 NS_DT_END
