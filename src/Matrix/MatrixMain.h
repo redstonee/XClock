@@ -5,10 +5,10 @@
 #define MATRIX_WIDTH (32)
 // LED矩阵高
 #define MATRIX_HEIGHT (8)
-// 屏幕最大亮度
+// 屏幕最小亮度
 #define MATRIX_BRIGHTNESS_BASE (1)
 // 光敏电阻转换亮度的步长
-#define MATRIX_LDR2LIGHT_STEP (150)
+#define MATRIX_LDR2LIGHT_STEP (100)
 // #define MATRIX_LDR2LIGHT_STEP (250)
 // 换场时间
 #define SCENE_TRANSITION_DURATION (0.5f)

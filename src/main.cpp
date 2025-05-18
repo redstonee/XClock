@@ -99,7 +99,7 @@ void vCheckAlarms(tm currentTime)
     }
 }
 
-void vGotoSleep(bool enableTimerWake = true)
+void goToSleep(bool enableTimerWake = true)
 {
     ESP_LOGI(TAG, "Go to sleep\n\r");
     digitalWrite(MIC_EN_PIN, LOW);
@@ -110,16 +110,13 @@ void vGotoSleep(bool enableTimerWake = true)
     esp_deep_sleep_start();
 }
 
-bool boNoisy()
+bool isNoisy()
 {
-    digitalWrite(MIC_EN_PIN, HIGH);
     for (int i = 0; i < 64; i++)
     {
         realComponent[i] = analogReadMilliVolts(MIC_SIG_PIN);
         imagComponent[i] = 0;
-        // Serial.printf("%g ",realComponent[i]);
     }
-    // Serial.printf("\n");
     fft->DCRemoval();
     fft->Windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
     fft->Compute(FFT_FORWARD);
@@ -145,29 +142,20 @@ void setup()
     if (BattMon::getBatteryLevel() < 10)
     {
         ESP_LOGE(TAG, "Battery level is low\n\r");
-        vGotoSleep(false);
+        goToSleep(false);
     }
-    pinMode(MIC_EN_PIN, OUTPUT);
-    digitalWrite(MIC_EN_PIN, HIGH);
-    analogSetPinAttenuation(MIC_SIG_PIN, ADC_6db);
 
     if (!RTC.begin())
     {
         ESP_LOGE(TAG, "Failed to initialize RTC\n\r");
-        while (1)
-        {
-            delay(1000);
-        }
+        goToSleep();
     }
     ESP_LOGI(TAG, "RTC initialized\n\r");
 
     if (!vSoundInit())
     {
         ESP_LOGE(TAG, "Sound Init failed\n\r");
-        while (1)
-        {
-            delay(1000);
-        }
+        goToSleep();
     }
     ESP_LOGI(TAG, "Sound Init success\n\r");
 
@@ -181,10 +169,7 @@ void setup()
     if (!RTC.getTime(&currentTime))
     {
         ESP_LOGE(TAG, "Failed to read RTC time\n\r");
-        while (1)
-        {
-            delay(1000);
-        }
+        goToSleep();
     }
     setSystemTime(currentTime);
 
@@ -192,20 +177,33 @@ void setup()
 
     ESP_LOGD(TAG, "Fuck Me");
 
-    delay(50); // delay for ADC stable
-    if (boNoisy() || isWakeupNeeded(true) || ESP_SLEEP_WAKEUP_EXT0 == esp_sleep_get_wakeup_cause())
+    pinMode(MIC_EN_PIN, OUTPUT);
+    digitalWrite(MIC_EN_PIN, HIGH);
+    analogSetPinAttenuation(MIC_SIG_PIN, ADC_6db);
+    
+    // Don't wake up by noise when battery level is not really high
+    bool noisy = false;
+    if (BattMon::getBatteryLevel() > 50)
+    {
+        delay(50); // delay for ADC stable
+        noisy = isNoisy();
+    }
+
+    if (noisy || isWakeupNeeded(true) || ESP_SLEEP_WAKEUP_EXT0 == esp_sleep_get_wakeup_cause())
     {
         vCreateKeyQueue();
         static ClockKey keyHandler;
         keyHandler.SetSendQueue(KeyQueue);
         keyHandler.Start();
-        pinMode(LED_EN_PIN, OUTPUT); // MIC EN
+        pinMode(LED_EN_PIN, OUTPUT);
         digitalWrite(LED_EN_PIN, HIGH);
+
         vMatrixInit(KeyQueue);
     }
+
     if (!(isWakeupNeeded(true) || isWakeupNeeded(false)))
     {
-        vGotoSleep();
+        goToSleep();
     }
 
     Network::begin();
@@ -218,7 +216,7 @@ void loop()
     if (BattMon::getBatteryLevel() < 10)
     {
         ESP_LOGE(TAG, "Battery level is low\n\r");
-        vGotoSleep(false);
+        goToSleep(false);
     }
 
     tm currentTime;
@@ -228,10 +226,10 @@ void loop()
 
     if (!(isWakeupNeeded(true) || isWakeupNeeded(false)))
     {
-        vGotoSleep();
+        goToSleep();
     }
 
-    if (boNoisy())
+    if ((BattMon::getBatteryLevel() > 50) && isNoisy())
     {
         vResetSleepTimer();
     }

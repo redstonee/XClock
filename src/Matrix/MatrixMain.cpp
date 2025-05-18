@@ -165,12 +165,15 @@ uint32_t u32ADCDataFilter(uint32_t volt)
 
 void vBrightessTask(void)
 {
-    uint32_t LDRADC;
     static uint8_t u8OldBrightness = MATRIX_BRIGHTNESS_BASE;
     uint8_t u8NewBrightness = MATRIX_BRIGHTNESS_BASE;
-    LDRADC = analogReadMilliVolts(LIGHT_SENSOR_PIN);
-    LDRADC = u32ADCDataFilter(LDRADC);
-    u8NewBrightness = (3300 - LDRADC) / MATRIX_LDR2LIGHT_STEP + MATRIX_BRIGHTNESS_BASE;
+    auto lightVoltage = analogReadMilliVolts(LIGHT_SENSOR_PIN);
+    lightVoltage = u32ADCDataFilter(lightVoltage);
+    if (lightVoltage > 2000)
+        u8NewBrightness = 1;
+    else
+        u8NewBrightness = (2000 - lightVoltage) / MATRIX_LDR2LIGHT_STEP + MATRIX_BRIGHTNESS_BASE;
+
     if (u8OldBrightness != u8NewBrightness)
     {
         FastLED.setBrightness(u8NewBrightness);
